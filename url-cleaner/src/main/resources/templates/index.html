@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>URL Cleaner</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-secondary: #101935;
+            --panel: rgba(255, 255, 255, 0.06);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-color: #f5f7ff;
+            --text-muted: #94a3b8;
+            --accent: #6f7dfb;
+            --accent-soft: rgba(111, 125, 251, 0.18);
+            --input-bg: rgba(255, 255, 255, 0.08);
+            --result-bg: rgba(15, 23, 42, 0.9);
+            --card-bg: #ffffff;
+            --card-text: #1f2a37;
+        }
+        .dark-mode {
+            --bg: #020617;
+            --bg-secondary: #0b1224;
+            --panel: rgba(15, 23, 42, 0.85);
+            --panel-border: rgba(148, 163, 184, 0.08);
+            --text-color: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #81c784;
+            --accent-soft: rgba(129, 199, 132, 0.18);
+            --input-bg: rgba(255, 255, 255, 0.06);
+            --result-bg: rgba(2, 6, 23, 0.9);
+            --card-bg: #1e293b;
+            --card-text: #e2e8f0;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background: radial-gradient(circle at top, var(--bg-secondary), var(--bg));
+            min-height: 100vh;
+            margin: 0;
+            font-family: "Inter", "Segoe UI", sans-serif;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+        }
+        .page-shell {
+            width: min(960px, 100%);
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .hero {
+            text-align: center;
+            padding-bottom: 0.5rem;
+        }
+        .hero .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            font-size: 0.75rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-muted);
+        }
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 2.9rem);
+            font-weight: 600;
+        }
+        .hero p {
+            margin-top: 0.75rem;
+            color: var(--text-muted);
+        }
+        .glass-card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(18px);
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
+        }
+        .card-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-bottom: 1.5rem;
+        }
+        .card-header .badge {
+            align-self: flex-start;
+            border-radius: 999px;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.8rem;
+            background: var(--accent-soft);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+        .input-field.modern {
+            margin-top: 1rem;
+        }
+        .input-field input[type=text] {
+            background: var(--input-bg);
+            border-radius: 14px !important;
+            border: 1px solid transparent !important;
+            padding: 1rem 1.2rem !important;
+            color: #6b7280;
+            font-size: 1rem;
+            transition: border 0.2s ease, box-shadow 0.2s ease;
+        }
+        .input-field input[type=text]::placeholder {
+            color: #9ca3af;
+        }
+        .input-field input[type=text]:focus {
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 2px var(--accent-soft) !important;
+        }
+        .input-field label {
+            color: var(--text-muted) !important;
+            font-weight: 500;
+        }
+        .input-field .helper-text {
+            color: var(--text-muted) !important;
+            margin-left: 0.2rem;
+        }
+        .primary-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .primary-actions .btn {
+            background: var(--accent);
+            border-radius: 12px;
+            padding: 0 2.5rem;
+            height: 48px;
+            text-transform: none;
+            font-weight: 600;
+            letter-spacing: 0;
+        }
+        .primary-actions .subtle-hint {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .result-card {
+            background: var(--result-bg);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1.75rem;
+        }
+        .result-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 1rem;
+            margin-bottom: 1.2rem;
+        }
+        .result-header h6 {
+            margin: 0;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: 0.75rem;
+        }
+        .result-url {
+            font-size: 1rem;
+            font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+            word-break: break-all;
+            margin: 0.4rem 0 0;
+            color: var(--text-color);
+        }
+        .result-card .btn-small {
+            border-radius: 10px;
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            text-transform: none;
+            font-weight: 600;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+        .stat-tile {
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .stat-tile span {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.4rem;
+        }
+        .stat-tile strong {
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell">
+        <div class="hero">
+            <p class="eyebrow">BootFleet Utility</p>
+            <h1>Clean tracking bloated URLs before you share them</h1>
+            <p>Paste a noisy marketing link and get a privacy-friendly version you can trust.</p>
+        </div>
+        <div class="glass-card">
+            <form action="/clean" method="post">
+                <div class="input-field modern">
+                    <input type="text" name="url" id="url" placeholder="https://example.com?utm_source=google&utm_medium=cpc" required>
+                    <label for="url">Target URL</label>
+                    <span class="helper-text">Removes UTM, click-ID, and social tracking parameters while preserving functional ones.</span>
+                </div>
+                <div class="primary-actions">
+                    <button class="btn waves-effect waves-light" type="submit">Clean URL</button>
+                </div>
+            </form>
+        </div>
+        <div class="result-card" th:if="${originalUrl != null}">
+            <div class="result-header">
+                <div>
+                    <h6>Original</h6>
+                    <p class="result-url" th:text="${originalUrl}"></p>
+                </div>
+            </div>
+            <div class="result-header" style="border: none; padding-bottom:0; margin-bottom:1.5rem;">
+                <div>
+                    <h6>Cleaned URL</h6>
+                    <p id="cleaned-url" class="result-url" th:text="${cleanedUrl}"></p>
+                </div>
+                <button id="copy-btn" class="btn-small waves-effect waves-light">Copy to Clipboard</button>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-tile">
+                    <span>Parameters Removed</span>
+                    <strong th:text="${paramsRemoved}"></strong>
+                </div>
+                <div class="stat-tile">
+                    <span>Length Reduction</span>
+                    <strong>
+                        <span th:text="${#numbers.formatDecimal(paramsRemoved == 0 ? 0 : lengthReduction, 1, 2)}"></span>%
+                    </strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        function updateTheme() {
+            if (mediaQuery.matches) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        }
+        updateTheme();
+        mediaQuery.addEventListener('change', updateTheme);
+
+        document.getElementById('copy-btn')?.addEventListener('click', function() {
+            const cleanedUrl = document.getElementById('cleaned-url').textContent;
+            navigator.clipboard.writeText(cleanedUrl).then(() => {
+                M.toast({html: 'Copied to clipboard!'});
+            });
+        });
+    </script>
+</body>
+</html>

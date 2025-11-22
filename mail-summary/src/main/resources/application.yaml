@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: mail-summary
+  ai:
+    ollama:
+        base-url:
+        chat:
+            model:
+
+gmail:
+  project-id:
+  oauth:
+    client-id:
+    client-secret:
+    auth-uri: https://accounts.google.com/o/oauth2/auth
+    token-uri: https://oauth2.googleapis.com/token
+    redirect-uri: http://localhost:8080/callback
+  tokens-directory: tokens
+
+app:
+  ai:
+    individual-email-prompt:

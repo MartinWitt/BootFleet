@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Mail Summary</title>
+    <!-- Removed external dependencies (Materialize/jQuery) to keep UI lean -->
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-secondary: #101935;
+            --panel: rgba(255, 255, 255, 0.06);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-color: #f5f7ff;
+            --text-muted: #94a3b8;
+            --accent: #6f7dfb;
+            --accent-soft: rgba(111, 125, 251, 0.18);
+        }
+
+        .dark-mode {
+            --bg: #020617;
+            --bg-secondary: #0b1224;
+            --panel: rgba(15, 23, 42, 0.85);
+            --panel-border: rgba(148, 163, 184, 0.08);
+            --text-color: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #81c784;
+            --accent-soft: rgba(129, 199, 132, 0.18);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at top, var(--bg-secondary), var(--bg));
+            background-attachment: fixed;
+            min-height: 100vh; margin: 0;
+            font-family: "Inter", "Segoe UI", sans-serif;
+            color: var(--text-color);
+            display: flex; align-items: flex-start; justify-content: center;
+            padding: 3rem 1rem 6rem;
+        }
+
+        .page-shell { width: min(1200px, 100%); display: flex; flex-direction: column; gap: 2rem; }
+        .hero { text-align: center; padding-bottom: 0.5rem; }
+        .hero h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 700; letter-spacing: -0.02em; }
+        .hero p { margin-top: 0.75rem; color: var(--text-muted); font-size: 1.05rem; }
+
+        .page-shell { width: min(1200px, 100%); display: flex; flex-direction: column; gap: 2rem; }
+        .hero { text-align: center; padding-bottom: 0.5rem; }
+        .hero h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 700; letter-spacing: -0.02em; }
+        .hero p { margin-top: 0.75rem; color: var(--text-muted); font-size: 1.05rem; }
+
+        .glass-card { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 20px; padding: 1.5rem 1.5rem 2rem; backdrop-filter: blur(18px); box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35); display: flex; flex-direction: column; max-height: calc(100vh - 400px); overflow: hidden; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; gap: 1rem; flex-wrap: wrap; flex-shrink: 0; }
+        .card-title { color: var(--text-color); font-size: 1.4rem; margin: 0; font-weight: 600; }
+
+        .control-group { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+        .select-clean {
+            background: rgba(255,255,255,0.04);
+            color: var(--text-color);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 0.5rem 0.75rem;
+            min-width: 180px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-primary:hover { opacity: 0.9; }
+        a.btn-primary { display: inline-block; text-decoration: none; padding: 0.6rem 1rem; }
+
+        .email-list { display: grid; gap: 1rem; margin-top: 1rem; overflow-y: auto; flex: 1; min-height: 0; padding-right: 0.5rem; }
+        .email-item { background: rgba(15, 23, 42, 0.4); border-radius: 12px; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.05); border-left: 3px solid transparent; transition: border-color 0.2s, transform 0.15s ease; }
+        .email-item:hover { border-left-color: var(--accent); transform: translateY(-2px); }
+        .email-meta { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .from-pill { background: var(--accent-soft); color: var(--accent); padding: 0.35rem 0.75rem; border-radius: 999px; font-weight: 600; font-size: 0.85rem; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .subject-line { color: var(--text-color); font-size: 1.1rem; font-weight: 700; margin: 0; }
+        .snippet { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
+        .load-status { color: var(--text-muted); text-align: center; padding: 0.5rem 0; margin-bottom: 0.5rem; flex-shrink: 0; font-size: 0.9rem; }
+        .summary-content { margin-top: 0.75rem; display: none; background: rgba(255,255,255,0.04); border: 1px solid var(--panel-border); padding: 0.75rem; border-radius: 8px; }
+        .sticky-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            align-items: center;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .loader { display: none; text-align: center; padding: 1rem; color: var(--text-muted); flex-shrink: 0; }
+        .loader.active { display: block; }
+
+        @media (max-width: 768px) {
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .control-group {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            .select-clean {
+                min-width: 150px;
+            }
+            .email-meta {
+                flex-wrap: wrap;
+            }
+            .email-id {
+                margin-left: auto;
+                flex-basis: 100%;
+                text-align: right;
+                margin-top: 0.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page-shell">
+    <div class="hero">
+        <p class="eyebrow">Inbox Fokus</p>
+        <h1>Dein Gmail-Überblick</h1>
+        <p>Scrolle durch deine neuesten Nachrichten und hol dir für jede Mail direkt eine Zusammenfassung.</p>
+    </div>
+
+    <div class="glass-card" th:if="${authorized}">
+        <div class="card-header">
+            <h2 class="card-title">Letzte Nachrichten</h2>
+            <div class="control-group">
+                <select id="label-select" class="select-clean">
+                    <option value="">Posteingang</option>
+                </select>
+                <button class="btn-primary" type="button" onclick="reloadEmails()">
+                    Neu laden
+                </button>
+            </div>
+        </div>
+
+        <div id="recent-emails-status" class="load-status"></div>
+        <div class="email-list" id="recent-emails-list"></div>
+        <div id="scroll-loader" class="loader">Weitere E-Mails werden geladen…</div>
+    </div>
+
+    <div class="glass-card" th:if="${!authorized}">
+        <div class="card-header">
+            <h2 class="card-title">Melde dich an</h2>
+        </div>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Verbinde dein Google-Konto, um deine E-Mails anzuzeigen und zusammenzufassen.</p>
+        <a class="btn-primary" href="/auth/login">Mit Google fortfahren</a>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    function updateTheme() { mediaQuery.matches ? document.body.classList.add('dark-mode') : document.body.classList.remove('dark-mode'); }
+    updateTheme();
+    mediaQuery.addEventListener('change', updateTheme);
+
+    const isAuthorized = /*[[${authorized}]]*/ false;
+    let nextPageToken = null;
+    let isLoading = false;
+    const pageSize = 10;
+    let currentLabelId = '';
+
+    async function loadLabels() {
+        const select = document.getElementById('label-select');
+        if (!select) return;
+        try {
+            const response = await fetch('/api/emails/labels');
+
+            if (response.status === 401) {
+                handleUnauthorized();
+                return;
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                // Check if error message indicates authorization issue
+                if (errorText.includes('Authorization') || errorText.includes('Please sign in')) {
+                    handleUnauthorized();
+                    return;
+                }
+                throw new Error(errorText);
+            }
+            const labels = await response.json();
+            labels.forEach(label => {
+                const option = document.createElement('option');
+                option.value = label.id;
+                option.textContent = label.name;
+                select.appendChild(option);
+            });
+            select.addEventListener('change', () => {
+                currentLabelId = select.value;
+                reloadEmails();
+            });
+        } catch (err) {
+            console.error('Labels laden fehlgeschlagen', err);
+        }
+    }
+
+    async function fetchEmails(pageToken, replace = false) {
+        if (isLoading) return;
+        isLoading = true;
+        toggleLoader(true);
+        const statusEl = document.getElementById('recent-emails-status');
+        const listEl = document.getElementById('recent-emails-list');
+        if (replace) { listEl.innerHTML = ''; statusEl.textContent = ''; }
+        try {
+            const params = new URLSearchParams();
+            params.append('limit', pageSize);
+            if (pageToken) params.append('pageToken', pageToken);
+            if (currentLabelId) params.append('labelId', currentLabelId);
+            const response = await fetch('/api/emails/recent?' + params.toString());
+
+            if (response.status === 401) {
+                handleUnauthorized();
+                return;
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                // Check if error message indicates authorization issue
+                if (errorText.includes('Authorization') || errorText.includes('Please sign in')) {
+                    handleUnauthorized();
+                    return;
+                }
+                throw new Error(errorText);
+            }
+            const payload = await response.json();
+            const emails = payload.messages || [];
+            nextPageToken = payload.nextPageToken || null;
+
+            if (emails.length === 0 && listEl.children.length === 0) {
+                statusEl.textContent = 'Keine E-Mails gefunden.';
+                return;
+            }
+
+            statusEl.textContent = `Geladene E-Mails: ${listEl.children.length + emails.length}`;
+            emails.forEach(email => renderEmail(listEl, email));
+        } catch (err) {
+            statusEl.textContent = 'Fehler: ' + err.message;
+        } finally {
+            toggleLoader(false);
+            isLoading = false;
+        }
+    }
+
+    function renderEmail(container, email) {
+        const card = document.createElement('div');
+        card.className = 'email-item';
+        card.innerHTML = `
+            <div class="email-meta">
+                <div class="from-pill" title="${email.from || ''}">${email.from || 'Unbekannt'}</div>
+                <span class="email-id">${email.id}</span>
+            </div>
+            <div class="subject-line">${email.subject || '(Kein Betreff)'}</div>
+            <div class="snippet">${(email.body || '').substring(0, 220)}</div>
+            <div class="sticky-actions">
+                <button class="btn-primary" type="button" onclick="summarizeEmail('${email.id}', this)">
+                    Zusammenfassung anzeigen
+                </button>
+                <span class="summary-status" style="color: var(--text-muted);"></span>
+            </div>
+            <div class="summary-content"></div>
+        `;
+        container.appendChild(card);
+    }
+
+    function toggleLoader(active) {
+        const loader = document.getElementById('scroll-loader');
+        if (!loader) return;
+        loader.classList.toggle('active', active);
+    }
+
+    function reloadEmails() {
+        nextPageToken = null;
+        fetchEmails(null, true);
+    }
+
+    async function summarizeEmail(id, buttonEl) {
+        if (!id || !buttonEl) return;
+        const statusEl = buttonEl.parentElement.querySelector('.summary-status');
+        const contentEl = buttonEl.parentElement.parentElement.querySelector('.summary-content');
+        statusEl.textContent = 'Analysiere...';
+        contentEl.style.display = 'none';
+        try {
+            buttonEl.disabled = true;
+            const response = await fetch(`/api/emails/${id}/summary`, { method: 'POST' });
+
+            if (response.status === 401) {
+                handleUnauthorized();
+                return;
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                // Check if error message indicates authorization issue
+                if (errorText.includes('Authorization') || errorText.includes('Please sign in')) {
+                    handleUnauthorized();
+                    return;
+                }
+                throw new Error(errorText);
+            }
+            const summary = await response.json();
+            statusEl.textContent = 'Fertig';
+            contentEl.style.display = 'block';
+            const actions = summary.actionItems && summary.actionItems.length
+                    ? '<ul style="margin: 0.5rem 0 0 1.1rem;">' + summary.actionItems.map(item => `<li>${item}</li>`).join('') + '</ul>'
+                    : '<div style="color: var(--text-muted);">Keine Action Items.</div>';
+            contentEl.innerHTML = `
+                <div style="color: var(--accent); font-weight: 600;">Zusammenfassung</div>
+                <div style="margin: 0.35rem 0 0.75rem 0;">${summary.summary || 'Keine Zusammenfassung.'}</div>
+                <div style="color: var(--text-muted); font-size: 0.9rem;">Action Items</div>
+                ${actions}
+            `;
+        } catch (err) {
+            statusEl.textContent = err.message;
+        } finally {
+            buttonEl.disabled = false;
+        }
+    }
+
+    function handleUnauthorized() {
+        // Show alert and redirect to login
+        alert('Autorisierung abgelaufen. Bitte melden Sie sich erneut an.');
+        window.location.href = '/auth/login';
+    }
+
+    function setupInfiniteScroll() {
+        window.addEventListener('scroll', () => {
+            if (isLoading || !nextPageToken) return;
+            const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
+            if (nearBottom) {
+                fetchEmails(nextPageToken, false);
+            }
+        });
+    }
+
+    if (isAuthorized) {
+        loadLabels();
+        fetchEmails(null, true);
+        setupInfiniteScroll();
+    }
+</script>
+</body>
+</html>
