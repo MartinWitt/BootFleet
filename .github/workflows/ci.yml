@@ -50,5 +50,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: downcase REPO and MODULE
+        run: |
+          echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+          echo "MODULE=${{ matrix.module }}" >>${GITHUB_ENV}
+
+
       - name: Build and Push Native Image
-        run: mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image
+        run: mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest -Dspring-boot.build-image.publish=true
