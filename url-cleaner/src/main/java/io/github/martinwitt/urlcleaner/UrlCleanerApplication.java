@@ -6,7 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class UrlCleanerApplication {
 
-    static void main() {
+    // fix this in spring 4.1
+    static void main(String[] args) {
         SpringApplication.run(UrlCleanerApplication.class);
     }
 }
