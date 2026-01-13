@@ -17,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
-import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +27,7 @@ public class OAuthTokenService {
 
     private static final Logger logger = LoggerFactory.getLogger(OAuthTokenService.class);
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-    private static final List<String> SCOPES =
-            List.of(GmailScopes.GMAIL_READONLY);
+    private static final List<String> SCOPES = List.of(GmailScopes.GMAIL_READONLY);
 
     private final GmailConfig gmailConfig;
 
