@@ -33,7 +33,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        module: [url-cleaner, meta-mcp-server, mail-summary]
+        module: [url-cleaner]
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 25
