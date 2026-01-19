@@ -100,8 +100,7 @@ class ResourceManagerTest {
     }
 
     @Test
-    void testUpdateDeploymentPreventsD
-uplicates() {
+    void testUpdateDeploymentPreventsDuplicates() {
         // Given
         Deployment deployment = createDeployment("default", "test-deployment");
         when(finder.findReferencedSecrets(deployment)).thenReturn(Set.of("my-secret"));

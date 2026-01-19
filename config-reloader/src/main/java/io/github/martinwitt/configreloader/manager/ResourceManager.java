@@ -165,7 +165,7 @@ public class ResourceManager {
     }
 
     private void watchResource(WatchedResource resource, KubernetesClient client, String key) {
-        io.fabric8.kubernetes.client.Watch watch;
+        io.fabric8.kubernetes.client.Watch watch = null;
         if (resource.type() == ResourceType.SECRET) {
             logger.info(
                     "Starting to watch secret: {}/{} for deployments: {}",
@@ -176,7 +176,7 @@ public class ResourceManager {
                     .inNamespace(resource.namespace())
                     .withName(resource.name())
                     .watch(new SecretWatcher(resource, client, this));
-        } else {
+        } else if (resource.type() == ResourceType.CONFIGMAP) {
             logger.info(
                     "Starting to watch configmap: {}/{} for deployments: {}",
                     resource.namespace(),
@@ -187,7 +187,9 @@ public class ResourceManager {
                     .withName(resource.name())
                     .watch(new ConfigMapWatcher(resource, client, this));
         }
-        activeWatches.put(key, watch);
+        if (watch != null) {
+            activeWatches.put(key, watch);
+        }
     }
 
     public WatchedResource getWatchedResource(String namespace, String name, ResourceType type) {
