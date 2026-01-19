@@ -9,11 +9,10 @@ import io.github.martinwitt.configreloader.util.PodRestarter;
 import io.github.martinwitt.configreloader.util.ResourceReferenceFinder;
 import io.github.martinwitt.configreloader.watcher.ConfigMapWatcher;
 import io.github.martinwitt.configreloader.watcher.SecretWatcher;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +22,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ResourceManager {
 
-    private final Map<String, Set<String>> deploymentToResourceKeys = new HashMap<>();
-    private final Map<String, WatchedResource> resources = new HashMap<>();
-    private final Set<String> watchingKeys = new HashSet<>();
+    private final Map<String, Set<String>> deploymentToResourceKeys = new ConcurrentHashMap<>();
+    private final Map<String, WatchedResource> resources = new ConcurrentHashMap<>();
+    private final Map<String, io.fabric8.kubernetes.client.Watch> activeWatches = new ConcurrentHashMap<>();
+    private final Set<String> watchingKeys = ConcurrentHashMap.newKeySet();
     private final ResourceReferenceFinder finder;
     private final PodRestarter restarter;
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -72,8 +72,13 @@ public class ResourceManager {
 
         removeOldKeys(deploymentId);
 
-        addResources(ns, secrets, ResourceType.SECRET, deploymentId, client);
-        addResources(ns, configMaps, ResourceType.CONFIGMAP, deploymentId, client);
+        // Collect all resource keys for this deployment
+        Set<String> allKeys = ConcurrentHashMap.newKeySet();
+        addResources(ns, secrets, ResourceType.SECRET, deploymentId, client, allKeys);
+        addResources(ns, configMaps, ResourceType.CONFIGMAP, deploymentId, client, allKeys);
+        
+        // Store the complete set of keys for this deployment
+        deploymentToResourceKeys.put(deploymentId, allKeys);
     }
 
     public void removeDeployment(String deploymentId) {
@@ -93,6 +98,11 @@ public class ResourceManager {
                     if (newDeps.isEmpty()) {
                         resources.remove(key);
                         watchingKeys.remove(key);
+                        // Close the watch when no longer needed
+                        io.fabric8.kubernetes.client.Watch watch = activeWatches.remove(key);
+                        if (watch != null) {
+                            watch.close();
+                        }
                         logger.info(
                                 "Removed {} {}/{} as no deployments are watching it",
                                 wr.type().name().toLowerCase(),
@@ -120,9 +130,11 @@ public class ResourceManager {
             Set<String> resourceNames,
             ResourceType type,
             String deploymentId,
-            KubernetesClient client) {
+            KubernetesClient client,
+            Set<String> allKeys) {
         for (String name : resourceNames) {
             String key = ns + "/" + name + "/" + type;
+            allKeys.add(key);
             WatchedResource existing = resources.get(key);
             if (existing == null) {
                 WatchedResource wr = new WatchedResource(ns, name, type, List.of(deploymentId));
@@ -135,33 +147,32 @@ public class ResourceManager {
                         deploymentId);
                 if (!watchingKeys.contains(key)) {
                     watchingKeys.add(key);
-                    watchResource(wr, client);
+                    watchResource(wr, client, key);
                 }
             } else {
-                resources.put(key, existing.addDeployment(deploymentId));
-                logger.info(
-                        "Added deployment {} to existing {} {}/{}",
-                        deploymentId,
-                        type.name().toLowerCase(),
-                        ns,
-                        name);
+                // Only add deployment if it's not already in the list
+                if (!existing.deploymentNames().contains(deploymentId)) {
+                    resources.put(key, existing.addDeployment(deploymentId));
+                    logger.info(
+                            "Added deployment {} to existing {} {}/{}",
+                            deploymentId,
+                            type.name().toLowerCase(),
+                            ns,
+                            name);
+                }
             }
         }
-        deploymentToResourceKeys.put(
-                deploymentId,
-                resourceNames.stream()
-                        .map(name -> ns + "/" + name + "/" + type)
-                        .collect(java.util.stream.Collectors.toSet()));
     }
 
-    private void watchResource(WatchedResource resource, KubernetesClient client) {
+    private void watchResource(WatchedResource resource, KubernetesClient client, String key) {
+        io.fabric8.kubernetes.client.Watch watch;
         if (resource.type() == ResourceType.SECRET) {
             logger.info(
                     "Starting to watch secret: {}/{} for deployments: {}",
                     resource.namespace(),
                     resource.name(),
                     resource.deploymentNames());
-            client.secrets()
+            watch = client.secrets()
                     .inNamespace(resource.namespace())
                     .withName(resource.name())
                     .watch(new SecretWatcher(resource, client, this));
@@ -171,11 +182,17 @@ public class ResourceManager {
                     resource.namespace(),
                     resource.name(),
                     resource.deploymentNames());
-            client.configMaps()
+            watch = client.configMaps()
                     .inNamespace(resource.namespace())
                     .withName(resource.name())
                     .watch(new ConfigMapWatcher(resource, client, this));
         }
+        activeWatches.put(key, watch);
+    }
+
+    public WatchedResource getWatchedResource(String namespace, String name, ResourceType type) {
+        String key = namespace + "/" + name + "/" + type;
+        return resources.get(key);
     }
 
     public void restartPodsForResource(WatchedResource resource, KubernetesClient client) {
