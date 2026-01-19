@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+spring:
+  main:
+    web-application-type: servlet
+
+configreloader:
+  enabled: true
+  enabled-annotation: config-reloader.io/enabled
+  dry-run: true
+  watch-mode: annotation  # Use annotation-based watching by default

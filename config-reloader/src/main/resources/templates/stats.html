@@ -1,0 +1,37 @@
+<div th:fragment="stats">
+    <!-- Stats grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number" th:text="${totalSecrets}">0</div>
+            <div class="stat-label">Secrets Watched</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-number" th:text="${totalConfigMaps}">0</div>
+            <div class="stat-label">ConfigMaps Watched</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-number" th:text="${totalResources}">0</div>
+            <div class="stat-label">Total Resources</div>
+        </div>
+    </div>
+
+    <!-- Resources section -->
+    <div class="resources-section">
+        <h2>Watched Resources</h2>
+
+        <div th:if="${#lists.isEmpty(watchedResources)}">
+            <p>No resources are currently being watched.</p>
+        </div>
+
+        <div th:each="resource : ${watchedResources}" class="resource-card">
+            <div class="resource-header">
+                <span th:text="${resource.type}">type</span>: <span th:text="${resource.namespace}">ns</span>/<span th:text="${resource.name}">name</span>
+            </div>
+            <div class="deployments">
+                Deployments: <span th:text="${resource.joinedDeployments}">deployments</span>
+            </div>
+        </div>
+    </div>
+</div>
