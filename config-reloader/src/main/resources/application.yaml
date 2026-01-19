@@ -9,4 +9,4 @@ configreloader:
   enabled: true
   enabled-annotation: config-reloader.io/enabled
   dry-run: true
-  watch-mode: all  # Changed to "all" for testing - watches all deployments
+  watch-mode: annotation  # Use annotation-based watching by default

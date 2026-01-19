@@ -17,7 +17,7 @@ public class StatsController {
         this.resourceManager = resourceManager;
     }
 
-    @GetMapping("/api/stats")
+    @GetMapping("/stats")
     public String getStats(Model model) {
         int totalSecrets = resourceManager.getTotalSecrets();
         int totalConfigMaps = resourceManager.getTotalConfigMaps();
@@ -39,7 +39,7 @@ public class StatsController {
                                                         String.join(", ", r.deploymentNames())))
                         .collect(Collectors.toList()));
 
-        return "stats";
+        return "stats :: stats";
     }
 
     @GetMapping("/")
