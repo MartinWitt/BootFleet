@@ -34,7 +34,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        module: [url-cleaner]
+        module: [url-cleaner, config-reloader]
         arch: [amd64, arm64]
     steps:
       - uses: actions/checkout@v4
@@ -72,7 +72,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        module: [url-cleaner]
+        module: [url-cleaner, config-reloader]
     steps:
       - name: Log in to the Container registry
         uses: docker/login-action@v3

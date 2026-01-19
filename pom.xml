@@ -12,6 +12,7 @@
   <modules>
     <!-- Add your module names here -->
     <module>url-cleaner</module>
+    <module>config-reloader</module>
   </modules>
 
   <properties>
