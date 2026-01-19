@@ -66,7 +66,10 @@ class ResourceReferenceFinderTest {
         Volume volume =
                 new VolumeBuilder()
                         .withName("secret-volume")
-                        .withSecret(new SecretVolumeSourceBuilder().withSecretName("volume-secret").build())
+                        .withSecret(
+                                new SecretVolumeSourceBuilder()
+                                        .withSecretName("volume-secret")
+                                        .build())
                         .build();
 
         Deployment deployment = createDeployment(List.of(envVar), List.of(volume));
@@ -186,7 +189,8 @@ class ResourceReferenceFinderTest {
         Volume volume =
                 new VolumeBuilder()
                         .withName("secret-volume")
-                        .withSecret(new SecretVolumeSourceBuilder().withSecretName(secretName).build())
+                        .withSecret(
+                                new SecretVolumeSourceBuilder().withSecretName(secretName).build())
                         .build();
         return createDeployment(List.of(), List.of(volume));
     }
@@ -211,7 +215,8 @@ class ResourceReferenceFinderTest {
         Volume volume =
                 new VolumeBuilder()
                         .withName("configmap-volume")
-                        .withConfigMap(new ConfigMapVolumeSourceBuilder().withName(configMapName).build())
+                        .withConfigMap(
+                                new ConfigMapVolumeSourceBuilder().withName(configMapName).build())
                         .build();
         return createDeployment(List.of(), List.of(volume));
     }
@@ -223,8 +228,7 @@ class ResourceReferenceFinderTest {
         PodSpec podSpec =
                 new PodSpecBuilder().withContainers(container).withVolumes(volumes).build();
 
-        PodTemplateSpec template =
-                new PodTemplateSpecBuilder().withSpec(podSpec).build();
+        PodTemplateSpec template = new PodTemplateSpecBuilder().withSpec(podSpec).build();
 
         DeploymentSpec spec = new DeploymentSpecBuilder().withTemplate(template).build();
 

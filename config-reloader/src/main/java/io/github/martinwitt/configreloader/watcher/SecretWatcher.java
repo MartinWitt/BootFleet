@@ -27,8 +27,9 @@ public class SecretWatcher implements Watcher<Secret> {
         if (action == Action.MODIFIED) {
             // Re-resolve the current WatchedResource from the ResourceManager to avoid
             // using a potentially stale snapshot captured when this watcher was created.
-            WatchedResource currentResource = resourceManager.getWatchedResource(
-                    resource.namespace(), resource.name(), resource.type());
+            WatchedResource currentResource =
+                    resourceManager.getWatchedResource(
+                            resource.namespace(), resource.name(), resource.type());
             if (currentResource == null) {
                 currentResource = resource;
             }

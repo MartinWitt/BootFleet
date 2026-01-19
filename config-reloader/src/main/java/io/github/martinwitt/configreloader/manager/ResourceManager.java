@@ -24,7 +24,8 @@ public class ResourceManager {
 
     private final Map<String, Set<String>> deploymentToResourceKeys = new ConcurrentHashMap<>();
     private final Map<String, WatchedResource> resources = new ConcurrentHashMap<>();
-    private final Map<String, io.fabric8.kubernetes.client.Watch> activeWatches = new ConcurrentHashMap<>();
+    private final Map<String, io.fabric8.kubernetes.client.Watch> activeWatches =
+            new ConcurrentHashMap<>();
     private final Set<String> watchingKeys = ConcurrentHashMap.newKeySet();
     private final ResourceReferenceFinder finder;
     private final PodRestarter restarter;
@@ -76,7 +77,7 @@ public class ResourceManager {
         Set<String> allKeys = ConcurrentHashMap.newKeySet();
         addResources(ns, secrets, ResourceType.SECRET, deploymentId, client, allKeys);
         addResources(ns, configMaps, ResourceType.CONFIGMAP, deploymentId, client, allKeys);
-        
+
         // Store the complete set of keys for this deployment
         deploymentToResourceKeys.put(deploymentId, allKeys);
     }
@@ -172,20 +173,22 @@ public class ResourceManager {
                     resource.namespace(),
                     resource.name(),
                     resource.deploymentNames());
-            watch = client.secrets()
-                    .inNamespace(resource.namespace())
-                    .withName(resource.name())
-                    .watch(new SecretWatcher(resource, client, this));
+            watch =
+                    client.secrets()
+                            .inNamespace(resource.namespace())
+                            .withName(resource.name())
+                            .watch(new SecretWatcher(resource, client, this));
         } else if (resource.type() == ResourceType.CONFIGMAP) {
             logger.info(
                     "Starting to watch configmap: {}/{} for deployments: {}",
                     resource.namespace(),
                     resource.name(),
                     resource.deploymentNames());
-            watch = client.configMaps()
-                    .inNamespace(resource.namespace())
-                    .withName(resource.name())
-                    .watch(new ConfigMapWatcher(resource, client, this));
+            watch =
+                    client.configMaps()
+                            .inNamespace(resource.namespace())
+                            .withName(resource.name())
+                            .watch(new ConfigMapWatcher(resource, client, this));
         }
         if (watch != null) {
             activeWatches.put(key, watch);
