@@ -1,0 +1,6 @@
+[
+  {
+    "name": "io.fabric8.kubernetes.client.impl.KubernetesClientImpl",
+    "allDeclaredConstructors": true
+  }
+]
