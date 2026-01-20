@@ -1,0 +1,56 @@
+[
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.Deployment"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.DeploymentList"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.StatefulSet"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.StatefulSetList"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.Secret"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.SecretList"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.ConfigMap"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.ConfigMapList"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.ObjectMeta"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.DeploymentSpec"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.StatefulSetSpec"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.PodTemplateSpec"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.PodSpec"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.Container"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.EnvFromSource"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.EnvVarSource"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.SecretKeySelector"
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.ConfigMapKeySelector"
+  }
+]

@@ -1,0 +1,134 @@
+[
+  {
+    "name": "io.fabric8.kubernetes.client.impl.KubernetesClientImpl",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.client.KubernetesClientBuilder",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.client.dsl.internal.BaseOperationContext",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.client.dsl.internal.WatchConnectionManager",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.client.informers.cache.DefaultSharedIndexInformer",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.client.impl.KubernetesClientImpl$APIGroupsOperationsImpl",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.Deployment",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.StatefulSet",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.Secret",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.ConfigMap",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.ObjectMeta",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.DeploymentSpec",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.StatefulSetSpec",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.PodTemplateSpec",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.PodSpec",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.Container",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.EnvFromSource",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.EnvVarSource",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.SecretKeySelector",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.ConfigMapKeySelector",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.client.Config",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.client.ConfigBuilder",
+    "queryAllPublicConstructors": true,
+    "queryAllPublicMethods": true,
+    "allPublicFields": true
+  }
+]
