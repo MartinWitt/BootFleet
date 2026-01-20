@@ -2,5 +2,15 @@
   {
     "name": "io.fabric8.kubernetes.client.impl.KubernetesClientImpl",
     "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.vertx.ext.web.client.WebClientOptions",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "io.vertx.core.impl.launcher.commands.VersionCommand",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true
   }
 ]
