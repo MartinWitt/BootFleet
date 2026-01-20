@@ -21,7 +21,7 @@
     <div class="resources-section">
         <h2>Watched Resources</h2>
 
-        <div th:if="${#lists.isEmpty(watchedResources)}">
+        <div th:if="${watchedResources.isEmpty()}">
             <p>No resources are currently being watched.</p>
         </div>
 
