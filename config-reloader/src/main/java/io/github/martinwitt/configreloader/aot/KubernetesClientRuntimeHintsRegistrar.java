@@ -25,9 +25,13 @@ public class KubernetesClientRuntimeHintsRegistrar implements RuntimeHintsRegist
                     "io.fabric8.kubernetes.client.informers.cache.DefaultSharedIndexInformer",
                     "io.fabric8.kubernetes.client.impl.KubernetesClientImpl$APIGroupsOperationsImpl",
                     "io.fabric8.kubernetes.api.model.apps.Deployment",
+                    "io.fabric8.kubernetes.api.model.apps.DeploymentList",
                     "io.fabric8.kubernetes.api.model.apps.StatefulSet",
+                    "io.fabric8.kubernetes.api.model.apps.StatefulSetList",
                     "io.fabric8.kubernetes.api.model.Secret",
+                    "io.fabric8.kubernetes.api.model.SecretList",
                     "io.fabric8.kubernetes.api.model.ConfigMap",
+                    "io.fabric8.kubernetes.api.model.ConfigMapList",
                     "io.fabric8.kubernetes.api.model.ObjectMeta",
                     "io.fabric8.kubernetes.api.model.apps.DeploymentSpec",
                     "io.fabric8.kubernetes.api.model.apps.StatefulSetSpec",
@@ -50,6 +54,7 @@ public class KubernetesClientRuntimeHintsRegistrar implements RuntimeHintsRegist
                                 c,
                                 MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS,
                                 MemberCategory.INVOKE_PUBLIC_METHODS,
+                                MemberCategory.INVOKE_DECLARED_METHODS,
                                 MemberCategory.ACCESS_DECLARED_FIELDS);
             } catch (Throwable ex) {
                 // ignore if class not present
@@ -69,6 +74,7 @@ public class KubernetesClientRuntimeHintsRegistrar implements RuntimeHintsRegist
                             clientImpl,
                             MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
                             MemberCategory.INVOKE_PUBLIC_METHODS,
+                            MemberCategory.INVOKE_DECLARED_METHODS,
                             MemberCategory.ACCESS_DECLARED_FIELDS);
         } catch (Throwable ex) {
             // ignore
