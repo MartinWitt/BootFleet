@@ -1,166 +1,68 @@
 [
   {
-    "name": "io.fabric8.kubernetes.client.impl.KubernetesClientImpl",
+    "name": "io.fabric8.kubernetes.api.model.ListMeta",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.Quantity",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.Quantity$Deserializer",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.Quantity$Serializer",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.apps.Deployment",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.apps.DeploymentList",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.apps.StatefulSet",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.apps.StatefulSetList",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.Secret",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.SecretList",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.ConfigMap",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.ConfigMapList",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
     "name": "io.fabric8.kubernetes.api.model.ObjectMeta",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.DeploymentList",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "io.fabric8.kubernetes.api.model.apps.Deployment",
+    "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
     "name": "io.fabric8.kubernetes.api.model.apps.DeploymentSpec",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "io.fabric8.kubernetes.api.model.apps.StatefulSetSpec",
+    "name": "io.fabric8.kubernetes.api.model.apps.DeploymentStatus",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
     "name": "io.fabric8.kubernetes.api.model.PodTemplateSpec",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
     "name": "io.fabric8.kubernetes.api.model.PodSpec",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "io.fabric8.kubernetes.api.model.Container",
+    "name": "io.fabric8.kubernetes.model.jackson.SettableBeanPropertyDelegating",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "io.fabric8.kubernetes.api.model.EnvFromSource",
+    "name": "com.fasterxml.jackson.databind.introspect.AnnotatedConstructor",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "io.fabric8.kubernetes.api.model.EnvVarSource",
+    "name": "com.fasterxml.jackson.databind.deser.std.StdValueInstantiator",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.SecretKeySelector",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.fabric8.kubernetes.api.model.ConfigMapKeySelector",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "io.vertx.ext.web.client.WebClientOptions",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "io.vertx.core.impl.launcher.commands.VersionCommand",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
   }
 ]
