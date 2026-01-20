@@ -24,6 +24,9 @@ public class KubernetesClientRuntimeHintsRegistrar implements RuntimeHintsRegist
                     "io.fabric8.kubernetes.client.dsl.internal.WatchConnectionManager",
                     "io.fabric8.kubernetes.client.informers.cache.DefaultSharedIndexInformer",
                     "io.fabric8.kubernetes.client.impl.KubernetesClientImpl$APIGroupsOperationsImpl",
+                    "io.fabric8.kubernetes.api.model.Quantity",
+                    "io.fabric8.kubernetes.api.model.Quantity$Deserializer",
+                    "io.fabric8.kubernetes.api.model.Quantity$Serializer",
                     "io.fabric8.kubernetes.api.model.apps.Deployment",
                     "io.fabric8.kubernetes.api.model.apps.DeploymentList",
                     "io.fabric8.kubernetes.api.model.apps.StatefulSet",
@@ -61,24 +64,7 @@ public class KubernetesClientRuntimeHintsRegistrar implements RuntimeHintsRegist
             }
         }
 
-        // reachability-metadata.json: register specific constructor for KubernetesClientImpl
-        try {
-            Class<?> clientImpl =
-                    Class.forName(
-                            "io.fabric8.kubernetes.client.impl.KubernetesClientImpl", false, cl);
-            // Register declared constructors (covers public and non-public constructors) so Graal
-            // native image
-            // allows reflective construction of this implementation during runtime.
-            hints.reflection()
-                    .registerType(
-                            clientImpl,
-                            MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
-                            MemberCategory.INVOKE_PUBLIC_METHODS,
-                            MemberCategory.INVOKE_DECLARED_METHODS,
-                            MemberCategory.ACCESS_DECLARED_FIELDS);
-        } catch (Throwable ex) {
-            // ignore
-        }
+        // ...existing code...
     }
 
     private void registerResourceHints(RuntimeHints hints) {
@@ -91,6 +77,9 @@ public class KubernetesClientRuntimeHintsRegistrar implements RuntimeHintsRegist
     private void registerSerializationHints(RuntimeHints hints, ClassLoader cl) {
         String[] classes =
                 new String[] {
+                    "io.fabric8.kubernetes.api.model.Quantity",
+                    "io.fabric8.kubernetes.api.model.Quantity$Deserializer",
+                    "io.fabric8.kubernetes.api.model.Quantity$Serializer",
                     "io.fabric8.kubernetes.api.model.apps.Deployment",
                     "io.fabric8.kubernetes.api.model.apps.DeploymentList",
                     "io.fabric8.kubernetes.api.model.apps.StatefulSet",
