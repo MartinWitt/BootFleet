@@ -1,0 +1,7 @@
+{
+  "resources": [
+    {
+      "pattern": "vertx-version.txt"
+    }
+  ]
+}
