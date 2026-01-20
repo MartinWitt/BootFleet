@@ -1,117 +1,39 @@
 {
-  "types": [
-    {
-      "name": "io.fabric8.kubernetes.api.model.Quantity",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.Quantity$Deserializer",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.Quantity$Serializer",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.apps.Deployment",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.apps.DeploymentList",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.apps.StatefulSet",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.apps.StatefulSetList",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.Secret",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.SecretList",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.ConfigMap",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.ConfigMapList",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.ObjectMeta",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.apps.DeploymentSpec",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.apps.StatefulSetSpec",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.PodTemplateSpec",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.PodSpec",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.Container",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.EnvFromSource",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.EnvVarSource",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.SecretKeySelector",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    },
-    {
-      "name": "io.fabric8.kubernetes.api.model.ConfigMapKeySelector",
-      "allDeclaredConstructors": true,
-      "allPublicMethods": true
-    }
-  ],
   "lambdaCapturingTypes": [
     {
       "name": "com.fasterxml.jackson.databind.ser.BeanSerializerFactory"
     },
     {
       "name": "com.fasterxml.jackson.databind.deser.BeanDeserializerFactory"
+    },
+    {
+      "name": "com.fasterxml.jackson.databind.deser.FieldProperty"
+    },
+    {
+      "name": "com.fasterxml.jackson.databind.deser.SetterlessProperty"
+    }
+  ],
+  "types": [
+    {
+      "name": "io.fabric8.kubernetes.api.model.Quantity"
+    },
+    {
+      "name": "io.fabric8.kubernetes.api.model.Quantity$Deserializer"
+    },
+    {
+      "name": "io.fabric8.kubernetes.api.model.Quantity$Serializer"
+    },
+    {
+      "name": "io.fabric8.kubernetes.api.model.apps.DeploymentList"
+    },
+    {
+      "name": "io.fabric8.kubernetes.api.model.apps.Deployment"
+    },
+    {
+      "name": "io.fabric8.kubernetes.api.model.apps.StatefulSetList"
+    },
+    {
+      "name": "io.fabric8.kubernetes.api.model.apps.StatefulSet"
     }
   ]
 }
