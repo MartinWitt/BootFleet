@@ -1,6 +1,15 @@
 {
   "reflection": [
     {
+      "type": "io.fabric8.kubernetes.api.model.DeleteOptions",
+      "methods": [
+        {
+          "name": "getAdditionalProperties",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "java.util.ArrayList",
       "methods": [
         {
