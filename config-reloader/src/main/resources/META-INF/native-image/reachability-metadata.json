@@ -6,6 +6,10 @@
         {
           "name": "getAdditionalProperties",
           "parameterTypes": []
+        },
+        {
+          "name": "getApiVersion",
+          "parameterTypes": []
         }
       ]
     },
