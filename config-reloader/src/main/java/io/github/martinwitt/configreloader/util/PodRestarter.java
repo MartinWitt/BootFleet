@@ -26,7 +26,7 @@ public class PodRestarter {
         this.properties = properties;
     }
 
-    @Timed(value = "podsrestart.duration", description = "Time taken to restart pods")
+    @Timed(value = "pods.restart.duration", description = "Time taken to restart pods")
     public void restartPodsForWorkload(String deploymentId, KubernetesClient client) {
         String[] parts = deploymentId.split("/");
         String ns = parts[0];
