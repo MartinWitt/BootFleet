@@ -9,6 +9,7 @@ import io.github.martinwitt.configreloader.util.PodRestarter;
 import io.github.martinwitt.configreloader.util.ResourceReferenceFinder;
 import io.github.martinwitt.configreloader.watcher.ConfigMapWatcher;
 import io.github.martinwitt.configreloader.watcher.SecretWatcher;
+import io.micrometer.core.annotation.Timed;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -200,6 +201,9 @@ public class ResourceManager {
         return resources.get(key);
     }
 
+    @Timed(
+            value = "resourcemanager.restart.pods",
+            description = "Time taken to restart pods for a resource")
     public void restartPodsForResource(WatchedResource resource, KubernetesClient client) {
         for (String deploymentId : resource.deploymentNames()) {
             restarter.restartPodsForWorkload(deploymentId, client);

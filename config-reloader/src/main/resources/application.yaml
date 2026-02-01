@@ -4,6 +4,31 @@ server:
 spring:
   main:
     web-application-type: servlet
+  aop:
+    proxy-target-class: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  metrics:
+    enable:
+      jvm: true
+      process: true
+      system: true
+    distribution:
+      percentiles-histogram:
+        resourcewatcher.deployment.update: true
+        resourcewatcher.statefulset.update: true
+        resourcemanager.restart.pods: true
+        podsrestart.duration: true
+  otlp:
+    metrics:
+      export:
+        enabled: ${OTEL_ENABLED:false}
+        step: ${OTEL_METRIC_EXPORT_INTERVAL:60s}
+        url: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/metrics}
 
 configreloader:
   enabled: true

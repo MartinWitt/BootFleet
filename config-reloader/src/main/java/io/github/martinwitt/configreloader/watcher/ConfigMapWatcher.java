@@ -6,6 +6,7 @@ import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.WatcherException;
 import io.github.martinwitt.configreloader.manager.ResourceManager;
 import io.github.martinwitt.configreloader.model.WatchedResource;
+import io.micrometer.core.annotation.Counted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +24,7 @@ public class ConfigMapWatcher implements Watcher<ConfigMap> {
     }
 
     @Override
+    @Counted(value = "watcher.configmap.event", description = "Count of configmap watch events")
     public void eventReceived(Action action, ConfigMap configMapResource) {
         if (action == Action.MODIFIED) {
             // Re-resolve the current WatchedResource from the ResourceManager to avoid
@@ -42,6 +44,7 @@ public class ConfigMapWatcher implements Watcher<ConfigMap> {
     }
 
     @Override
+    @Counted(value = "watcher.configmap.closed", description = "Count of closed configmap watchers")
     public void onClose(WatcherException cause) {
         logger.error("Watcher closed for configmap {}", resource.name(), cause);
     }
