@@ -4,6 +4,10 @@
       "type": "io.fabric8.kubernetes.api.model.DeleteOptions",
       "methods": [
         {
+          "name": "getKind",
+          "parameterTypes": []
+        },
+        {
           "name": "getAdditionalProperties",
           "parameterTypes": []
         },
