@@ -5,6 +5,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.github.martinwitt.configreloader.ConfigReloaderProperties;
+import io.micrometer.core.annotation.Timed;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ public class PodRestarter {
         this.properties = properties;
     }
 
+    @Timed(value = "pods.restart.duration", description = "Time taken to restart pods")
     public void restartPodsForWorkload(String deploymentId, KubernetesClient client) {
         String[] parts = deploymentId.split("/");
         String ns = parts[0];

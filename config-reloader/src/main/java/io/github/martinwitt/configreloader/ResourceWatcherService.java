@@ -6,6 +6,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.github.martinwitt.configreloader.manager.ResourceManager;
 import io.github.martinwitt.configreloader.watcher.DeploymentWatcher;
 import io.github.martinwitt.configreloader.watcher.StatefulSetWatcher;
+import io.micrometer.core.annotation.Timed;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +80,9 @@ public class ResourceWatcherService {
         }
     }
 
+    @Timed(
+            value = "resourcewatcher.deployment.update",
+            description = "Time taken to update a deployment")
     public void updateDeployment(Deployment deployment, KubernetesClient client) {
         if (shouldWatchWorkload(deployment.getMetadata().getAnnotations())) {
             resourceManager.updateDeployment(deployment, client);
@@ -92,6 +96,9 @@ public class ResourceWatcherService {
         }
     }
 
+    @Timed(
+            value = "resourcewatcher.statefulset.update",
+            description = "Time taken to update a statefulset")
     public void updateStatefulSet(StatefulSet statefulSet, KubernetesClient client) {
         if (shouldWatchWorkload(statefulSet.getMetadata().getAnnotations())) {
             resourceManager.updateStatefulSet(statefulSet, client);
