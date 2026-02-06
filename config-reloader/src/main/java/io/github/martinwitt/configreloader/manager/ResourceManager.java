@@ -30,12 +30,17 @@ public class ResourceManager {
     private final Set<String> watchingKeys = ConcurrentHashMap.newKeySet();
     private final ResourceReferenceFinder finder;
     private final PodRestarter restarter;
+    private final WatchRecoveryManager watchRecoveryManager;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    public ResourceManager(ResourceReferenceFinder finder, PodRestarter restarter) {
+    public ResourceManager(
+            ResourceReferenceFinder finder,
+            PodRestarter restarter,
+            WatchRecoveryManager watchRecoveryManager) {
         this.finder = finder;
         this.restarter = restarter;
+        this.watchRecoveryManager = watchRecoveryManager;
     }
 
     public void updateDeployment(Deployment deployment, KubernetesClient client) {
@@ -178,7 +183,9 @@ public class ResourceManager {
                     client.secrets()
                             .inNamespace(resource.namespace())
                             .withName(resource.name())
-                            .watch(new SecretWatcher(resource, client, this));
+                            .watch(
+                                    new SecretWatcher(
+                                            resource, client, this, watchRecoveryManager));
         } else if (resource.type() == ResourceType.CONFIGMAP) {
             logger.info(
                     "Starting to watch configmap: {}/{} for deployments: {}",
@@ -189,11 +196,35 @@ public class ResourceManager {
                     client.configMaps()
                             .inNamespace(resource.namespace())
                             .withName(resource.name())
-                            .watch(new ConfigMapWatcher(resource, client, this));
+                            .watch(
+                                    new ConfigMapWatcher(
+                                            resource, client, this, watchRecoveryManager));
         }
         if (watch != null) {
             activeWatches.put(key, watch);
         }
+    }
+
+    /**
+     * Restarts a watch for a resource. This is called when a watch fails with "too old resource
+     * version" error.
+     */
+    public void restartWatch(WatchedResource resource, KubernetesClient client) {
+        String key = resource.namespace() + "/" + resource.name() + "/" + resource.type();
+        
+        // Close the old watch if it exists
+        io.fabric8.kubernetes.client.Watch oldWatch = activeWatches.remove(key);
+        if (oldWatch != null) {
+            try {
+                oldWatch.close();
+            } catch (Exception e) {
+                logger.warn("Error closing old watch for {}", key, e);
+            }
+        }
+        
+        // Start a new watch
+        watchResource(resource, client, key);
+        watchRecoveryManager.resetRetryState(key);
     }
 
     public WatchedResource getWatchedResource(String namespace, String name, ResourceType type) {

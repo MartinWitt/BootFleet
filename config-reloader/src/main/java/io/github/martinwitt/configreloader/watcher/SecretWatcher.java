@@ -5,6 +5,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.WatcherException;
 import io.github.martinwitt.configreloader.manager.ResourceManager;
+import io.github.martinwitt.configreloader.manager.WatchRecoveryManager;
 import io.github.martinwitt.configreloader.model.WatchedResource;
 import io.micrometer.core.annotation.Counted;
 import org.slf4j.Logger;
@@ -15,12 +16,19 @@ public class SecretWatcher implements Watcher<Secret> {
     private final WatchedResource resource;
     private final KubernetesClient client;
     private final ResourceManager resourceManager;
+    private final WatchRecoveryManager watchRecoveryManager;
+    private final String resourceKey;
 
     public SecretWatcher(
-            WatchedResource resource, KubernetesClient client, ResourceManager resourceManager) {
+            WatchedResource resource,
+            KubernetesClient client,
+            ResourceManager resourceManager,
+            WatchRecoveryManager watchRecoveryManager) {
         this.resource = resource;
         this.client = client;
         this.resourceManager = resourceManager;
+        this.watchRecoveryManager = watchRecoveryManager;
+        this.resourceKey = resource.namespace() + "/" + resource.name() + "/SECRET";
     }
 
     @Override
@@ -47,5 +55,9 @@ public class SecretWatcher implements Watcher<Secret> {
     @Counted(value = "watcher.secret.closed", description = "Count of closed secret watchers")
     public void onClose(WatcherException cause) {
         logger.error("Watcher closed for secret {}", resource.name(), cause);
+        watchRecoveryManager.handleWatcherException(
+                resourceKey,
+                cause,
+                () -> resourceManager.restartWatch(resource, client));
     }
 }

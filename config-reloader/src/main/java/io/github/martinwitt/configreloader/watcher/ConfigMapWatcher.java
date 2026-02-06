@@ -5,6 +5,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.WatcherException;
 import io.github.martinwitt.configreloader.manager.ResourceManager;
+import io.github.martinwitt.configreloader.manager.WatchRecoveryManager;
 import io.github.martinwitt.configreloader.model.WatchedResource;
 import io.micrometer.core.annotation.Counted;
 import org.slf4j.Logger;
@@ -15,12 +16,19 @@ public class ConfigMapWatcher implements Watcher<ConfigMap> {
     private final WatchedResource resource;
     private final KubernetesClient client;
     private final ResourceManager resourceManager;
+    private final WatchRecoveryManager watchRecoveryManager;
+    private final String resourceKey;
 
     public ConfigMapWatcher(
-            WatchedResource resource, KubernetesClient client, ResourceManager resourceManager) {
+            WatchedResource resource,
+            KubernetesClient client,
+            ResourceManager resourceManager,
+            WatchRecoveryManager watchRecoveryManager) {
         this.resource = resource;
         this.client = client;
         this.resourceManager = resourceManager;
+        this.watchRecoveryManager = watchRecoveryManager;
+        this.resourceKey = resource.namespace() + "/" + resource.name() + "/CONFIGMAP";
     }
 
     @Override
@@ -47,5 +55,9 @@ public class ConfigMapWatcher implements Watcher<ConfigMap> {
     @Counted(value = "watcher.configmap.closed", description = "Count of closed configmap watchers")
     public void onClose(WatcherException cause) {
         logger.error("Watcher closed for configmap {}", resource.name(), cause);
+        watchRecoveryManager.handleWatcherException(
+                resourceKey,
+                cause,
+                () -> resourceManager.restartWatch(resource, client));
     }
 }
