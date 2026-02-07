@@ -23,12 +23,6 @@ management:
         resourcewatcher.statefulset.update: true
         resourcemanager.restart.pods: true
         pods.restart.duration: true
-  otlp:
-    metrics:
-      export:
-        enabled: ${OTEL_ENABLED:false}
-        step: ${OTEL_METRIC_EXPORT_INTERVAL:60s}
-        url: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/metrics}
 
 configreloader:
   enabled: true
