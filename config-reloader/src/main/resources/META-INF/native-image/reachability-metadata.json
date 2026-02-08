@@ -326,7 +326,53 @@
       "type": "com.sun.management.HotSpotDiagnosticMXBean"
     },
     {
-      "type": "com.sun.management.OperatingSystemMXBean"
+      "type": "com.sun.management.OperatingSystemMXBean",
+      "methods": [
+        {
+          "name": "getCommittedVirtualMemorySize",
+          "parameterTypes": []
+        },
+        {
+          "name": "getTotalSwapSpaceSize",
+          "parameterTypes": []
+        },
+        {
+          "name": "getFreeSwapSpaceSize",
+          "parameterTypes": []
+        },
+        {
+          "name": "getProcessCpuTime",
+          "parameterTypes": []
+        },
+        {
+          "name": "getFreePhysicalMemorySize",
+          "parameterTypes": []
+        },
+        {
+          "name": "getFreeMemorySize",
+          "parameterTypes": []
+        },
+        {
+          "name": "getTotalPhysicalMemorySize",
+          "parameterTypes": []
+        },
+        {
+          "name": "getTotalMemorySize",
+          "parameterTypes": []
+        },
+        {
+          "name": "getSystemCpuLoad",
+          "parameterTypes": []
+        },
+        {
+          "name": "getCpuLoad",
+          "parameterTypes": []
+        },
+        {
+          "name": "getProcessCpuLoad",
+          "parameterTypes": []
+        }
+      ]
     },
     {
       "type": "com.sun.management.ThreadMXBean"
