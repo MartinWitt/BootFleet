@@ -1,6 +1,17 @@
 {
   "reflection": [
     {
+    "type": "io.fabric8.kubernetes.api.model.apps.DeploymentStatus",
+    "methods": [
+      {
+        "name": "setTerminatingReplicas",
+        "parameterTypes": [
+          "java.lang.Integer"
+        ]
+      }
+      ]
+    },
+    {
       "type": "io.fabric8.kubernetes.api.model.ContainerStateTerminated",
       "methods": [
         {
