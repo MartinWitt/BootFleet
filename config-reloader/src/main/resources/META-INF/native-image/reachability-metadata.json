@@ -1,6 +1,17 @@
 {
   "reflection": [
     {
+      "type": "io.fabric8.kubernetes.api.model.apps.RollingUpdateStatefulSetStrategy",
+      "methods": [
+        {
+          "name": "setMaxUnavailable",
+          "parameterTypes": [
+            "io.fabric8.kubernetes.api.model.IntOrString"
+          ]
+        }
+      ]
+    },
+    {
     "type": "io.fabric8.kubernetes.api.model.apps.DeploymentStatus",
     "methods": [
       {
