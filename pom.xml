@@ -59,7 +59,9 @@
               <formatAnnotations/>
             </java>
             <pom>
-              <sortPom/>
+              <sortPom>
+                <sortDependencies>artifactId,groupid</sortDependencies>
+              </sortPom>
             </pom>
           </configuration>
           <executions>

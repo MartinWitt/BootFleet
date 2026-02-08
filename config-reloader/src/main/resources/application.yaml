@@ -23,7 +23,9 @@ management:
         resourcewatcher.statefulset.update: true
         resourcemanager.restart.pods: true
         pods.restart.duration: true
-
+  endpoint:
+    prometheus:
+      access: unrestricted
 configreloader:
   enabled: true
   enabled-annotation: config-reloader.io/enabled
