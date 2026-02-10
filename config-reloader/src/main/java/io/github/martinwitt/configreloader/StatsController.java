@@ -1,7 +1,6 @@
 package io.github.martinwitt.configreloader;
 
-import io.github.martinwitt.configreloader.manager.ResourceManager;
-import io.github.martinwitt.configreloader.model.WatchedResource;
+import io.github.martinwitt.configreloader.domain.service.ConfigResourceRepository;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Controller;
@@ -11,17 +10,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class StatsController {
 
-    private final ResourceManager resourceManager;
+    private final ConfigResourceRepository repository;
 
-    public StatsController(ResourceManager resourceManager) {
-        this.resourceManager = resourceManager;
+    public StatsController(ConfigResourceRepository repository) {
+        this.repository = repository;
     }
 
     @GetMapping("/stats")
     public String getStats(Model model) {
-        int totalSecrets = resourceManager.getTotalSecrets();
-        int totalConfigMaps = resourceManager.getTotalConfigMaps();
-        Map<String, WatchedResource> resources = resourceManager.getWatchedResources();
+        int totalSecrets = repository.countSecrets();
+        int totalConfigMaps = repository.countConfigMaps();
+        var resources = repository.findAll();
 
         model.addAttribute("totalSecrets", totalSecrets);
         model.addAttribute("totalConfigMaps", totalConfigMaps);
@@ -30,13 +29,21 @@ public class StatsController {
                 "watchedResources",
                 resources.values().stream()
                         .map(
-                                r ->
-                                        Map.of(
-                                                "namespace", r.namespace(),
-                                                "name", r.name(),
-                                                "type", r.type().name(),
-                                                "joinedDeployments",
-                                                        String.join(", ", r.deploymentNames())))
+                                r -> {
+                                    String deploymentNames =
+                                            r.dependentWorkloads().stream()
+                                                    .map(w -> w.toQualifiedName())
+                                                    .collect(Collectors.joining(", "));
+                                    return Map.of(
+                                            "namespace",
+                                            r.resourceId().namespace(),
+                                            "name",
+                                            r.resourceId().name(),
+                                            "type",
+                                            r.resourceId().type().name(),
+                                            "joinedDeployments",
+                                            deploymentNames);
+                                })
                         .collect(Collectors.toList()));
 
         return "stats :: stats";

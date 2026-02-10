@@ -1,4 +1,4 @@
-package io.github.martinwitt.configreloader.util;
+package io.github.martinwitt.configreloader.infrastructure.kubernetes;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -7,48 +7,66 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpec;
 import io.fabric8.kubernetes.api.model.apps.DeploymentSpecBuilder;
+import io.github.martinwitt.configreloader.ConfigReloaderProperties;
+import io.github.martinwitt.configreloader.domain.model.ConfigResourceId;
+import io.github.martinwitt.configreloader.domain.model.ConfigResourceType;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ResourceReferenceFinderTest {
+class KubernetesWorkloadReaderTest {
 
-    private ResourceReferenceFinder finder;
+    private KubernetesWorkloadReader reader;
+    private ConfigReloaderProperties properties;
 
     @BeforeEach
     void setUp() {
-        finder = new ResourceReferenceFinder();
+        properties = new ConfigReloaderProperties();
+        properties.setWatchMode("annotation");
+        properties.setEnabledAnnotation("config-reloader.io/enabled");
+        reader = new KubernetesWorkloadReader(properties);
     }
 
     @Test
-    void testFindReferencedSecretsFromEnvVar() {
+    void testExtractConfigReferencesFromSecretEnvVar() {
         // Given
         Deployment deployment = createDeploymentWithSecretEnvVar("my-secret");
+        String namespace = "default";
 
         // When
-        Set<String> secrets = finder.findReferencedSecrets(deployment);
+        Set<ConfigResourceId> resources =
+                reader.extractConfigReferences(
+                        namespace, deployment.getSpec().getTemplate().getSpec());
 
         // Then
-        assertEquals(1, secrets.size());
-        assertTrue(secrets.contains("my-secret"));
+        assertEquals(1, resources.size());
+        ConfigResourceId secretId =
+                new ConfigResourceId(namespace, "my-secret", ConfigResourceType.SECRET);
+        assertTrue(resources.contains(secretId));
     }
 
     @Test
-    void testFindReferencedSecretsFromVolume() {
+    void testExtractConfigReferencesFromSecretVolume() {
         // Given
         Deployment deployment = createDeploymentWithSecretVolume("volume-secret");
+        String namespace = "default";
 
         // When
-        Set<String> secrets = finder.findReferencedSecrets(deployment);
+        Set<ConfigResourceId> resources =
+                reader.extractConfigReferences(
+                        namespace, deployment.getSpec().getTemplate().getSpec());
 
         // Then
-        assertEquals(1, secrets.size());
-        assertTrue(secrets.contains("volume-secret"));
+        assertEquals(1, resources.size());
+        ConfigResourceId secretId =
+                new ConfigResourceId(namespace, "volume-secret", ConfigResourceType.SECRET);
+        assertTrue(resources.contains(secretId));
     }
 
     @Test
-    void testFindReferencedSecretsMultiple() {
+    void testExtractConfigReferencesMultipleSecrets() {
         // Given
         EnvVar envVar =
                 new EnvVarBuilder()
@@ -73,56 +91,76 @@ class ResourceReferenceFinderTest {
                         .build();
 
         Deployment deployment = createDeployment(List.of(envVar), List.of(volume));
+        String namespace = "default";
 
         // When
-        Set<String> secrets = finder.findReferencedSecrets(deployment);
+        Set<ConfigResourceId> resources =
+                reader.extractConfigReferences(
+                        namespace, deployment.getSpec().getTemplate().getSpec());
 
         // Then
-        assertEquals(2, secrets.size());
-        assertTrue(secrets.contains("env-secret"));
-        assertTrue(secrets.contains("volume-secret"));
+        assertEquals(2, resources.size());
+        ConfigResourceId envSecretId =
+                new ConfigResourceId(namespace, "env-secret", ConfigResourceType.SECRET);
+        ConfigResourceId volSecretId =
+                new ConfigResourceId(namespace, "volume-secret", ConfigResourceType.SECRET);
+        assertTrue(resources.contains(envSecretId));
+        assertTrue(resources.contains(volSecretId));
     }
 
     @Test
-    void testFindReferencedSecretsWithNoSecrets() {
+    void testExtractConfigReferencesWithNoSecrets() {
         // Given
         Deployment deployment = createEmptyDeployment();
+        String namespace = "default";
 
         // When
-        Set<String> secrets = finder.findReferencedSecrets(deployment);
+        Set<ConfigResourceId> resources =
+                reader.extractConfigReferences(
+                        namespace, deployment.getSpec().getTemplate().getSpec());
 
         // Then
-        assertTrue(secrets.isEmpty());
+        assertTrue(resources.isEmpty());
     }
 
     @Test
-    void testFindReferencedConfigMapsFromEnvVar() {
+    void testExtractConfigReferencesFromConfigMapEnvVar() {
         // Given
         Deployment deployment = createDeploymentWithConfigMapEnvVar("my-configmap");
+        String namespace = "default";
 
         // When
-        Set<String> configMaps = finder.findReferencedConfigMaps(deployment);
+        Set<ConfigResourceId> resources =
+                reader.extractConfigReferences(
+                        namespace, deployment.getSpec().getTemplate().getSpec());
 
         // Then
-        assertEquals(1, configMaps.size());
-        assertTrue(configMaps.contains("my-configmap"));
+        assertEquals(1, resources.size());
+        ConfigResourceId configMapId =
+                new ConfigResourceId(namespace, "my-configmap", ConfigResourceType.CONFIGMAP);
+        assertTrue(resources.contains(configMapId));
     }
 
     @Test
-    void testFindReferencedConfigMapsFromVolume() {
+    void testExtractConfigReferencesFromConfigMapVolume() {
         // Given
         Deployment deployment = createDeploymentWithConfigMapVolume("volume-configmap");
+        String namespace = "default";
 
         // When
-        Set<String> configMaps = finder.findReferencedConfigMaps(deployment);
+        Set<ConfigResourceId> resources =
+                reader.extractConfigReferences(
+                        namespace, deployment.getSpec().getTemplate().getSpec());
 
         // Then
-        assertEquals(1, configMaps.size());
-        assertTrue(configMaps.contains("volume-configmap"));
+        assertEquals(1, resources.size());
+        ConfigResourceId configMapId =
+                new ConfigResourceId(namespace, "volume-configmap", ConfigResourceType.CONFIGMAP);
+        assertTrue(resources.contains(configMapId));
     }
 
     @Test
-    void testFindReferencedConfigMapsMultiple() {
+    void testExtractConfigReferencesMultipleConfigMaps() {
         // Given
         EnvVar envVar =
                 new EnvVarBuilder()
@@ -147,26 +185,85 @@ class ResourceReferenceFinderTest {
                         .build();
 
         Deployment deployment = createDeployment(List.of(envVar), List.of(volume));
+        String namespace = "default";
 
         // When
-        Set<String> configMaps = finder.findReferencedConfigMaps(deployment);
+        Set<ConfigResourceId> resources =
+                reader.extractConfigReferences(
+                        namespace, deployment.getSpec().getTemplate().getSpec());
 
         // Then
-        assertEquals(2, configMaps.size());
-        assertTrue(configMaps.contains("env-configmap"));
-        assertTrue(configMaps.contains("volume-configmap"));
+        assertEquals(2, resources.size());
+        ConfigResourceId envConfigMapId =
+                new ConfigResourceId(namespace, "env-configmap", ConfigResourceType.CONFIGMAP);
+        ConfigResourceId volConfigMapId =
+                new ConfigResourceId(namespace, "volume-configmap", ConfigResourceType.CONFIGMAP);
+        assertTrue(resources.contains(envConfigMapId));
+        assertTrue(resources.contains(volConfigMapId));
     }
 
     @Test
-    void testFindReferencedConfigMapsWithNoConfigMaps() {
+    void testExtractConfigReferencesWithNoConfigMaps() {
         // Given
         Deployment deployment = createEmptyDeployment();
+        String namespace = "default";
 
         // When
-        Set<String> configMaps = finder.findReferencedConfigMaps(deployment);
+        Set<ConfigResourceId> resources =
+                reader.extractConfigReferences(
+                        namespace, deployment.getSpec().getTemplate().getSpec());
 
         // Then
-        assertTrue(configMaps.isEmpty());
+        assertTrue(resources.isEmpty());
+    }
+
+    @Test
+    void testShouldWatchWithAnnotationModeAndEnabledAnnotation() {
+        // Given
+        Map<String, String> annotations = Map.of("config-reloader.io/enabled", "true");
+
+        // When
+        boolean shouldWatch = reader.shouldWatch(annotations);
+
+        // Then
+        assertTrue(shouldWatch);
+    }
+
+    @Test
+    void testShouldWatchWithAnnotationModeAndDisabledAnnotation() {
+        // Given
+        Map<String, String> annotations = Map.of("config-reloader.io/enabled", "false");
+
+        // When
+        boolean shouldWatch = reader.shouldWatch(annotations);
+
+        // Then
+        assertFalse(shouldWatch);
+    }
+
+    @Test
+    void testShouldWatchWithAnnotationModeAndNoAnnotation() {
+        // Given
+        Map<String, String> annotations = Map.of();
+
+        // When
+        boolean shouldWatch = reader.shouldWatch(annotations);
+
+        // Then
+        assertFalse(shouldWatch);
+    }
+
+    @Test
+    void testShouldWatchWithAllMode() {
+        // Given
+        properties.setWatchMode("all");
+        Map<String, String> annotations = Map.of();
+
+        // When
+        boolean shouldWatch = reader.shouldWatch(annotations);
+
+        // Then
+        assertTrue(shouldWatch);
     }
 
     private Deployment createDeploymentWithSecretEnvVar(String secretName) {
@@ -232,7 +329,13 @@ class ResourceReferenceFinderTest {
 
         DeploymentSpec spec = new DeploymentSpecBuilder().withTemplate(template).build();
 
-        return new DeploymentBuilder().withSpec(spec).build();
+        return new DeploymentBuilder()
+                .withNewMetadata()
+                .withName("test-deployment")
+                .withNamespace("default")
+                .endMetadata()
+                .withSpec(spec)
+                .build();
     }
 
     private Deployment createEmptyDeployment() {
@@ -240,6 +343,12 @@ class ResourceReferenceFinderTest {
         PodSpec podSpec = new PodSpecBuilder().withContainers(container).build();
         PodTemplateSpec template = new PodTemplateSpecBuilder().withSpec(podSpec).build();
         DeploymentSpec spec = new DeploymentSpecBuilder().withTemplate(template).build();
-        return new DeploymentBuilder().withSpec(spec).build();
+        return new DeploymentBuilder()
+                .withNewMetadata()
+                .withName("test-deployment")
+                .withNamespace("default")
+                .endMetadata()
+                .withSpec(spec)
+                .build();
     }
 }
