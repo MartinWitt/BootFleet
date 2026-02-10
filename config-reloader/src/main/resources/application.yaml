@@ -30,4 +30,4 @@ configreloader:
   enabled: true
   enabled-annotation: config-reloader.io/enabled
   dry-run: true
-  watch-mode: annotation  # Use annotation-based watching by default
+  watch-mode: all  # Use annotation-based watching by default
