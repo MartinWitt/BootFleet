@@ -4,7 +4,6 @@ import io.github.martinwitt.configreloader.domain.model.ConfigResourceId;
 import io.github.martinwitt.configreloader.domain.model.WatchedConfigResource;
 import io.github.martinwitt.configreloader.domain.model.WorkloadConfiguration;
 import io.github.martinwitt.configreloader.domain.model.WorkloadId;
-import io.github.martinwitt.configreloader.domain.port.WorkloadReader;
 import io.github.martinwitt.configreloader.domain.port.WorkloadRestarter;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,15 +19,11 @@ public class WorkloadConfigurationService {
             LoggerFactory.getLogger(WorkloadConfigurationService.class);
 
     private final ConfigResourceRepository repository;
-    private final WorkloadReader workloadReader;
     private final WorkloadRestarter workloadRestarter;
 
     public WorkloadConfigurationService(
-            ConfigResourceRepository repository,
-            WorkloadReader workloadReader,
-            WorkloadRestarter workloadRestarter) {
+            ConfigResourceRepository repository, WorkloadRestarter workloadRestarter) {
         this.repository = repository;
-        this.workloadReader = workloadReader;
         this.workloadRestarter = workloadRestarter;
     }
 

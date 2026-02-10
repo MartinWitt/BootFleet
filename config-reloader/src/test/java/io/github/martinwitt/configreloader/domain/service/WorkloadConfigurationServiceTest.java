@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import io.github.martinwitt.configreloader.domain.model.*;
-import io.github.martinwitt.configreloader.domain.port.WorkloadReader;
 import io.github.martinwitt.configreloader.domain.port.WorkloadRestarter;
 import java.util.HashSet;
 import java.util.Optional;
@@ -20,14 +19,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class WorkloadConfigurationServiceTest {
 
     @Mock private ConfigResourceRepository repository;
-    @Mock private WorkloadReader workloadReader;
     @Mock private WorkloadRestarter workloadRestarter;
 
     private WorkloadConfigurationService service;
 
     @BeforeEach
     void setUp() {
-        service = new WorkloadConfigurationService(repository, workloadReader, workloadRestarter);
+        service = new WorkloadConfigurationService(repository, workloadRestarter);
     }
 
     @Test

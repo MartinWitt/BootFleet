@@ -2,9 +2,6 @@ package io.github.martinwitt.configreloader.application.service;
 
 import io.github.martinwitt.configreloader.domain.model.WorkloadConfiguration;
 import io.github.martinwitt.configreloader.domain.model.WorkloadId;
-import io.github.martinwitt.configreloader.domain.port.WorkloadReader;
-import io.github.martinwitt.configreloader.domain.port.WorkloadRestarter;
-import io.github.martinwitt.configreloader.domain.service.ConfigResourceRepository;
 import io.github.martinwitt.configreloader.domain.service.WorkloadConfigurationService;
 import io.micrometer.core.annotation.Timed;
 import org.slf4j.Logger;
@@ -18,12 +15,8 @@ public class WorkloadManagementService {
 
     private final WorkloadConfigurationService workloadConfigurationService;
 
-    public WorkloadManagementService(
-            ConfigResourceRepository repository,
-            WorkloadReader workloadReader,
-            WorkloadRestarter workloadRestarter) {
-        this.workloadConfigurationService =
-                new WorkloadConfigurationService(repository, workloadReader, workloadRestarter);
+    public WorkloadManagementService(WorkloadConfigurationService workloadConfigurationService) {
+        this.workloadConfigurationService = workloadConfigurationService;
     }
 
     /** Register a workload and track its configuration dependencies. */
