@@ -44,6 +44,10 @@
           "type": "io.fabric8.kubernetes.api.model.DeleteOptions",
           "methods": [
             {
+              "name": "getIgnoreStoreReadErrorWithClusterBreakingPotential",
+              "parameterTypes": []
+            },
+            {
               "name": "setDeletionTimestamp",
               "parameterTypes": [
                 "java.lang.String"
