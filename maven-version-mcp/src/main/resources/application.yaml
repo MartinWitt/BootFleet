@@ -1,0 +1,14 @@
+spring:
+  ai:
+    mcp:
+      server:
+        protocol: stateless
+        path: /mcp
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.springframework.ai.mcp: DEBUG
+    org.springaicommunity.mcp: DEBUG

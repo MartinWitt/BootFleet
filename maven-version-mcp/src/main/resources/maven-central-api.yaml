@@ -1,0 +1,257 @@
+openapi: 3.0.0
+info:
+  title: Maven Central Repository Search API
+  description: |
+    REST API for searching and retrieving artifacts from the Maven Central Repository.
+    These URLs allow you to access the search functionality of the Central Repository from any non-browser user agent.
+    
+    Note: The "wt" parameter in every URL determines the format of the results.
+    - "json" provides a JSON response
+    - "xml" provides an XML formatted response
+    
+    The "rows" parameter limits the number of results returned by the server.
+    
+    Most URLs in the actual API have been URL-decoded for readability. When called programmatically, you may need to URL-encode them.
+  version: 1.0.0
+  contact:
+    name: Maven Central Repository
+    url: https://search.maven.org
+
+servers:
+  - url: https://search.maven.org
+    description: Maven Central Repository Search API
+
+paths:
+  /solrsearch/select:
+    get:
+      summary: Search Maven Central Repository
+      description: |
+        Flexible search endpoint that supports multiple search criteria including:
+        - Basic keyword search
+        - Search by groupId (g:), artifactId (a:), version (v:)
+        - Search by packaging (p:), classifier (l:)
+        - Search by classname (c:), fully-qualified classname (fc:)
+        - Search by SHA-1 checksum (1:)
+        - Search by tags
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: |
+            Search query supporting various formats:
+            - Basic search: "guice"
+            - By coordinates: "g:com.google.inject AND a:guice"
+            - By groupId: "g:com.google.inject"
+            - By artifactId: "a:guice"
+            - By version: "g:com.google.inject AND a:guice AND v:3.0"
+            - By classifier: "l:javadoc"
+            - By packaging: "p:jar"
+            - By classname: "c:junit"
+            - By fully-qualified classname: "fc:org.specs.runner.JUnit"
+            - By SHA-1 checksum: "1:35379fb6526fd0191f331542b4e9ae2e566c57933"
+            - By tags: "tags:sbtplugin"
+          schema:
+            type: string
+          examples:
+            basicSearch:
+              value: "guice"
+            coordinateSearch:
+              value: "g:com.google.inject AND a:guice AND v:3.0 AND l:javadoc AND p:jar"
+            classnameSearch:
+              value: "c:junit"
+            tagsSearch:
+              value: "tags:sbtplugin"
+        - name: rows
+          in: query
+          required: false
+          description: Maximum number of results to return
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 1000
+          example: 20
+        - name: wt
+          in: query
+          required: false
+          description: Response format (json or xml)
+          schema:
+            type: string
+            enum:
+              - json
+              - xml
+            default: json
+          example: json
+        - name: core
+          in: query
+          required: false
+          description: |
+            Search core to use. Use "gav" for groupId+artifactId search to return all versions.
+          schema:
+            type: string
+            enum:
+              - gav
+          example: gav
+        - name: start
+          in: query
+          required: false
+          description: Pagination offset for results
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          example: 0
+      responses:
+        '200':
+          description: Successful search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseHeader:
+                    type: object
+                    properties:
+                      status:
+                        type: integer
+                      QTime:
+                        type: integer
+                      params:
+                        type: object
+                  response:
+                    type: object
+                    properties:
+                      numFound:
+                        type: integer
+                        description: Total number of matching artifacts
+                      start:
+                        type: integer
+                        description: Pagination offset
+                      docs:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: Unique artifact identifier
+                            g:
+                              type: string
+                              description: GroupId
+                            a:
+                              type: string
+                              description: ArtifactId
+                            v:
+                              type: string
+                              description: Version
+                            p:
+                              type: string
+                              description: Packaging type
+                            timestamp:
+                              type: integer
+                              description: Unix timestamp of release
+                            tags:
+                              type: array
+                              items:
+                                type: string
+                              description: Associated tags
+        '400':
+          description: Invalid query parameters
+        '500':
+          description: Server error
+
+  /remotecontent:
+    get:
+      summary: Download artifact from Central Repository
+      description: Downloads a file at the given path from the Central Repository
+      parameters:
+        - name: filepath
+          in: query
+          required: true
+          description: |
+            Path to the artifact file in the repository.
+            Format: groupId/artifactId/version/filename
+            Example: com/jolira/guice/3.0.0/guice-3.0.0.pom
+          schema:
+            type: string
+          example: com/jolira/guice/3.0.0/guice-3.0.0.pom
+      responses:
+        '200':
+          description: File content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+            application/xml:
+              schema:
+                type: string
+                description: POM file content
+            text/plain:
+              schema:
+                type: string
+                description: Text file content
+        '404':
+          description: File not found in repository
+        '400':
+          description: Invalid filepath parameter
+        '500':
+          description: Server error
+
+tags:
+  - name: Search
+    description: Search operations for Maven artifacts
+  - name: Download
+    description: Download artifacts from the repository
+
+components:
+  schemas:
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Artifact identifier (groupId:artifactId)
+        g:
+          type: string
+          description: GroupId
+        a:
+          type: string
+          description: ArtifactId
+        v:
+          type: string
+          description: Version
+        p:
+          type: string
+          description: Packaging (jar, pom, etc.)
+        l:
+          type: string
+          description: Classifier (sources, javadoc, etc.)
+        timestamp:
+          type: integer
+          description: Unix timestamp of release
+        tags:
+          type: array
+          items:
+            type: string
+
+    SearchResponse:
+      type: object
+      properties:
+        responseHeader:
+          type: object
+          properties:
+            status:
+              type: integer
+        response:
+          type: object
+          properties:
+            numFound:
+              type: integer
+            start:
+              type: integer
+            docs:
+              type: array
+              items:
+                $ref: '#/components/schemas/SearchResult'
+
