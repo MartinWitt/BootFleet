@@ -37,4 +37,3 @@ Modules use shared parent POM with Java 25, Spring Boot 4.x, and Spotless format
 - Add new tracking param to remove: Edit `TRACKING_PARAMS` set in `UrlController.java`
 - Query Maven versions: Use MCP tools like `maven-get-latest-version` with groupId/artifactId
 - Watch K8s resource: Implement `ConfigResourceRepository` (in-memory default, extend for persistence)</content>
-<parameter name="filePath">C:\Users\Martin Wittlinger\OneDrive\programmieren\BootFleet\AGENTS.md
