@@ -34,7 +34,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        module: [url-cleaner, config-reloader]
+        module: [url-cleaner, config-reloader, maven-version-mcp]
         arch: [amd64, arm64]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -72,7 +72,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        module: [url-cleaner, config-reloader]
+        module: [url-cleaner, config-reloader, maven-version-mcp]
     steps:
       - name: Log in to the Container registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3

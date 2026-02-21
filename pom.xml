@@ -13,6 +13,7 @@
     <!-- Add your module names here -->
     <module>url-cleaner</module>
     <module>config-reloader</module>
+    <module>maven-version-mcp</module>
   </modules>
 
   <properties>
