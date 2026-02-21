@@ -42,9 +42,7 @@ public class MavenMetadataCachingService {
      * @param artifactId Maven artifactId
      * @return List of version strings, or empty list if metadata cannot be fetched
      */
-    @Cacheable(
-            value = "mavenVersions",
-            key = "#registryUrl + ':' + #groupId + ':' + #artifactId")
+    @Cacheable(value = "mavenVersions", key = "#registryUrl + ':' + #groupId + ':' + #artifactId")
     public List<String> fetchAndCacheVersions(
             String registryUrl, String groupId, String artifactId) {
         try {

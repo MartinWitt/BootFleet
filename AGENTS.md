@@ -6,7 +6,7 @@ NEVER RUN MAVEN CLEAN
 ## Architecture Overview
 BootFleet is a Maven multi-module monorepo containing independent Spring Boot microservices:
 - **config-reloader**: Kubernetes config watcher with web UI for ConfigMap/Secret stats (hexagonal architecture: domain/model/port/service, infrastructure)
-- **maven-version-mcp**: MCP server for Maven artifact version queries using Renovate's datasource
+- **maven-version-mcp**: MCP server for Maven artifact version queries using direct Maven Central API calls
 - **url-cleaner**: Web app to remove tracking parameters (utm_*, fbclid, etc.) from URLs
 - **mail-summary**: AI-powered email summarization service (Spring AI integration)
 
@@ -22,7 +22,7 @@ Modules use shared parent POM with Java 25, Spring Boot 4.x, and Spotless format
 ## Project Conventions
 - **Package structure**: `io.github.martinwitt.{module}` (e.g., `io.github.martinwitt.configreloader`)
 - **Controllers**: Thymeleaf templates in `src/main/resources/templates/` (e.g., config-reloader's `stats.html` fragment)
-- **Configuration**: `application.yaml` in `src/main/resources/` (e.g., maven-version-mcp timeouts)
+- **Configuration**: `application.yaml` in `src/main/resources/` (e.g., module-specific settings)
 - **Dependencies**: Managed in parent POM, use BOMs for Spring Boot/Spring Cloud
 - **Crypto/Security**: BouncyCastle in config-reloader for certificate handling
 - **Kubernetes integration**: Fabric8 client with Spring Cloud Kubernetes (config-reloader)
