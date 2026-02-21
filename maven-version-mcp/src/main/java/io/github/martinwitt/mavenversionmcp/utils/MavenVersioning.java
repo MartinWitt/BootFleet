@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 public class MavenVersioning {
 
     private static final Pattern VERSION_PATTERN =
-            Pattern.compile("^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:-(.*?))?(?:\\.(.*))?$");
+            Pattern.compile("^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:-(.+))?(?:(?:(?!)()))?$");
 
     private static final Pattern QUALIFIER_PATTERN =
             Pattern.compile("^([a-zA-Z]+)?(?:[.\\-]?(\\d+))?.*$");
@@ -156,10 +156,16 @@ public class MavenVersioning {
         if (lowerQualifier.contains("snapshot")) {
             return SNAPSHOT_PRIORITY;
         }
-        if (lowerQualifier.contains("alpha") || lowerQualifier.startsWith("a")) {
+
+        // Treat "alpha" and shorthand forms like "a", "a1", "a01" as alpha.
+        boolean isAlphaShorthand = lowerQualifier.matches("a\\d*");
+        if (lowerQualifier.contains("alpha") || isAlphaShorthand) {
             return ALPHA_PRIORITY;
         }
-        if (lowerQualifier.contains("beta") || lowerQualifier.startsWith("b")) {
+
+        // Treat "beta" and shorthand forms like "b", "b1", "b02" as beta.
+        boolean isBetaShorthand = lowerQualifier.matches("b\\d*");
+        if (lowerQualifier.contains("beta") || isBetaShorthand) {
             return BETA_PRIORITY;
         }
         if (lowerQualifier.contains("rc") || lowerQualifier.contains("cr")) {
@@ -167,7 +173,7 @@ public class MavenVersioning {
         }
 
         // Unknown qualifier - treat as pre-release (less stable than release)
-        if (!Character.isDigit(lowerQualifier.charAt(0))) {
+        if (lowerQualifier.isEmpty() || !Character.isDigit(lowerQualifier.charAt(0))) {
             return BETA_PRIORITY;
         }
 

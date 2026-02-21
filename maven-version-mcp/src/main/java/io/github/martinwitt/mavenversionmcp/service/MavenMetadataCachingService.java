@@ -44,8 +44,7 @@ public class MavenMetadataCachingService {
      */
     @Cacheable(
             value = "mavenVersions",
-            key = "#registryUrl + ':' + #groupId + ':' + #artifactId",
-            unless = "#result == null || #result.isEmpty()")
+            key = "#registryUrl + ':' + #groupId + ':' + #artifactId")
     public List<String> fetchAndCacheVersions(
             String registryUrl, String groupId, String artifactId) {
         try {
