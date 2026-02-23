@@ -1,0 +1,30 @@
+spring:
+  ai:
+    mcp:
+      server:
+        protocol: STREAMABLE
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+
+# Sequential Thinking Configuration
+app:
+  thinking:
+    session:
+      timeout-minutes: 30
+      cleanup-interval-minutes: 5
+    thought:
+      max-per-session: 1000
+    branch:
+      max-per-session: 100
+
