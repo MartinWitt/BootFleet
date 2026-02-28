@@ -40,6 +40,7 @@ public class McpApiKeyAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean(name = "mcpApiKeyFilterRegistration")
     public FilterRegistrationBean<McpApiKeyFilter> mcpApiKeyFilterRegistration(
             McpApiKeyFilter filter) {
         FilterRegistrationBean<McpApiKeyFilter> registration = new FilterRegistrationBean<>(filter);
