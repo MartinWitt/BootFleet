@@ -11,6 +11,7 @@
 
   <modules>
     <!-- Add your module names here -->
+    <module>mcp-utils</module>
     <module>url-cleaner</module>
     <module>config-reloader</module>
     <module>maven-version-mcp</module>
