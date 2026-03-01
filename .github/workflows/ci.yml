@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  HELPER_LIBS: spring-boot-utils,mcp-utils
+
 on:
   push:
     branches: [ master ]
@@ -20,10 +23,10 @@ jobs:
           cache: 'maven'
 
       - name: Spotless Check
-        run: mvn spotless:check
+        run: mvn -B spotless:check
 
       - name: Compile and Test
-        run: mvn verify
+        run: mvn -B verify
 
   build-images:
     needs: [build-and-test]
@@ -60,7 +63,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
+      - name: Pre-install library modules
+        # Install common sibling modules to the runner's local Maven repository so
+        # the later `spring-boot:build-image` run for the selected module can resolve them
+        # without attempting to build them as images. Avoids publishing artifacts.
+        run: mvn -B -DskipTests install -pl ${{ env.HELPER_LIBS }} -am
+
       - name: Build and Push Native Image
+        # Build and push the native image for the selected module. Sibling libs were
+        # pre-installed above so publishing those modules is not necessary.
         run: mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest-${{ matrix.arch }} -Dspring-boot.build-image.publish=true -Dspring-boot.build-image.buildCache=cache
 
   create-manifest:
