@@ -31,15 +31,15 @@ public class McpApiKeyFilter extends OncePerRequestFilter {
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String requestUri = request.getRequestURI();
+        String pathToCheck = request.getServletPath();
 
-        if (isProtectedPath(requestUri)) {
+        if (isProtectedPath(pathToCheck)) {
             String providedKey = request.getHeader(properties.getHeaderName());
 
-            if (!properties.getApiKey().equals(providedKey)) {
+            if (properties.getApiKey() == null || !properties.getApiKey().equals(providedKey)) {
                 logger.warn(
                         "Rejected request to {} – invalid or missing API key in header '{}'",
-                        requestUri,
+                        pathToCheck,
                         properties.getHeaderName());
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
