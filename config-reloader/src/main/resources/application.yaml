@@ -8,24 +8,13 @@ spring:
     proxy-target-class: true
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health,metrics,prometheus
   metrics:
-    enable:
-      jvm: true
-      process: true
-      system: true
     distribution:
       percentiles-histogram:
         resourcewatcher.deployment.update: true
         resourcewatcher.statefulset.update: true
         resourcemanager.restart.pods: true
         pods.restart.duration: true
-  endpoint:
-    prometheus:
-      access: unrestricted
 configreloader:
   enabled: true
   enabled-annotation: config-reloader.io/enabled
