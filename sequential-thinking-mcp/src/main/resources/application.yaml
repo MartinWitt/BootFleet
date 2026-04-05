@@ -2,9 +2,17 @@ spring:
   ai:
     mcp:
       server:
-        protocol: STREAMABLE
+        protocol: stateless
+        path: /mcp
 server:
   port: 8080
+  forward-headers-strategy: framework
+
+logging:
+  level:
+    org.springframework.ai.mcp: DEBUG
+    org.springaicommunity.mcp: DEBUG
+    io.github.martinwitt: DEBUG
 
 
 # Sequential Thinking Configuration
