@@ -187,12 +187,14 @@ public class TodoController {
     @PostMapping("/todos/{id}/status")
     @ResponseBody
     public ResponseEntity<String> changeStatus(@PathVariable Long id, @RequestParam String status) {
+        TodoStatus parsedStatus;
         try {
-            boolean found = todoService.changeStatus(id, status);
-            return found ? ResponseEntity.ok("ok") : ResponseEntity.notFound().build();
+            parsedStatus = TodoStatus.valueOf(status);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Invalid status value.");
         }
+        boolean found = todoService.changeStatus(id, parsedStatus);
+        return found ? ResponseEntity.ok("ok") : ResponseEntity.notFound().build();
     }
 
     @PostMapping("/todos/reorder")

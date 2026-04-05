@@ -51,13 +51,12 @@ public class TodoService {
     }
 
     @Transactional
-    public boolean changeStatus(Long id, String status) {
-        TodoStatus parsedStatus = TodoStatus.valueOf(status);
+    public boolean changeStatus(Long id, TodoStatus status) {
         return todoRepository
                 .findById(id)
                 .map(
                         t -> {
-                            t.setStatus(parsedStatus);
+                            t.setStatus(status);
                             todoRepository.save(t);
                             return true;
                         })
