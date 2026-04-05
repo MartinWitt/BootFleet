@@ -5,7 +5,7 @@
 build
 .idea
 target
-
+*.iml
 # tuck gmail api
 credentials.json
 tokens/

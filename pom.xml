@@ -17,6 +17,7 @@
     <module>config-reloader</module>
     <module>maven-version-mcp</module>
     <module>sequential-thinking-mcp</module>
+    <module>todo-app</module>
   </modules>
 
   <properties>
