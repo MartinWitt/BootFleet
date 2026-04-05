@@ -1,6 +1,7 @@
 package io.github.martinwitt.todoapp.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import java.util.Objects;
 
 @Entity
@@ -10,7 +11,7 @@ public class Tag {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @NotBlank @Column(nullable = false, unique = true)
     private String name;
 
     public Tag() {}

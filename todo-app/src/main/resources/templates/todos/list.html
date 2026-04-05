@@ -49,7 +49,6 @@
                 <strong th:text="${todo.title}"></strong>
                 <div class="meta">
                     <span th:if="${formattedDeadlines.get(todo.id)}" th:text="'📅 ' + ${formattedDeadlines.get(todo.id)}"></span>
-                  <span th:text="'Created today'"></span>
                   <span th:if="${todo.cronExpression}" th:text="'⏱️ ' + ${todo.cronExpression}" style="color: var(--success);"></span>
                 </div>
                 <div class="tags" th:if="${todo.tags.size()>0}">

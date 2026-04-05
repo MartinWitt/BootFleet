@@ -8,7 +8,7 @@ A modern, production-ready todo application built with Spring Boot, featuring da
 - ✅ **Full Todo Lifecycle** — Create, read, update, delete tasks
 - ✅ **Task Tagging** — Organize todos with custom tags
 - ✅ **Deadlines** — Set task dates and optional times
-- ✅ **Status Management** — Track task status (OPEN, ACTIVE, COMPLETED)
+- ✅ **Status Management** — Track task status (OPEN, IN_PROGRESS, DONE)
 - ✅ **Drag & Drop Reordering** — Sortable task list with visual feedback
 - ✅ **Tag Filtering** — Filter todos by tags
 
@@ -116,7 +116,7 @@ Or enter custom Cron format: `minute hour day month weekday`
 ```yaml
 # application.yaml
 spring.datasource.url: jdbc:h2:mem:todoapp
-spring.jpa.hibernate.ddl-auto: update
+spring.jpa.hibernate.ddl-auto: validate
 spring.thymeleaf.cache: false
 ```
 

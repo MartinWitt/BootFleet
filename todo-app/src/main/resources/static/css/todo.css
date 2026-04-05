@@ -344,6 +344,8 @@ form label {
 }
 
 form input[type="text"],
+form input[type="date"],
+form input[type="time"],
 form input[type="datetime-local"],
 form textarea,
 form select {
@@ -358,6 +360,8 @@ form select {
 }
 
 form input[type="text"]:focus,
+form input[type="date"]:focus,
+form input[type="time"]:focus,
 form input[type="datetime-local"]:focus,
 form textarea:focus,
 form select:focus {

@@ -13,7 +13,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -77,6 +79,11 @@ public class TodoController {
             Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("tags", tagService.findAll());
+            model.addAttribute("statuses", TodoStatus.values());
+            model.addAttribute("tagNames", tagNames != null ? Set.copyOf(tagNames) : Set.of());
+            model.addAttribute("deadlineDate", deadlineDate != null ? deadlineDate : "");
+            model.addAttribute("deadlineTime", deadlineTime != null ? deadlineTime : "");
+            model.addAttribute("cronExpression", cronExpression != null ? cronExpression : "");
             return "todos/form";
         }
 
@@ -143,7 +150,13 @@ public class TodoController {
             @RequestParam(value = "cronExpression", required = false) String cronExpression,
             Model model) {
         if (bindingResult.hasErrors()) {
+            todo.setId(id);
             model.addAttribute("tags", tagService.findAll());
+            model.addAttribute("statuses", TodoStatus.values());
+            model.addAttribute("tagNames", tagNames != null ? Set.copyOf(tagNames) : Set.of());
+            model.addAttribute("deadlineDate", deadlineDate != null ? deadlineDate : "");
+            model.addAttribute("deadlineTime", deadlineTime != null ? deadlineTime : "");
+            model.addAttribute("cronExpression", cronExpression != null ? cronExpression : "");
             return "todos/form";
         }
         todo.setId(id);
@@ -173,9 +186,13 @@ public class TodoController {
 
     @PostMapping("/todos/{id}/status")
     @ResponseBody
-    public String changeStatus(@PathVariable Long id, @RequestParam String status) {
-        todoService.changeStatus(id, status);
-        return "ok";
+    public ResponseEntity<String> changeStatus(@PathVariable Long id, @RequestParam String status) {
+        try {
+            boolean found = todoService.changeStatus(id, status);
+            return found ? ResponseEntity.ok("ok") : ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid status: " + status);
+        }
     }
 
     @PostMapping("/todos/reorder")

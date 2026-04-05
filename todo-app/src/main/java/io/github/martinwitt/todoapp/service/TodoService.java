@@ -6,7 +6,6 @@ import io.github.martinwitt.todoapp.domain.TodoStatus;
 import io.github.martinwitt.todoapp.repository.TagRepository;
 import io.github.martinwitt.todoapp.repository.TodoRepository;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,30 +41,27 @@ public class TodoService {
 
     @Transactional
     public void reorder(List<Long> orderedIds) {
-        AtomicInteger pos = new AtomicInteger();
-        for (Long id : orderedIds) {
-            todoRepository
-                    .findById(id)
-                    .ifPresent(
-                            t -> {
-                                t.setPosition(pos.getAndIncrement());
-                                todoRepository.save(t);
-                            });
+        List<Todo> todos = todoRepository.findAllById(orderedIds);
+        Map<Long, Integer> positionMap = new HashMap<>();
+        for (int i = 0; i < orderedIds.size(); i++) {
+            positionMap.put(orderedIds.get(i), i);
         }
+        todos.forEach(t -> t.setPosition(positionMap.get(t.getId())));
+        todoRepository.saveAll(todos);
     }
 
     @Transactional
-    public void changeStatus(Long id, String status) {
-        todoRepository
+    public boolean changeStatus(Long id, String status) {
+        TodoStatus parsedStatus = TodoStatus.valueOf(status);
+        return todoRepository
                 .findById(id)
-                .ifPresent(
+                .map(
                         t -> {
-                            try {
-                                t.setStatus(TodoStatus.valueOf(status));
-                                todoRepository.save(t);
-                            } catch (Exception ignored) {
-                            }
-                        });
+                            t.setStatus(parsedStatus);
+                            todoRepository.save(t);
+                            return true;
+                        })
+                .orElse(false);
     }
 
     @Transactional
