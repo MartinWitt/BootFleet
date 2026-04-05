@@ -1,0 +1,76 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TodoApp — Manage Your Tasks</title>
+  <link rel="stylesheet" href="/css/todo.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script src="/js/todo-dnd.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📋 TodoApp</h1>
+      <p>Organize your tasks with style</p>
+    </header>
+
+    <main>
+      <div class="controls">
+        <div class="controls-left">
+          <a href="/todos/new" class="btn">+ New Todo</a>
+          <a href="/tags" class="btn btn-secondary">Manage Tags</a>
+        </div>
+
+        <div class="filter">
+          <form method="get" action="/todos">
+            <select name="tag" onchange="this.form.submit()">
+              <option value="">All Tags</option>
+              <th:block th:each="t : ${tags}">
+                <option th:value="${t.name}" th:text="${t.name}" th:selected="${t.name == selectedTag}"></option>
+              </th:block>
+            </select>
+          </form>
+        </div>
+      </div>
+
+      <div id="todo-list" class="todo-list" th:attr="data-reorder-url=@{/todos/reorder}">
+        <th:block th:if="${todos.size()==0}">
+          <div class="no-todos">
+            <p>✨ No todos yet — create one to get started!</p>
+            <a href="/todos/new" class="btn">Create Your First Todo</a>
+          </div>
+        </th:block>
+
+        <ul id="todos" class="todos" th:if="${todos.size()>0}">
+          <th:block th:each="todo : ${todos}">
+            <li class="todo-row" th:attr="data-id=${todo.id}">
+              <div class="todo-main">
+                <strong th:text="${todo.title}"></strong>
+                <div class="meta">
+                    <span th:if="${formattedDeadlines.get(todo.id)}" th:text="'📅 ' + ${formattedDeadlines.get(todo.id)}"></span>
+                  <span th:if="${todo.cronExpression}" th:text="'⏱️ ' + ${todo.cronExpression}" style="color: var(--success);"></span>
+                </div>
+                <div class="tags" th:if="${todo.tags.size()>0}">
+                  <th:block th:each="tag : ${todo.tags}">
+                    <span class="tag" th:text="${tag.name}"></span>
+                  </th:block>
+                </div>
+              </div>
+              <div class="actions">
+                <a th:href="@{/todos/{id}/edit(id=${todo.id})}">✏️ Edit</a>
+                <select class="status-select" th:attr="data-id=${todo.id}">
+                  <th:block th:each="s : ${statuses}">
+                    <option th:value="${s}" th:selected="${s.name()==todo.status.name()}" th:text="${s}"></option>
+                  </th:block>
+                </select>
+              </div>
+            </li>
+          </th:block>
+        </ul>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
+
