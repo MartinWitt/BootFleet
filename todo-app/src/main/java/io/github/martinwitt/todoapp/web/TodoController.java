@@ -191,7 +191,7 @@ public class TodoController {
             boolean found = todoService.changeStatus(id, status);
             return found ? ResponseEntity.ok("ok") : ResponseEntity.notFound().build();
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Invalid status: " + status);
+            return ResponseEntity.badRequest().body("Invalid status value.");
         }
     }
 
