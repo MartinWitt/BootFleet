@@ -1,0 +1,115 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${todo.id==null}? 'New Todo — TodoApp' : 'Edit Todo — TodoApp'"></title>
+  <link rel="stylesheet" href="/css/todo.css"/>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1 th:text="${todo.id==null}? '✨ Create New Todo' : '✏️ Edit Todo'"></h1>
+      <p th:text="${todo.id==null}? 'Add a new task to your list' : 'Update your task details'"></p>
+    </header>
+
+    <main>
+      <form th:action="${todo.id==null}? '/todos' : '/todos/' + ${todo.id}" method="post">
+        <div class="form-group">
+          <label for="title">Task Title *</label>
+          <input type="text" id="title" name="title" th:value="${todo.title}" placeholder="Enter a descriptive title..." required />
+        </div>
+
+        <div class="form-group">
+          <label for="text">Description</label>
+          <textarea id="text" name="text" placeholder="Add more details about this task..." th:text="${todo.text}"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="deadline">Deadline</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label for="deadlineDate" style="display: block; font-size: 0.85rem; margin-bottom: 4px;">Date</label>
+              <input type="date" id="deadlineDate" name="deadlineDate" th:value="${deadlineDate}" />
+            </div>
+            <div>
+              <label for="deadlineTime" style="display: block; font-size: 0.85rem; margin-bottom: 4px;">Time (optional)</label>
+              <input type="time" id="deadlineTime" name="deadlineTime" th:value="${deadlineTime}" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Select Tags</label>
+          <div class="tag-selector">
+            <th:block th:each="tag : ${tags}">
+              <input
+                type="checkbox"
+                th:id="'tag-' + ${tag.id}"
+                name="tagNames"
+                th:value="${tag.name}"
+                class="tag-checkbox"
+                th:checked="${tagNames.contains(tag.name)}"
+              />
+              <label th:for="'tag-' + ${tag.id}" class="tag-label" th:text="${tag.name}"></label>
+            </th:block>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            <th:block th:each="s : ${statuses}">
+              <option th:value="${s}" th:selected="${todo.status != null ? s.name() == todo.status.name() : false}" th:text="${s}"></option>
+            </th:block>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>⏱️ Recurrence (optional)</label>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; margin-bottom: 12px;">
+            <button type="button" class="cron-btn" data-cron="0 0 * * *" onclick="setCron(this)">📅 Daily</button>
+            <button type="button" class="cron-btn" data-cron="0 0 * * 1" onclick="setCron(this)">📅 Weekly</button>
+            <button type="button" class="cron-btn" data-cron="0 0 1 * *" onclick="setCron(this)">📅 Monthly</button>
+            <button type="button" class="cron-btn" data-cron="0 9 * * *" onclick="setCron(this)">⏰ 9 AM</button>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px;">
+            <input type="text" id="cronExpression" name="cronExpression" th:value="${cronExpression}" placeholder="Custom cron (min hour day month weekday)" />
+            <button type="button" class="btn-secondary" onclick="clearCron()" style="padding: 12px 16px;">Clear</button>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px; line-height: 1.4;">
+            Format: minute hour day month weekday (e.g., 0 0 * * * = daily, 0 0 1 * * = 1st of month)
+          </p>
+        </div>
+
+        <div class="form-actions">
+          <a href="/todos" class="btn-cancel">Cancel</a>
+          <button type="submit" class="btn-primary" th:text="${todo.id==null}? 'Create Todo' : 'Save Changes'"></button>
+        </div>
+      </form>
+
+      <script>
+        function setCron(btn) {
+          document.getElementById('cronExpression').value = btn.getAttribute('data-cron');
+          updateCronButtonStates(btn.getAttribute('data-cron'));
+        }
+        function clearCron() {
+          document.getElementById('cronExpression').value = '';
+          updateCronButtonStates('');
+        }
+        function updateCronButtonStates(selectedCron) {
+          document.querySelectorAll('.cron-btn').forEach(btn => {
+            btn.style.opacity = btn.getAttribute('data-cron') === selectedCron && selectedCron ? '1' : '0.5';
+          });
+        }
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+          const cron = document.getElementById('cronExpression').value;
+          updateCronButtonStates(cron);
+        });
+      </script>
+    </main>
+  </div>
+</body>
+</html>
+
