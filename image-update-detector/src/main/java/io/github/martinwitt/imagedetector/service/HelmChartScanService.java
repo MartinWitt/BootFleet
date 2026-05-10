@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 
@@ -31,7 +30,8 @@ public class HelmChartScanService {
 
         // Configure YAML with reasonable limits for Helm artifacts
         LoaderOptions loaderOptions = new LoaderOptions();
-        loaderOptions.setCodePointLimit(256 * 1024 * 1024); // 256MB limit for large Chart.yaml files
+        loaderOptions.setCodePointLimit(
+                256 * 1024 * 1024); // 256MB limit for large Chart.yaml files
         loaderOptions.setMaxAliasesForCollections(1000000);
         loaderOptions.setAllowDuplicateKeys(false);
 
@@ -151,9 +151,10 @@ public class HelmChartScanService {
         }
 
         // Clean up removed dependencies in batches
-        List<HelmChartDependencyEntity> toDelete = dependencyRepo.findByAppName(appName).stream()
-                .filter(dep -> !currentDeps.contains(dep.getDependencyName()))
-                .toList();
+        List<HelmChartDependencyEntity> toDelete =
+                dependencyRepo.findByAppName(appName).stream()
+                        .filter(dep -> !currentDeps.contains(dep.getDependencyName()))
+                        .toList();
 
         if (!toDelete.isEmpty()) {
             for (int i = 0; i < toDelete.size(); i += BATCH_SIZE) {

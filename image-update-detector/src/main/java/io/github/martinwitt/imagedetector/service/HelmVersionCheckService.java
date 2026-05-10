@@ -4,7 +4,6 @@ import io.github.martinwitt.imagedetector.model.HelmChartDependencyEntity;
 import io.github.martinwitt.imagedetector.model.HelmChartDependencyRepository;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -35,11 +34,9 @@ public class HelmVersionCheckService {
 
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(10000); // 10 seconds
-        factory.setReadTimeout(30000);    // 30 seconds
+        factory.setReadTimeout(30000); // 30 seconds
 
-        this.restTemplate = new RestTemplate(
-            new BufferingClientHttpRequestFactory(factory)
-        );
+        this.restTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(factory));
 
         LoaderOptions loaderOptions = new LoaderOptions();
         // 256MB limit to handle large Helm repositories like Bitnami
@@ -68,7 +65,8 @@ public class HelmVersionCheckService {
                 for (HelmChartDependencyEntity dep : page.getContent()) {
                     try {
                         String latestVersion = findLatestVersion(dep, repoCache);
-                        if (latestVersion != null && !latestVersion.equals(dep.getLatestVersion())) {
+                        if (latestVersion != null
+                                && !latestVersion.equals(dep.getLatestVersion())) {
                             dep.setLatestVersion(latestVersion);
                             if (!latestVersion.equals(dep.getVersion())) {
                                 logger.info(
@@ -100,7 +98,8 @@ public class HelmVersionCheckService {
     }
 
     private String findLatestVersion(
-            HelmChartDependencyEntity dep, Map<String, Map<String, String>> repoCache) throws IOException {
+            HelmChartDependencyEntity dep, Map<String, Map<String, String>> repoCache)
+            throws IOException {
         if (dep.getRepository() == null || dep.getRepository().isBlank()) {
             return null;
         }
@@ -134,10 +133,11 @@ public class HelmVersionCheckService {
     }
 
     /**
-     * Streaming YAML parser that only extracts the latest stable version of a specific chart.
-     * This keeps memory usage constant regardless of index.yaml size.
+     * Streaming YAML parser that only extracts the latest stable version of a specific chart. This
+     * keeps memory usage constant regardless of index.yaml size.
      */
-    private String fetchLatestChartVersionStreaming(String indexUrl, String chartName) throws IOException {
+    private String fetchLatestChartVersionStreaming(String indexUrl, String chartName)
+            throws IOException {
         try {
             ResponseEntity<byte[]> response = restTemplate.getForEntity(indexUrl, byte[].class);
 
@@ -147,8 +147,10 @@ public class HelmVersionCheckService {
 
             // Safety check on response size
             if (response.getBody().length > MAX_INDEX_SIZE) {
-                logger.warn("Helm index.yaml response too large ({}MB) from {}, skipping",
-                    response.getBody().length / (1024 * 1024), indexUrl);
+                logger.warn(
+                        "Helm index.yaml response too large ({}MB) from {}, skipping",
+                        response.getBody().length / (1024 * 1024),
+                        indexUrl);
                 return null;
             }
 
@@ -164,10 +166,11 @@ public class HelmVersionCheckService {
     }
 
     /**
-     * Parses YAML stream and extracts only the latest version for the specified chart.
-     * Stops early once latest version is found - no need to load entire YAML.
+     * Parses YAML stream and extracts only the latest version for the specified chart. Stops early
+     * once latest version is found - no need to load entire YAML.
      */
-    private String parseLatestVersionFromStream(InputStream inputStream, String chartName) throws IOException {
+    private String parseLatestVersionFromStream(InputStream inputStream, String chartName)
+            throws IOException {
         try {
             Map<String, Object> fullIndex = yaml.load(inputStream);
             if (fullIndex == null || !fullIndex.containsKey("entries")) {
