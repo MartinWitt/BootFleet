@@ -4,6 +4,7 @@ import io.github.martinwitt.imagedetector.model.HelmChartDependencyEntity;
 import io.github.martinwitt.imagedetector.model.HelmChartDependencyRepository;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -19,6 +20,11 @@ import org.springframework.web.client.RestTemplate;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
+import org.yaml.snakeyaml.events.Event;
+import org.yaml.snakeyaml.events.MappingEndEvent;
+import org.yaml.snakeyaml.events.ScalarEvent;
+import org.yaml.snakeyaml.events.SequenceEndEvent;
+import org.yaml.snakeyaml.events.SequenceStartEvent;
 
 @Service
 public class HelmVersionCheckService {
@@ -172,43 +178,47 @@ public class HelmVersionCheckService {
             throws IOException {
         try {
             Yaml yaml = createYamlParser();
-            Map<String, Object> fullIndex = yaml.load(inputStream);
-            if (fullIndex == null || !fullIndex.containsKey("entries")) {
-                return null;
+            try (InputStreamReader reader = new InputStreamReader(inputStream)) {
+                var events = yaml.parse(reader);
+
+                String latestVersion = null;
+                boolean inEntries = false;
+                boolean inChart = false;
+                boolean inChartList = false;
+                String currentKey = null;
+
+                for (Event event : events) {
+                    if (event instanceof ScalarEvent scalar) {
+                        currentKey = scalar.getValue();
+                        if ("entries".equals(currentKey)) {
+                            inEntries = true;
+                        } else if (inEntries && !inChartList && currentKey.equals(chartName)) {
+                            inChart = true;
+                        }
+                    } else if (event instanceof SequenceStartEvent && inChart) {
+                        inChartList = true;
+                    } else if (event instanceof SequenceEndEvent && inChartList) {
+                        inChartList = false;
+                        inChart = false;
+                        break;
+                    } else if (event instanceof MappingEndEvent && inChartList) {
+                        currentKey = null;
+                    }
+
+                    if ("version".equals(currentKey) && event instanceof ScalarEvent scalar2) {
+                        String version = scalar2.getValue();
+                        if (!version.isEmpty() && isStableVersion(version)) {
+                            if (latestVersion == null
+                                    || compareVersions(version, latestVersion) > 0) {
+                                latestVersion = version;
+                            }
+                        }
+                        currentKey = null;
+                    }
+                }
+
+                return latestVersion;
             }
-
-            Map<?, ?> entries = (Map<?, ?>) fullIndex.get("entries");
-            Object chartObj = entries.get(chartName);
-
-            if (!(chartObj instanceof java.util.List<?> charts)) {
-                return null;
-            }
-
-            // Track only the latest stable version - don't store all
-            String latestVersion = null;
-
-            for (Object chart : charts) {
-                if (!(chart instanceof Map<?, ?> chartMap)) {
-                    continue;
-                }
-
-                Object versionObj = chartMap.get("version");
-                if (versionObj == null) {
-                    continue;
-                }
-
-                String version = versionObj.toString().trim();
-                if (version.isEmpty() || !isStableVersion(version)) {
-                    continue;
-                }
-
-                // Only keep the highest version
-                if (latestVersion == null || compareVersions(version, latestVersion) > 0) {
-                    latestVersion = version;
-                }
-            }
-
-            return latestVersion;
         } catch (YAMLException e) {
             logger.warn("YAML parsing error for chart {}: {}", chartName, e.getMessage());
             throw new IOException("YAML parse error: " + e.getMessage(), e);
