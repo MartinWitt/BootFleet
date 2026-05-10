@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: image-update-detector
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: "maximumSize=1000,expireAfterWrite=1h"
+
+server:
+  port: 8080
+
+app:
+  gitops:
+    repo:
+    branch:
+    token:
+    refresh-interval-ms: ${GITOPS_REFRESH_INTERVAL_MS:300000}
+  helm-check-interval-ms: ${HELM_CHECK_INTERVAL_MS:600000}
+
+logging:
+  level:
+    root: INFO
+    io.github.martinwitt: DEBUG
+

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helm Dependency Monitor</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <script src="https://unpkg.com/htmx.org@1.9.10"
+            integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
+            crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        header {
+            margin-bottom: 30px;
+            border-bottom: 3px solid #17a2b8;
+            padding-bottom: 15px;
+        }
+        h1 {
+            color: #17a2b8;
+            margin: 0 0 5px 0;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 13px;
+            margin: 0;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .refresh-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        .refresh-btn:hover {
+            background: #138496;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .dependencies-section h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #17a2b8;
+            padding-bottom: 10px;
+        }
+        .dependencies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 15px;
+        }
+        .dependency-card {
+            background: #f8f9fa;
+            padding: 18px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+        }
+        .dependency-card:hover {
+            border-color: #17a2b8;
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.2);
+        }
+        .dependency-card.outdated {
+            border-color: #ffc107;
+            background: #fffbf0;
+        }
+        .dependency-card.outdated::before {
+            content: "⚠️ UPDATE AVAILABLE";
+            display: block;
+            color: #ff9800;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            padding: 4px 6px;
+            background: #fff3e0;
+            border-radius: 3px;
+            width: fit-content;
+        }
+        .dependency-app {
+            color: #17a2b8;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .dependency-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        .version-badge {
+            display: inline-block;
+            background: #17a2b8;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        .dependency-repo {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 10px;
+            word-break: break-word;
+            background: #f0f7ff;
+            padding: 6px 8px;
+            border-radius: 4px;
+        }
+        .last-updated {
+            color: #999;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+        .loading {
+            text-align: center;
+            color: #999;
+            padding: 30px;
+            font-size: 14px;
+        }
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📦 Helm Dependency Monitor</h1>
+            <p class="subtitle">Track all Helm chart dependencies across your applications</p>
+        </header>
+
+        <div class="controls">
+            <button class="refresh-btn" hx-get="/" hx-target="body" hx-swap="outerHTML">
+                ↻ Refresh
+            </button>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Total Dependencies Being Monitored</div>
+            <div class="stat-number" th:text="${dependencyCount ?: 0}">0</div>
+        </div>
+
+        <div class="dependencies-section">
+            <h2>Dependencies</h2>
+
+            <div th:if="${dependencies.isEmpty()}" class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <p>No dependencies tracked yet. The scanner will pick them up soon...</p>
+            </div>
+
+            <div th:unless="${dependencies.isEmpty()}" class="dependencies-grid">
+                <div th:each="dep : ${dependencies}" class="dependency-card" th:classappend="${dep.hasUpdate()} ? 'outdated' : ''">
+                    <div class="dependency-app" th:text="${dep.appName}"></div>
+                    <div>
+                        <span class="dependency-name" th:text="${dep.dependencyName}"></span>
+                        <span class="version-badge" th:text="${dep.version}"></span>
+                    </div>
+                    <div th:if="${dep.latestVersion != null}" style="margin: 10px 0;">
+                        <small style="color: #666;">Latest: <strong style="color: #17a2b8;" th:text="${dep.latestVersion}"></strong></small>
+                    </div>
+                    <div class="dependency-repo" th:if="${dep.repository}" th:text="${dep.repository}"></div>
+                    <div class="last-updated">
+                        Updated: <span th:text="${#temporals.format(dep.lastUpdated, 'dd.MM.yyyy HH:mm')}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh every 30 seconds
+        setTimeout(() => location.reload(), 30000);
+    </script>
+</body>
+</html>
