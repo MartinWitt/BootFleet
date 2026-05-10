@@ -19,7 +19,6 @@ public class HelmChartScanService {
     private static final int BATCH_SIZE = 100;
     private final HelmChartDependencyRepository dependencyRepo;
     private final GitOpsClient gitOpsClient;
-    private final Yaml yaml;
 
     public HelmChartScanService(
             HelmChartRepository helmChartRepo,
@@ -27,15 +26,14 @@ public class HelmChartScanService {
             GitOpsClient gitOpsClient) {
         this.dependencyRepo = dependencyRepo;
         this.gitOpsClient = gitOpsClient;
+    }
 
-        // Configure YAML with reasonable limits for Helm artifacts
+    private Yaml createYamlParser() {
         LoaderOptions loaderOptions = new LoaderOptions();
-        loaderOptions.setCodePointLimit(
-                256 * 1024 * 1024); // 256MB limit for large Chart.yaml files
+        loaderOptions.setCodePointLimit(256 * 1024 * 1024);
         loaderOptions.setMaxAliasesForCollections(1000000);
         loaderOptions.setAllowDuplicateKeys(false);
-
-        this.yaml = new Yaml(loaderOptions);
+        return new Yaml(loaderOptions);
     }
 
     @Scheduled(fixedDelayString = "${app.gitops.refresh-interval-ms:300000}")
@@ -70,6 +68,7 @@ public class HelmChartScanService {
         }
 
         try {
+            Yaml yaml = createYamlParser();
             Map<String, Object> chartYaml = yaml.load(chartContent);
             if (chartYaml == null) {
                 logger.warn("Empty Chart.yaml for app: {}", appName);

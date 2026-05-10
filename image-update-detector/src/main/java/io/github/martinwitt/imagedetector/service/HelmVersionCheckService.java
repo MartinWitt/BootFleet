@@ -27,7 +27,6 @@ public class HelmVersionCheckService {
     private static final int MAX_INDEX_SIZE = 256 * 1024 * 1024; // 256MB max
     private final HelmChartDependencyRepository dependencyRepo;
     private final RestTemplate restTemplate;
-    private final Yaml yaml;
 
     public HelmVersionCheckService(HelmChartDependencyRepository dependencyRepo) {
         this.dependencyRepo = dependencyRepo;
@@ -37,14 +36,14 @@ public class HelmVersionCheckService {
         factory.setReadTimeout(30000); // 30 seconds
 
         this.restTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(factory));
+    }
 
+    private Yaml createYamlParser() {
         LoaderOptions loaderOptions = new LoaderOptions();
-        // 256MB limit to handle large Helm repositories like Bitnami
         loaderOptions.setCodePointLimit(256 * 1024 * 1024);
         loaderOptions.setMaxAliasesForCollections(1000000);
         loaderOptions.setAllowDuplicateKeys(false);
-
-        this.yaml = new Yaml(loaderOptions);
+        return new Yaml(loaderOptions);
     }
 
     @Scheduled(fixedDelayString = "${app.helm-check-interval-ms:600000}")
@@ -172,6 +171,7 @@ public class HelmVersionCheckService {
     private String parseLatestVersionFromStream(InputStream inputStream, String chartName)
             throws IOException {
         try {
+            Yaml yaml = createYamlParser();
             Map<String, Object> fullIndex = yaml.load(inputStream);
             if (fullIndex == null || !fullIndex.containsKey("entries")) {
                 return null;
