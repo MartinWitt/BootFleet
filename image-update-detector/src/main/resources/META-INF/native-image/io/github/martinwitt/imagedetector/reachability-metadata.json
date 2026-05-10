@@ -1,0 +1,13 @@
+{
+  "reflection": [
+    {
+      "type": "io.github.martinwitt.imagedetector.model.HelmChartDependencyEntity",
+      "methods": [
+        {
+          "name": "hasUpdate",
+          "parameterTypes": []
+        }
+      ]
+    }
+  ]
+}
