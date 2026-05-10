@@ -6,7 +6,10 @@ build
 .idea
 target
 *.iml
-# tuck gmail api
+# Secrets & local config
 credentials.json
 tokens/
 application-privat.yaml
+application-local.yaml
+*.local.yaml
+.env.local
