@@ -10,14 +10,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 
 @Service
 public class HelmChartScanService {
     private static final Logger logger = LoggerFactory.getLogger(HelmChartScanService.class);
+    private static final int BATCH_SIZE = 100;
     private final HelmChartDependencyRepository dependencyRepo;
     private final GitOpsClient gitOpsClient;
-    private final Yaml yaml = new Yaml();
+    private final Yaml yaml;
 
     public HelmChartScanService(
             HelmChartRepository helmChartRepo,
@@ -25,6 +28,14 @@ public class HelmChartScanService {
             GitOpsClient gitOpsClient) {
         this.dependencyRepo = dependencyRepo;
         this.gitOpsClient = gitOpsClient;
+
+        // Configure YAML with reasonable limits for Helm artifacts
+        LoaderOptions loaderOptions = new LoaderOptions();
+        loaderOptions.setCodePointLimit(256 * 1024 * 1024); // 256MB limit for large Chart.yaml files
+        loaderOptions.setMaxAliasesForCollections(1000000);
+        loaderOptions.setAllowDuplicateKeys(false);
+
+        this.yaml = new Yaml(loaderOptions);
     }
 
     @Scheduled(fixedDelayString = "${app.gitops.refresh-interval-ms:300000}")
@@ -85,6 +96,7 @@ public class HelmChartScanService {
         }
 
         Set<String> currentDeps = new HashSet<>();
+        List<HelmChartDependencyEntity> toSave = new ArrayList<>();
 
         for (Object depObj : dependenciesList) {
             if (!(depObj instanceof Map<?, ?> depMap)) {
@@ -127,13 +139,28 @@ public class HelmChartScanService {
                 dep.setRepository(repository);
             }
             dep.setLastUpdated(Instant.now());
-            dependencyRepo.save(dep);
+            toSave.add(dep);
         }
 
-        // Clean up removed dependencies
-        dependencyRepo.findByAppName(appName).stream()
+        // Batch save dependencies
+        if (!toSave.isEmpty()) {
+            for (int i = 0; i < toSave.size(); i += BATCH_SIZE) {
+                int end = Math.min(i + BATCH_SIZE, toSave.size());
+                dependencyRepo.saveAll(toSave.subList(i, end));
+            }
+        }
+
+        // Clean up removed dependencies in batches
+        List<HelmChartDependencyEntity> toDelete = dependencyRepo.findByAppName(appName).stream()
                 .filter(dep -> !currentDeps.contains(dep.getDependencyName()))
-                .forEach(dependencyRepo::delete);
+                .toList();
+
+        if (!toDelete.isEmpty()) {
+            for (int i = 0; i < toDelete.size(); i += BATCH_SIZE) {
+                int end = Math.min(i + BATCH_SIZE, toDelete.size());
+                dependencyRepo.deleteAllInBatch(toDelete.subList(i, end));
+            }
+        }
     }
 
     private String getString(Object value) {

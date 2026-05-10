@@ -3,40 +3,49 @@ package io.github.martinwitt.imagedetector.service;
 import io.github.martinwitt.imagedetector.model.HelmChartDependencyEntity;
 import io.github.martinwitt.imagedetector.model.HelmChartDependencyRepository;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.BufferingClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
 
 @Service
 public class HelmVersionCheckService {
     private static final Logger logger = LoggerFactory.getLogger(HelmVersionCheckService.class);
+    // Large Helm repos can have big index.yaml files (Bitnami ~60MB), allow up to 256MB
+    private static final int MAX_INDEX_SIZE = 256 * 1024 * 1024; // 256MB max
     private final HelmChartDependencyRepository dependencyRepo;
     private final RestTemplate restTemplate;
     private final Yaml yaml;
 
     public HelmVersionCheckService(HelmChartDependencyRepository dependencyRepo) {
         this.dependencyRepo = dependencyRepo;
-        this.restTemplate = new RestTemplate();
-        restTemplate
-                .getMessageConverters()
-                .addFirst(new StringHttpMessageConverter(StandardCharsets.UTF_8));
+
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10000); // 10 seconds
+        factory.setReadTimeout(30000);    // 30 seconds
+
+        this.restTemplate = new RestTemplate(
+            new BufferingClientHttpRequestFactory(factory)
+        );
 
         LoaderOptions loaderOptions = new LoaderOptions();
-        loaderOptions.setCodePointLimit(100 * 1024 * 1024); // 100MB
-        loaderOptions.setMaxAliasesForCollections(Integer.MAX_VALUE);
-        loaderOptions.setAllowDuplicateKeys(true);
+        // 256MB limit to handle large Helm repositories like Bitnami
+        loaderOptions.setCodePointLimit(256 * 1024 * 1024);
+        loaderOptions.setMaxAliasesForCollections(1000000);
+        loaderOptions.setAllowDuplicateKeys(false);
 
         this.yaml = new Yaml(loaderOptions);
     }
@@ -46,31 +55,42 @@ public class HelmVersionCheckService {
         logger.info("Starting Helm version check");
 
         try {
-            List<HelmChartDependencyEntity> dependencies = dependencyRepo.findAll();
-            Map<String, Set<String>> repoCache = new HashMap<>();
+            // Cache per repository: repoUrl -> (chartName -> latestVersion)
+            Map<String, Map<String, String>> repoCache = new HashMap<>();
+            int pageSize = 100;
+            int pageNum = 0;
+            boolean hasMore = true;
 
-            for (HelmChartDependencyEntity dep : dependencies) {
-                try {
-                    String latestVersion = findLatestVersion(dep, repoCache);
-                    if (latestVersion != null && !latestVersion.equals(dep.getLatestVersion())) {
-                        dep.setLatestVersion(latestVersion);
-                        if (!latestVersion.equals(dep.getVersion())) {
-                            logger.info(
-                                    "Update available for {}/{}: {} -> {}",
-                                    dep.getAppName(),
-                                    dep.getDependencyName(),
-                                    dep.getVersion(),
-                                    latestVersion);
+            while (hasMore) {
+                Pageable pageable = PageRequest.of(pageNum, pageSize);
+                var page = dependencyRepo.findAll(pageable);
+
+                for (HelmChartDependencyEntity dep : page.getContent()) {
+                    try {
+                        String latestVersion = findLatestVersion(dep, repoCache);
+                        if (latestVersion != null && !latestVersion.equals(dep.getLatestVersion())) {
+                            dep.setLatestVersion(latestVersion);
+                            if (!latestVersion.equals(dep.getVersion())) {
+                                logger.info(
+                                        "Update available for {}/{}: {} -> {}",
+                                        dep.getAppName(),
+                                        dep.getDependencyName(),
+                                        dep.getVersion(),
+                                        latestVersion);
+                            }
+                            dependencyRepo.save(dep);
                         }
-                        dependencyRepo.save(dep);
+                    } catch (Exception e) {
+                        logger.warn(
+                                "Failed to check version for {}/{}: {}",
+                                dep.getAppName(),
+                                dep.getDependencyName(),
+                                e.getMessage());
                     }
-                } catch (Exception e) {
-                    logger.warn(
-                            "Failed to check version for {}/{}: {}",
-                            dep.getAppName(),
-                            dep.getDependencyName(),
-                            e.getMessage());
                 }
+
+                hasMore = page.hasNext();
+                pageNum++;
             }
 
             logger.info("Helm version check completed");
@@ -80,7 +100,7 @@ public class HelmVersionCheckService {
     }
 
     private String findLatestVersion(
-            HelmChartDependencyEntity dep, Map<String, Set<String>> repoCache) throws IOException {
+            HelmChartDependencyEntity dep, Map<String, Map<String, String>> repoCache) throws IOException {
         if (dep.getRepository() == null || dep.getRepository().isBlank()) {
             return null;
         }
@@ -91,68 +111,104 @@ public class HelmVersionCheckService {
         }
 
         String indexUrl = repoUrl + "index.yaml";
+        String chartName = dep.getDependencyName();
 
-        // Prüfe Cache
-        if (repoCache.containsKey(repoUrl)) {
-            Set<String> versions = repoCache.get(repoUrl);
-            return versions.stream()
-                    .filter(v -> !v.isEmpty())
-                    .max(this::compareVersions)
-                    .orElse(null);
+        // Check cache first
+        Map<String, String> chartCache = repoCache.computeIfAbsent(repoUrl, k -> new HashMap<>());
+        if (chartCache.containsKey(chartName)) {
+            return chartCache.get(chartName);
         }
 
-        // Fetch index.yaml
+        // Fetch and parse streaming
         try {
-            Set<String> availableVersions = fetchChartVersions(indexUrl, dep.getDependencyName());
-            repoCache.put(repoUrl, availableVersions);
-
-            return availableVersions.stream()
-                    .filter(v -> !v.isEmpty())
-                    .filter(this::isStableVersion)
-                    .max(this::compareVersions)
-                    .orElse(null);
+            String latestVersion = fetchLatestChartVersionStreaming(indexUrl, chartName);
+            if (latestVersion != null && isStableVersion(latestVersion)) {
+                chartCache.put(chartName, latestVersion);
+                return latestVersion;
+            }
+            return null;
         } catch (Exception e) {
             logger.warn("Failed to fetch index from {}: {}", indexUrl, e.getMessage());
             return null;
         }
     }
 
-    private Set<String> fetchChartVersions(String indexUrl, String chartName) throws IOException {
+    /**
+     * Streaming YAML parser that only extracts the latest stable version of a specific chart.
+     * This keeps memory usage constant regardless of index.yaml size.
+     */
+    private String fetchLatestChartVersionStreaming(String indexUrl, String chartName) throws IOException {
         try {
-            String response = restTemplate.getForObject(indexUrl, String.class);
+            ResponseEntity<byte[]> response = restTemplate.getForEntity(indexUrl, byte[].class);
 
-            if (response == null) {
+            if (response.getBody() == null || response.getBody().length == 0) {
                 throw new IOException("Empty response from " + indexUrl);
             }
 
-            Map<String, Object> index = yaml.load(sanitizeYaml(response));
-            if (index == null || !index.containsKey("entries")) {
-                return Collections.emptySet();
+            // Safety check on response size
+            if (response.getBody().length > MAX_INDEX_SIZE) {
+                logger.warn("Helm index.yaml response too large ({}MB) from {}, skipping",
+                    response.getBody().length / (1024 * 1024), indexUrl);
+                return null;
             }
 
-            Map<?, ?> entries = (Map<?, ?>) index.get("entries");
-            Object chartObj = entries.get(chartName);
-
-            if (!(chartObj instanceof List<?> charts)) {
-                return Collections.emptySet();
+            // Stream parse YAML looking only for our chart name and its versions
+            try (InputStream inputStream = new java.io.ByteArrayInputStream(response.getBody())) {
+                return parseLatestVersionFromStream(inputStream, chartName);
             }
-
-            Set<String> versions = new HashSet<>();
-
-            for (Object chart : charts) {
-                if (chart instanceof Map<?, ?> chartMap) {
-                    Object version = chartMap.get("version");
-                    if (version != null) {
-                        versions.add(version.toString());
-                    }
-                }
-            }
-
-            return versions;
         } catch (Exception e) {
             logger.warn("Failed to fetch chart versions from {}: {}", indexUrl, e.getMessage());
             throw new IOException(
                     "Failed to fetch index from " + indexUrl + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Parses YAML stream and extracts only the latest version for the specified chart.
+     * Stops early once latest version is found - no need to load entire YAML.
+     */
+    private String parseLatestVersionFromStream(InputStream inputStream, String chartName) throws IOException {
+        try {
+            Map<String, Object> fullIndex = yaml.load(inputStream);
+            if (fullIndex == null || !fullIndex.containsKey("entries")) {
+                return null;
+            }
+
+            Map<?, ?> entries = (Map<?, ?>) fullIndex.get("entries");
+            Object chartObj = entries.get(chartName);
+
+            if (!(chartObj instanceof java.util.List<?> charts)) {
+                return null;
+            }
+
+            // Track only the latest stable version - don't store all
+            String latestVersion = null;
+
+            for (Object chart : charts) {
+                if (!(chart instanceof Map<?, ?> chartMap)) {
+                    continue;
+                }
+
+                Object versionObj = chartMap.get("version");
+                if (versionObj == null) {
+                    continue;
+                }
+
+                String version = versionObj.toString().trim();
+                if (version.isEmpty() || !isStableVersion(version)) {
+                    continue;
+                }
+
+                // Only keep the highest version
+                if (latestVersion == null || compareVersions(version, latestVersion) > 0) {
+                    latestVersion = version;
+                }
+            }
+
+            return latestVersion;
+        } catch (YAMLException e) {
+            logger.warn("YAML parsing error for chart {}: {}", chartName, e.getMessage());
+            throw new IOException("YAML parse error: " + e.getMessage(), e);
         }
     }
 
@@ -186,31 +242,5 @@ public class HelmVersionCheckService {
             if (minor != other.minor) return Integer.compare(minor, other.minor);
             return Integer.compare(patch, other.patch);
         }
-    }
-
-    private static String sanitizeYaml(String input) {
-        if (input == null) return null;
-
-        StringBuilder out = new StringBuilder(input.length());
-
-        for (int i = 0; i < input.length(); i++) {
-            char c = input.charAt(i);
-
-            // Entferne BOM
-            if (c == '\uFEFF') continue;
-
-            // Entferne NBSP
-            if (c == '\u00A0') continue;
-
-            // Entferne Zero-width characters
-            if (c == '\u200B' || c == '\u200C' || c == '\u200D') continue;
-
-            // Entferne alle Control Characters außer erlaubte
-            if (c < 0x20 && c != '\n' && c != '\r' && c != '\t') continue;
-
-            out.append(c);
-        }
-
-        return out.toString();
     }
 }
