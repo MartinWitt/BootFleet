@@ -15,6 +15,7 @@
     <module>mcp-utils</module>
     <module>url-cleaner</module>
     <module>config-reloader</module>
+    <module>image-update-detector</module>
     <module>maven-version-mcp</module>
     <module>sequential-thinking-mcp</module>
     <module>todo-app</module>
@@ -31,6 +32,11 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.yaml</groupId>
+        <artifactId>snakeyaml</artifactId>
+        <version>2.2</version>
+      </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
