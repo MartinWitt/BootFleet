@@ -1,6 +1,8 @@
 package io.github.martinwitt.imagedetector.client;
 
 import io.github.martinwitt.imagedetector.ImageDetectorProperties;
+import java.util.ArrayList;
+import java.util.List;
 import org.kohsuke.github.GHFileNotFoundException;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
@@ -8,9 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Component
 public class GitOpsClient {

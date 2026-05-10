@@ -10,6 +10,6 @@ target
 credentials.json
 tokens/
 application-privat.yaml
-application-local.yaml
+**/application-local.yaml
 *.local.yaml
 .env.local
