@@ -6,8 +6,78 @@
         {
           "name": "hasUpdate",
           "parameterTypes": []
+        },
+        {
+          "name": "getId",
+          "parameterTypes": []
+        },
+        {
+          "name": "getAppName",
+          "parameterTypes": []
+        },
+        {
+          "name": "getDependencyName",
+          "parameterTypes": []
+        },
+        {
+          "name": "getVersion",
+          "parameterTypes": []
+        },
+        {
+          "name": "getRepository",
+          "parameterTypes": []
+        },
+        {
+          "name": "getLatestVersion",
+          "parameterTypes": []
+        },
+        {
+          "name": "getLastUpdated",
+          "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "org.thymeleaf.expression.Temporals",
+      "methods": [
+        {
+          "name": "format",
+          "parameterTypes": [
+            "java.time.temporal.Temporal",
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "formatISO",
+          "parameterTypes": [
+            "java.time.temporal.Temporal"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.thymeleaf.expression.Dates",
+      "methods": [
+        {
+          "name": "format",
+          "parameterTypes": [
+            "java.util.Calendar",
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.hibernate.orm.core.internal.EntityManagerImpl",
+      "allPublicMethods": true
+    }
+  ],
+  "serialization": [
+    {
+      "type": "java.time.Instant"
+    },
+    {
+      "type": "io.github.martinwitt.imagedetector.model.HelmChartDependencyEntity"
     }
   ]
 }
