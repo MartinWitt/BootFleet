@@ -205,7 +205,10 @@ public class HelmVersionCheckService {
                         currentKey = null;
                     }
 
-                    if (inChart && inChartList && "version".equals(currentKey) && event instanceof ScalarEvent scalar2) {
+                    if (inChart
+                            && inChartList
+                            && "version".equals(currentKey)
+                            && event instanceof ScalarEvent scalar2) {
                         String version = scalar2.getValue();
                         if (!version.isEmpty() && isStableVersion(version)) {
                             if (latestVersion == null
