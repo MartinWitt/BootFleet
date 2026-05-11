@@ -185,30 +185,19 @@ public class HelmVersionCheckService {
                 boolean inEntries = false;
                 boolean inChart = false;
                 boolean inChartList = false;
-                boolean expectingVersionValue = false;
                 String currentKey = null;
+                String lastScalarValue = null;
 
                 for (Event event : events) {
                     if (event instanceof ScalarEvent scalar) {
                         String value = scalar.getValue();
-
-                        if (expectingVersionValue && inChart && inChartList) {
-                            if (!value.isEmpty() && isStableVersion(value)) {
-                                if (latestVersion == null
-                                        || compareVersions(value, latestVersion) > 0) {
-                                    latestVersion = value;
-                                }
-                            }
-                            expectingVersionValue = false;
-                        }
+                        lastScalarValue = value;
 
                         currentKey = value;
                         if ("entries".equals(currentKey)) {
                             inEntries = true;
                         } else if (inEntries && !inChartList && currentKey.equals(chartName)) {
                             inChart = true;
-                        } else if (inChart && inChartList && "version".equals(currentKey)) {
-                            expectingVersionValue = true;
                         }
                     } else if (event instanceof SequenceStartEvent && inChart) {
                         inChartList = true;
@@ -217,6 +206,15 @@ public class HelmVersionCheckService {
                         inChart = false;
                         break;
                     } else if (event instanceof MappingEndEvent && inChartList) {
+                        if ("version".equals(currentKey)
+                                && lastScalarValue != null
+                                && !lastScalarValue.isEmpty()
+                                && isStableVersion(lastScalarValue)) {
+                            if (latestVersion == null
+                                    || compareVersions(lastScalarValue, latestVersion) > 0) {
+                                latestVersion = lastScalarValue;
+                            }
+                        }
                         currentKey = null;
                     }
                 }
