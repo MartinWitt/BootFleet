@@ -185,15 +185,30 @@ public class HelmVersionCheckService {
                 boolean inEntries = false;
                 boolean inChart = false;
                 boolean inChartList = false;
+                boolean expectingVersionValue = false;
                 String currentKey = null;
 
                 for (Event event : events) {
                     if (event instanceof ScalarEvent scalar) {
-                        currentKey = scalar.getValue();
+                        String value = scalar.getValue();
+
+                        if (expectingVersionValue && inChart && inChartList) {
+                            if (!value.isEmpty() && isStableVersion(value)) {
+                                if (latestVersion == null
+                                        || compareVersions(value, latestVersion) > 0) {
+                                    latestVersion = value;
+                                }
+                            }
+                            expectingVersionValue = false;
+                        }
+
+                        currentKey = value;
                         if ("entries".equals(currentKey)) {
                             inEntries = true;
                         } else if (inEntries && !inChartList && currentKey.equals(chartName)) {
                             inChart = true;
+                        } else if (inChart && inChartList && "version".equals(currentKey)) {
+                            expectingVersionValue = true;
                         }
                     } else if (event instanceof SequenceStartEvent && inChart) {
                         inChartList = true;
@@ -202,20 +217,6 @@ public class HelmVersionCheckService {
                         inChart = false;
                         break;
                     } else if (event instanceof MappingEndEvent && inChartList) {
-                        currentKey = null;
-                    }
-
-                    if (inChart
-                            && inChartList
-                            && "version".equals(currentKey)
-                            && event instanceof ScalarEvent scalar2) {
-                        String version = scalar2.getValue();
-                        if (!version.isEmpty() && isStableVersion(version)) {
-                            if (latestVersion == null
-                                    || compareVersions(version, latestVersion) > 0) {
-                                latestVersion = version;
-                            }
-                        }
                         currentKey = null;
                     }
                 }
