@@ -224,7 +224,7 @@ public class HelmVersionCheckService {
                     } else if (event instanceof SequenceEndEvent && inChartList) {
                         inChartList = false;
                         inChart = false;
-                        break;
+                        // Don't break - continue to parse in case there are more charts or we're in a nested structure
                     } else if (event instanceof MappingEndEvent && inChartList) {
                         currentKey = null;
                     }
