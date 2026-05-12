@@ -191,7 +191,27 @@ public class HelmVersionCheckService {
                 for (Event event : events) {
                     if (event instanceof ScalarEvent scalar) {
                         String value = scalar.getValue();
-                        lastScalarValue = value;
+
+                        // If previous key was "version" and we're in chart list, this value is the version
+                        if ("version".equals(currentKey) && inChart && inChartList) {
+                            if (!value.isEmpty() && !value.equals("version")) {
+                                boolean stable = isStableVersion(value);
+                                logger.debug("Found version {} for chart {} - stable: {}", value, chartName, stable);
+                                if (stable) {
+                                    if (latestVersion == null) {
+                                        latestVersion = value;
+                                        logger.debug("Set initial latestVersion to {}", value);
+                                    } else {
+                                        int cmp = compareVersions(value, latestVersion);
+                                        logger.debug("Comparing {} vs {} = {}", value, latestVersion, cmp);
+                                        if (cmp > 0) {
+                                            latestVersion = value;
+                                            logger.debug("Updated latestVersion to {}", value);
+                                        }
+                                    }
+                                }
+                            }
+                        }
 
                         currentKey = value;
                         if ("entries".equals(currentKey)) {
@@ -206,15 +226,6 @@ public class HelmVersionCheckService {
                         inChart = false;
                         break;
                     } else if (event instanceof MappingEndEvent && inChartList) {
-                        if ("version".equals(currentKey)
-                                && lastScalarValue != null
-                                && !lastScalarValue.isEmpty()
-                                && isStableVersion(lastScalarValue)) {
-                            if (latestVersion == null
-                                    || compareVersions(lastScalarValue, latestVersion) > 0) {
-                                latestVersion = lastScalarValue;
-                            }
-                        }
                         currentKey = null;
                     }
                 }
@@ -229,7 +240,8 @@ public class HelmVersionCheckService {
 
     private boolean isStableVersion(String version) {
         String lower = version.toLowerCase();
-        return !lower.matches(".*(-alpha|-beta|-rc|v?0\\.0\\.0-|-dev|-snapshot|-next).*");
+        // Reject pre-release versions, snapshots, 0.0.0, and versions with wildcards or special chars
+        return !lower.matches(".*(-alpha|-beta|-rc|v?0\\.0\\.0|-dev|-snapshot|-next|\\*|\\?).*");
     }
 
     private int compareVersions(String v1, String v2) {
