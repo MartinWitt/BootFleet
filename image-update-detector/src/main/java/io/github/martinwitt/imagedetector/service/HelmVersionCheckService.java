@@ -179,60 +179,66 @@ public class HelmVersionCheckService {
         try {
             Yaml yaml = createYamlParser();
             try (InputStreamReader reader = new InputStreamReader(inputStream)) {
-                var events = yaml.parse(reader);
+                // Load the entire YAML as a Map
+                @SuppressWarnings("unchecked")
+                Map<String, Object> root = yaml.load(reader);
 
                 String latestVersion = null;
-                boolean inEntries = false;
-                boolean inChart = false;
-                boolean inChartList = false;
-                String currentKey = null;
-                String lastScalarValue = null;
 
-                for (Event event : events) {
-                    if (event instanceof ScalarEvent scalar) {
-                        String value = scalar.getValue();
+                if (root == null) {
+                    return null;
+                }
 
-                        // If previous key was "version" and we're in chart list, this value is the version
-                        if ("version".equals(currentKey) && inChart && inChartList) {
-                            if (!value.isEmpty() && !value.equals("version")) {
-                                boolean stable = isStableVersion(value);
-                                logger.debug("Found version {} for chart {} - stable: {}", value, chartName, stable);
-                                if (stable) {
-                                    if (latestVersion == null) {
-                                        latestVersion = value;
-                                        logger.debug("Set initial latestVersion to {}", value);
-                                    } else {
-                                        int cmp = compareVersions(value, latestVersion);
-                                        logger.debug("Comparing {} vs {} = {}", value, latestVersion, cmp);
-                                        if (cmp > 0) {
-                                            latestVersion = value;
-                                            logger.debug("Updated latestVersion to {}", value);
-                                        }
-                                    }
-                                }
+                @SuppressWarnings("unchecked")
+                Map<String, Object> entries = (Map<String, Object>) root.get("entries");
+                if (entries == null) {
+                    return null;
+                }
+
+                Object chartData = entries.get(chartName);
+                if (chartData == null) {
+                    return null;
+                }
+
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> chartVersions = (List<Map<String, Object>>) chartData;
+                if (chartVersions == null || chartVersions.isEmpty()) {
+                    return null;
+                }
+
+                // Iterate through all versions and find the latest stable one
+                for (Map<String, Object> versionEntry : chartVersions) {
+                    Object versionObj = versionEntry.get("version");
+                    if (versionObj == null) {
+                        continue;
+                    }
+
+                    String version = versionObj.toString().trim();
+                    if (version.isEmpty()) {
+                        continue;
+                    }
+
+                    boolean stable = isStableVersion(version);
+                    logger.debug("Found version {} for chart {} - stable: {}", version, chartName, stable);
+
+                    if (stable) {
+                        if (latestVersion == null) {
+                            latestVersion = version;
+                            logger.debug("Set initial latestVersion to {}", version);
+                        } else {
+                            int cmp = compareVersions(version, latestVersion);
+                            logger.debug("Comparing {} vs {} = {}", version, latestVersion, cmp);
+                            if (cmp > 0) {
+                                latestVersion = version;
+                                logger.debug("Updated latestVersion to {}", version);
                             }
                         }
-
-                        currentKey = value;
-                        if ("entries".equals(currentKey)) {
-                            inEntries = true;
-                        } else if (inEntries && !inChartList && currentKey.equals(chartName)) {
-                            inChart = true;
-                        }
-                    } else if (event instanceof SequenceStartEvent && inChart) {
-                        inChartList = true;
-                    } else if (event instanceof SequenceEndEvent && inChartList) {
-                        inChartList = false;
-                        inChart = false;
-                        // Don't break - continue to parse in case there are more charts or we're in a nested structure
-                    } else if (event instanceof MappingEndEvent && inChartList) {
-                        currentKey = null;
                     }
                 }
 
                 return latestVersion;
             }
-        } catch (YAMLException e) {
+        } catch (Exception e) {
             logger.warn("YAML parsing error for chart {}: {}", chartName, e.getMessage());
             throw new IOException("YAML parse error: " + e.getMessage(), e);
         }
