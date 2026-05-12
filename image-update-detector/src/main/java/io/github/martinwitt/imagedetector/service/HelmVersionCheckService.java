@@ -20,12 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.error.YAMLException;
-import org.yaml.snakeyaml.events.Event;
-import org.yaml.snakeyaml.events.MappingEndEvent;
-import org.yaml.snakeyaml.events.ScalarEvent;
-import org.yaml.snakeyaml.events.SequenceEndEvent;
-import org.yaml.snakeyaml.events.SequenceStartEvent;
 
 @Service
 public class HelmVersionCheckService {
@@ -220,7 +214,11 @@ public class HelmVersionCheckService {
                     }
 
                     boolean stable = isStableVersion(version);
-                    logger.debug("Found version {} for chart {} - stable: {}", version, chartName, stable);
+                    logger.debug(
+                            "Found version {} for chart {} - stable: {}",
+                            version,
+                            chartName,
+                            stable);
 
                     if (stable) {
                         if (latestVersion == null) {
@@ -247,7 +245,8 @@ public class HelmVersionCheckService {
 
     private boolean isStableVersion(String version) {
         String lower = version.toLowerCase();
-        // Reject pre-release versions, snapshots, 0.0.0, and versions with wildcards or special chars
+        // Reject pre-release versions, snapshots, 0.0.0, and versions with wildcards or special
+        // chars
         return !lower.matches(".*(-alpha|-beta|-rc|v?0\\.0\\.0|-dev|-snapshot|-next|\\*|\\?).*");
     }
 
