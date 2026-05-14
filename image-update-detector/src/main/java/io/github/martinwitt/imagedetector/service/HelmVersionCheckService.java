@@ -20,12 +20,29 @@ import org.yaml.snakeyaml.Yaml;
 @Service
 public class HelmVersionCheckService {
     private static final Logger logger = LoggerFactory.getLogger(HelmVersionCheckService.class);
-    // Large Helm repos can have big index.yaml files (Bitnami ~60MB), allow up to 256MB
-    private static final int MAX_INDEX_SIZE = 256 * 1024 * 1024; // 256MB max
+    // Large Helm repos can have big index.yaml files (Bitnami ~60MB), allow up to 100MB
+    private static final int MAX_INDEX_SIZE = 100 * 1024 * 1024; // 100MB max
 
     // Local in-memory tracking: chartId -> {currentVersion, repoUrl, chartName}
     private final Map<String, ChartInfo> trackedCharts = new HashMap<>();
     private final RestTemplate restTemplate;
+    // Per-repo cache with TTL: repoUrl -> {timestamp, cache}
+    private static final long REPO_CACHE_TTL_MS = 3600000; // 1 hour
+    private final Map<String, CacheEntry> perRepoCaches = new HashMap<>();
+    
+    private static class CacheEntry {
+        final Map<String, String> cache;
+        final long timestamp;
+        
+        CacheEntry(Map<String, String> cache) {
+            this.cache = cache;
+            this.timestamp = System.currentTimeMillis();
+        }
+        
+        boolean isExpired() {
+            return System.currentTimeMillis() - timestamp > REPO_CACHE_TTL_MS;
+        }
+    }
 
     public HelmVersionCheckService() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
@@ -52,8 +69,8 @@ public class HelmVersionCheckService {
 
     private Yaml createYamlParser() {
         LoaderOptions loaderOptions = new LoaderOptions();
-        loaderOptions.setCodePointLimit(256 * 1024 * 1024);
-        loaderOptions.setMaxAliasesForCollections(1000000);
+        loaderOptions.setCodePointLimit(100 * 1024 * 1024);  // 100MB max to prevent memory exhaustion
+        loaderOptions.setMaxAliasesForCollections(50);        // Helm charts don't need any alias support really
         loaderOptions.setAllowDuplicateKeys(false);
         return new Yaml(loaderOptions);
     }
@@ -63,8 +80,9 @@ public class HelmVersionCheckService {
         logger.info("Starting Helm version check for {} charts", trackedCharts.size());
 
         try {
-            // Cache per repository: repoUrl -> (chartName -> latestVersion)
-            Map<String, Map<String, String>> repoCache = new HashMap<>();
+            // Clean up expired per-repo caches to prevent memory buildup
+            perRepoCaches.entrySet().removeIf(e -> e.getValue().isExpired());
+            logger.debug("Cache cleanup: {} active repo caches", perRepoCaches.size());
 
             for (Map.Entry<String, ChartInfo> entry : trackedCharts.entrySet()) {
                 String chartId = entry.getKey();
@@ -72,7 +90,7 @@ public class HelmVersionCheckService {
 
                 try {
                     logger.debug("Checking chart: {} ({})", chartId, chartInfo.chartName);
-                    String latestVersion = findLatestVersion(chartInfo, repoCache);
+                    String latestVersion = findLatestVersion(chartInfo);
 
                     if (latestVersion != null) {
                         chartInfo.latestVersion = latestVersion;
@@ -95,8 +113,7 @@ public class HelmVersionCheckService {
         }
     }
 
-    private String findLatestVersion(
-            ChartInfo chartInfo, Map<String, Map<String, String>> repoCache) throws IOException {
+    private String findLatestVersion(ChartInfo chartInfo) throws IOException {
         if (chartInfo.repoUrl == null || chartInfo.repoUrl.isBlank()) {
             return null;
         }
@@ -109,17 +126,26 @@ public class HelmVersionCheckService {
         String indexUrl = repoUrl + "index.yaml";
         String chartName = chartInfo.chartName;
 
-        // Check cache first
-        Map<String, String> chartCache = repoCache.computeIfAbsent(repoUrl, k -> new HashMap<>());
-        if (chartCache.containsKey(chartName)) {
-            return chartCache.get(chartName);
+        // Check persistent per-repo cache first
+        CacheEntry cacheEntry = perRepoCaches.get(repoUrl);
+        if (cacheEntry != null && !cacheEntry.isExpired()) {
+            if (cacheEntry.cache.containsKey(chartName)) {
+                logger.debug("Using cached version for {}", chartName);
+                return cacheEntry.cache.get(chartName);
+            }
         }
 
         // Fetch and parse complete YAML
         try {
             String latestVersion = fetchLatestChartVersionStreaming(indexUrl, chartName);
             if (latestVersion != null && isStableVersion(latestVersion)) {
-                chartCache.put(chartName, latestVersion);
+                // Update or create cache entry
+                CacheEntry entry = cacheEntry;
+                if (entry == null || entry.isExpired()) {
+                    entry = new CacheEntry(new HashMap<>());
+                    perRepoCaches.put(repoUrl, entry);
+                }
+                entry.cache.put(chartName, latestVersion);
                 return latestVersion;
             }
             return null;
@@ -136,25 +162,34 @@ public class HelmVersionCheckService {
     private String fetchLatestChartVersionStreaming(String indexUrl, String chartName)
             throws IOException {
         try {
-            ResponseEntity<byte[]> response = restTemplate.getForEntity(indexUrl, byte[].class);
+            // Use streaming approach - never load entire file into memory
+            return restTemplate.execute(
+                    indexUrl,
+                    org.springframework.http.HttpMethod.GET,
+                    clientHttpRequest -> {},
+                    clientHttpResponse -> {
+                        // Check size before processing
+                        String contentLength = clientHttpResponse.getHeaders().getFirst("Content-Length");
+                        if (contentLength != null) {
+                            try {
+                                long size = Long.parseLong(contentLength);
+                                if (size > MAX_INDEX_SIZE) {
+                                    logger.warn(
+                                            "Helm index.yaml too large ({}MB) from {}, skipping",
+                                            size / (1024 * 1024),
+                                            indexUrl);
+                                    return null;
+                                }
+                            } catch (NumberFormatException e) {
+                                logger.debug("Could not parse Content-Length from {}", indexUrl);
+                            }
+                        }
 
-            if (response.getBody() == null || response.getBody().length == 0) {
-                throw new IOException("Empty response from " + indexUrl);
-            }
-
-            // Safety check on response size
-            if (response.getBody().length > MAX_INDEX_SIZE) {
-                logger.warn(
-                        "Helm index.yaml response too large ({}MB) from {}, skipping",
-                        response.getBody().length / (1024 * 1024),
-                        indexUrl);
-                return null;
-            }
-
-            // Stream parse YAML looking only for our chart name and its versions
-            try (InputStream inputStream = new java.io.ByteArrayInputStream(response.getBody())) {
-                return parseLatestVersionFromStream(inputStream, chartName);
-            }
+                        // Stream directly into parser - no byte[] buffer!
+                        try (InputStream is = clientHttpResponse.getBody()) {
+                            return parseLatestVersionFromStream(is, chartName);
+                        }
+                    });
         } catch (Exception e) {
             logger.warn("Failed to fetch chart versions from {}: {}", indexUrl, e.getMessage());
             throw new IOException(
@@ -163,81 +198,149 @@ public class HelmVersionCheckService {
     }
 
     /**
-     * Parses YAML stream and extracts only the latest version for the specified chart. Stops early
-     * once latest version is found - no need to load entire YAML.
+     * Streaming parser that uses YAML indentation to find chart versions.
+     * Tracks indentation levels to distinguish between:
+     * - Chart entries (same indent as the found chart key)
+     * - Metadata fields (greater indent than chart key)
+     * - Next chart (same indent as chart key, ends with ":")
      */
     private String parseLatestVersionFromStream(InputStream inputStream, String chartName)
             throws IOException {
-        try {
-            Yaml yaml = createYamlParser();
-            try (InputStreamReader reader = new InputStreamReader(inputStream)) {
-                // Load the entire YAML as a Map
-                @SuppressWarnings("unchecked")
-                Map<String, Object> root = yaml.load(reader);
+        try (InputStreamReader reader = new InputStreamReader(inputStream);
+                java.io.BufferedReader buffered = new java.io.BufferedReader(reader, 16384)) {
+            
+            String latestVersion = null;
+            boolean foundChart = false;
+            int chartIndentLevel = -1;
+            boolean inDependencies = false;      // Track if we're inside dependencies: section
+            int dependenciesIndent = -1;          // Indentation level of the "dependencies:" line
+            int versionCount = 0;
+            int stableCount = 0;
+            int linesAfterChart = 0;
+            final int MAX_LINES_AFTER_CHART = 10000;
 
-                String latestVersion = null;
-
-                if (root == null) {
-                    return null;
+            String line;
+            while ((line = buffered.readLine()) != null) {
+                // Calculate indentation level (spaces count as 1, tabs as 4)
+                int indent = 0;
+                for (char c : line.toCharArray()) {
+                    if (c == ' ') {
+                        indent++;
+                    } else if (c == '\t') {
+                        indent += 4;
+                    } else {
+                        break;
+                    }
+                }
+                
+                String trimmed = line.trim();
+                
+                // Skip empty lines
+                if (trimmed.isEmpty()) {
+                    continue;
                 }
 
-                @SuppressWarnings("unchecked")
-                Map<String, Object> entries = (Map<String, Object>) root.get("entries");
-                if (entries == null) {
-                    return null;
-                }
-
-                Object chartData = entries.get(chartName);
-                if (chartData == null) {
-                    return null;
-                }
-
-                @SuppressWarnings("unchecked")
-                List<Map<String, Object>> chartVersions = (List<Map<String, Object>>) chartData;
-                if (chartVersions == null || chartVersions.isEmpty()) {
-                    return null;
-                }
-
-                // Iterate through all versions and find the latest stable one
-                for (Map<String, Object> versionEntry : chartVersions) {
-                    Object versionObj = versionEntry.get("version");
-                    if (versionObj == null) {
+                // Stage 1: Look for chart name as a key
+                if (!foundChart) {
+                    // Match: "  chartname:" or "chartname:" at any indentation
+                    if (trimmed.startsWith(chartName + ":") && 
+                        (trimmed.length() == chartName.length() + 1 || 
+                         trimmed.charAt(chartName.length() + 1) != '-')) {
+                        foundChart = true;
+                        chartIndentLevel = indent;
+                        logger.info("Found chart {} in entries at indent {}", chartName, chartIndentLevel);
                         continue;
                     }
+                    continue;
+                }
 
-                    String version = versionObj.toString().trim();
-                    if (version.isEmpty()) {
-                        continue;
-                    }
+                // Stage 2: Track dependencies section - only extract chart versions, not dependency versions
+                if (trimmed.startsWith("dependencies:")) {
+                    inDependencies = true;
+                    dependenciesIndent = indent;
+                    logger.debug("Entering dependencies section at indent {}", dependenciesIndent);
+                    continue;
+                }
+                
+                // Exit dependencies section when we find a key at same or lower indentation
+                if (inDependencies && indent <= dependenciesIndent && trimmed.endsWith(":") && !trimmed.startsWith("-")) {
+                    inDependencies = false;
+                    logger.debug("Exiting dependencies section");
+                }
 
-                    boolean stable = isStableVersion(version);
-                    logger.debug(
-                            "Found version {} for chart {} - stable: {}",
-                            version,
-                            chartName,
-                            stable);
+                // Stage 3: After finding chart, look for versions
+                linesAfterChart++;
+                if (linesAfterChart > MAX_LINES_AFTER_CHART) {
+                    logger.warn("Exceeded max lines after finding chart {}, stopping", chartName);
+                    break;
+                }
 
-                    if (stable) {
-                        if (latestVersion == null) {
-                            latestVersion = version;
-                            logger.debug("Set initial latestVersion to {}", version);
-                        } else {
-                            int cmp = compareVersions(version, latestVersion);
-                            logger.debug("Comparing {} vs {} = {}", version, latestVersion, cmp);
-                            if (cmp > 0) {
+                // Stop if we hit the next chart entry
+                if (indent <= chartIndentLevel && trimmed.endsWith(":") && !trimmed.startsWith("-")) {
+                    logger.debug("Found next chart at indent {} for {}, stopping", indent, chartName);
+                    break;
+                }
+
+                // Extract version ONLY if not in dependencies section
+                if (trimmed.contains("version:") && !inDependencies) {
+                    String version = extractVersionValue(trimmed);
+                    if (version != null && !version.isEmpty()) {
+                        versionCount++;
+                        
+                        if (isStableVersion(version)) {
+                            stableCount++;
+                            if (latestVersion == null) {
                                 latestVersion = version;
-                                logger.debug("Updated latestVersion to {}", version);
+                            } else if (compareVersions(version, latestVersion) > 0) {
+                                latestVersion = version;
                             }
                         }
                     }
                 }
-
-                return latestVersion;
             }
+
+            if (latestVersion != null) {
+                logger.info(
+                        "Chart {}: FOUND latest={} (scanned {} versions, {} stable)",
+                        chartName,
+                        latestVersion,
+                        versionCount,
+                        stableCount);
+            } else {
+                logger.warn(
+                        "Chart {}: no version (found {} versions total, {} stable)",
+                        chartName,
+                        versionCount,
+                        stableCount);
+            }
+
+            return latestVersion;
         } catch (Exception e) {
-            logger.warn("YAML parsing error for chart {}: {}", chartName, e.getMessage());
-            throw new IOException("YAML parse error: " + e.getMessage(), e);
+            logger.error("YAML parse error for {}: {}", chartName, e.getMessage(), e);
+            throw new IOException("Parse failed: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Extract version value from "- version: 1.2.3" line.
+     */
+    private String extractVersionValue(String line) {
+        // Handle: "- version: 1.2.3" or "- version: '1.2.3'" or "- version: \"1.2.3\""
+        if (!line.contains("version:")) {
+            return null;
+        }
+        
+        String afterVersion = line.substring(line.indexOf("version:") + 8).trim();
+        
+        // Remove quotes if present
+        if (afterVersion.startsWith("\"") && afterVersion.endsWith("\"")) {
+            return afterVersion.substring(1, afterVersion.length() - 1);
+        }
+        if (afterVersion.startsWith("'") && afterVersion.endsWith("'")) {
+            return afterVersion.substring(1, afterVersion.length() - 1);
+        }
+        
+        return afterVersion;
     }
 
     private boolean isStableVersion(String version) {
@@ -286,8 +389,7 @@ public class HelmVersionCheckService {
         }
 
         try {
-            Map<String, Map<String, String>> repoCache = new HashMap<>();
-            String latestVersion = findLatestVersion(chartInfo, repoCache);
+            String latestVersion = findLatestVersion(chartInfo);
             logger.info(
                     "Latest version for {} ({}): {}", chartId, chartInfo.chartName, latestVersion);
             return latestVersion;
