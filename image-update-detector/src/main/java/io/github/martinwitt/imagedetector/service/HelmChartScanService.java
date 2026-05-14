@@ -46,8 +46,9 @@ public class HelmChartScanService {
 
     private Yaml createYamlParser() {
         LoaderOptions loaderOptions = new LoaderOptions();
-        loaderOptions.setCodePointLimit(50 * 1024 * 1024);   // 50MB max for Chart.yaml (much smaller than index.yaml)
-        loaderOptions.setMaxAliasesForCollections(50);       // Helm charts don't need alias support
+        loaderOptions.setCodePointLimit(
+                50 * 1024 * 1024); // 50MB max for Chart.yaml (much smaller than index.yaml)
+        loaderOptions.setMaxAliasesForCollections(50); // Helm charts don't need alias support
         loaderOptions.setAllowDuplicateKeys(false);
         return new Yaml(loaderOptions);
     }

@@ -4,11 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,16 +27,16 @@ public class HelmVersionCheckService {
     // Per-repo cache with TTL: repoUrl -> {timestamp, cache}
     private static final long REPO_CACHE_TTL_MS = 3600000; // 1 hour
     private final Map<String, CacheEntry> perRepoCaches = new HashMap<>();
-    
+
     private static class CacheEntry {
         final Map<String, String> cache;
         final long timestamp;
-        
+
         CacheEntry(Map<String, String> cache) {
             this.cache = cache;
             this.timestamp = System.currentTimeMillis();
         }
-        
+
         boolean isExpired() {
             return System.currentTimeMillis() - timestamp > REPO_CACHE_TTL_MS;
         }
@@ -69,8 +67,10 @@ public class HelmVersionCheckService {
 
     private Yaml createYamlParser() {
         LoaderOptions loaderOptions = new LoaderOptions();
-        loaderOptions.setCodePointLimit(100 * 1024 * 1024);  // 100MB max to prevent memory exhaustion
-        loaderOptions.setMaxAliasesForCollections(50);        // Helm charts don't need any alias support really
+        loaderOptions.setCodePointLimit(
+                100 * 1024 * 1024); // 100MB max to prevent memory exhaustion
+        loaderOptions.setMaxAliasesForCollections(
+                50); // Helm charts don't need any alias support really
         loaderOptions.setAllowDuplicateKeys(false);
         return new Yaml(loaderOptions);
     }
@@ -169,7 +169,8 @@ public class HelmVersionCheckService {
                     clientHttpRequest -> {},
                     clientHttpResponse -> {
                         // Check size before processing
-                        String contentLength = clientHttpResponse.getHeaders().getFirst("Content-Length");
+                        String contentLength =
+                                clientHttpResponse.getHeaders().getFirst("Content-Length");
                         if (contentLength != null) {
                             try {
                                 long size = Long.parseLong(contentLength);
@@ -198,22 +199,20 @@ public class HelmVersionCheckService {
     }
 
     /**
-     * Streaming parser that uses YAML indentation to find chart versions.
-     * Tracks indentation levels to distinguish between:
-     * - Chart entries (same indent as the found chart key)
-     * - Metadata fields (greater indent than chart key)
-     * - Next chart (same indent as chart key, ends with ":")
+     * Streaming parser that uses YAML indentation to find chart versions. Tracks indentation levels
+     * to distinguish between: - Chart entries (same indent as the found chart key) - Metadata
+     * fields (greater indent than chart key) - Next chart (same indent as chart key, ends with ":")
      */
     private String parseLatestVersionFromStream(InputStream inputStream, String chartName)
             throws IOException {
         try (InputStreamReader reader = new InputStreamReader(inputStream);
                 java.io.BufferedReader buffered = new java.io.BufferedReader(reader, 16384)) {
-            
+
             String latestVersion = null;
             boolean foundChart = false;
             int chartIndentLevel = -1;
-            boolean inDependencies = false;      // Track if we're inside dependencies: section
-            int dependenciesIndent = -1;          // Indentation level of the "dependencies:" line
+            boolean inDependencies = false; // Track if we're inside dependencies: section
+            int dependenciesIndent = -1; // Indentation level of the "dependencies:" line
             int versionCount = 0;
             int stableCount = 0;
             int linesAfterChart = 0;
@@ -232,9 +231,9 @@ public class HelmVersionCheckService {
                         break;
                     }
                 }
-                
+
                 String trimmed = line.trim();
-                
+
                 // Skip empty lines
                 if (trimmed.isEmpty()) {
                     continue;
@@ -243,27 +242,34 @@ public class HelmVersionCheckService {
                 // Stage 1: Look for chart name as a key
                 if (!foundChart) {
                     // Match: "  chartname:" or "chartname:" at any indentation
-                    if (trimmed.startsWith(chartName + ":") && 
-                        (trimmed.length() == chartName.length() + 1 || 
-                         trimmed.charAt(chartName.length() + 1) != '-')) {
+                    if (trimmed.startsWith(chartName + ":")
+                            && (trimmed.length() == chartName.length() + 1
+                                    || trimmed.charAt(chartName.length() + 1) != '-')) {
                         foundChart = true;
                         chartIndentLevel = indent;
-                        logger.info("Found chart {} in entries at indent {}", chartName, chartIndentLevel);
+                        logger.info(
+                                "Found chart {} in entries at indent {}",
+                                chartName,
+                                chartIndentLevel);
                         continue;
                     }
                     continue;
                 }
 
-                // Stage 2: Track dependencies section - only extract chart versions, not dependency versions
+                // Stage 2: Track dependencies section - only extract chart versions, not dependency
+                // versions
                 if (trimmed.startsWith("dependencies:")) {
                     inDependencies = true;
                     dependenciesIndent = indent;
                     logger.debug("Entering dependencies section at indent {}", dependenciesIndent);
                     continue;
                 }
-                
+
                 // Exit dependencies section when we find a key at same or lower indentation
-                if (inDependencies && indent <= dependenciesIndent && trimmed.endsWith(":") && !trimmed.startsWith("-")) {
+                if (inDependencies
+                        && indent <= dependenciesIndent
+                        && trimmed.endsWith(":")
+                        && !trimmed.startsWith("-")) {
                     inDependencies = false;
                     logger.debug("Exiting dependencies section");
                 }
@@ -276,8 +282,11 @@ public class HelmVersionCheckService {
                 }
 
                 // Stop if we hit the next chart entry
-                if (indent <= chartIndentLevel && trimmed.endsWith(":") && !trimmed.startsWith("-")) {
-                    logger.debug("Found next chart at indent {} for {}, stopping", indent, chartName);
+                if (indent <= chartIndentLevel
+                        && trimmed.endsWith(":")
+                        && !trimmed.startsWith("-")) {
+                    logger.debug(
+                            "Found next chart at indent {} for {}, stopping", indent, chartName);
                     break;
                 }
 
@@ -286,7 +295,7 @@ public class HelmVersionCheckService {
                     String version = extractVersionValue(trimmed);
                     if (version != null && !version.isEmpty()) {
                         versionCount++;
-                        
+
                         if (isStableVersion(version)) {
                             stableCount++;
                             if (latestVersion == null) {
@@ -321,17 +330,15 @@ public class HelmVersionCheckService {
         }
     }
 
-    /**
-     * Extract version value from "- version: 1.2.3" line.
-     */
+    /** Extract version value from "- version: 1.2.3" line. */
     private String extractVersionValue(String line) {
         // Handle: "- version: 1.2.3" or "- version: '1.2.3'" or "- version: \"1.2.3\""
         if (!line.contains("version:")) {
             return null;
         }
-        
+
         String afterVersion = line.substring(line.indexOf("version:") + 8).trim();
-        
+
         // Remove quotes if present
         if (afterVersion.startsWith("\"") && afterVersion.endsWith("\"")) {
             return afterVersion.substring(1, afterVersion.length() - 1);
@@ -339,7 +346,7 @@ public class HelmVersionCheckService {
         if (afterVersion.startsWith("'") && afterVersion.endsWith("'")) {
             return afterVersion.substring(1, afterVersion.length() - 1);
         }
-        
+
         return afterVersion;
     }
 
