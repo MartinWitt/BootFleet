@@ -1,10 +1,6 @@
 package io.github.martinwitt.imagedetector.service;
 
 import io.github.martinwitt.imagedetector.client.GitOpsClient;
-import io.github.martinwitt.imagedetector.model.HelmChartDependencyEntity;
-import io.github.martinwitt.imagedetector.model.HelmChartDependencyRepository;
-import io.github.martinwitt.imagedetector.model.HelmChartRepository;
-import java.time.Instant;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,19 +12,36 @@ import org.yaml.snakeyaml.Yaml;
 @Service
 public class HelmChartScanService {
     private static final Logger logger = LoggerFactory.getLogger(HelmChartScanService.class);
-    private static final int BATCH_SIZE = 100;
-    private final HelmChartDependencyRepository dependencyRepo;
+
+    // Local in-memory storage: appName -> List of chart dependencies
+    private final Map<String, List<ChartDependency>> scannedCharts = new HashMap<>();
     private final GitOpsClient gitOpsClient;
     private final HelmVersionCheckService versionCheckService;
 
+    /** Get all scanned charts */
+    public Map<String, List<ChartDependency>> getScannedCharts() {
+        return new HashMap<>(scannedCharts);
+    }
+
     public HelmChartScanService(
-            HelmChartRepository helmChartRepo,
-            HelmChartDependencyRepository dependencyRepo,
-            GitOpsClient gitOpsClient,
-            HelmVersionCheckService versionCheckService) {
-        this.dependencyRepo = dependencyRepo;
+            GitOpsClient gitOpsClient, HelmVersionCheckService versionCheckService) {
         this.gitOpsClient = gitOpsClient;
         this.versionCheckService = versionCheckService;
+    }
+
+    /** Local holder for scanned chart dependency information */
+    public static class ChartDependency {
+        public String name;
+        public String version;
+        public String repository;
+        public long lastUpdated;
+
+        public ChartDependency(String name, String version, String repository) {
+            this.name = name;
+            this.version = version;
+            this.repository = repository;
+            this.lastUpdated = System.currentTimeMillis();
+        }
     }
 
     private Yaml createYamlParser() {
@@ -39,7 +52,7 @@ public class HelmChartScanService {
         return new Yaml(loaderOptions);
     }
 
-    @Scheduled(fixedDelayString = "${app.gitops.refresh-interval-ms:300000}")
+    @Scheduled(fixedDelayString = "${app.gitops.refresh-interval-ms:300000}", initialDelay = 0)
     public void scanHelmCharts() {
         logger.info("Starting Helm chart scan from GitOps repository");
 
@@ -47,6 +60,9 @@ public class HelmChartScanService {
             List<String> apps = gitOpsClient.listApps();
             logger.info("Found {} apps in /apps/", apps.size());
 
+            Set<String> currentApps = new HashSet<>(apps);
+
+            // Scan all apps
             for (String appName : apps) {
                 try {
                     scanApp(appName);
@@ -54,6 +70,24 @@ public class HelmChartScanService {
                     logger.warn("Failed to scan app {}: {}", appName, e.getMessage());
                 }
             }
+
+            // Clean up removed apps
+            scannedCharts.keySet().stream()
+                    .filter(app -> !currentApps.contains(app))
+                    .toList()
+                    .forEach(
+                            app -> {
+                                List<ChartDependency> charts = scannedCharts.remove(app);
+                                logger.info(
+                                        "Removed app from scanning: {} (had {} charts)",
+                                        app,
+                                        charts.size());
+
+                                // Unregister all charts for this app from version check service
+                                for (ChartDependency chart : charts) {
+                                    versionCheckService.unregisterChart(app, chart.name);
+                                }
+                            });
 
             logger.info("Helm chart scan completed");
         } catch (Exception e) {
@@ -89,6 +123,8 @@ public class HelmChartScanService {
         Object depsObj = chartYaml.get("dependencies");
         if (depsObj == null) {
             logger.debug("No dependencies found in Chart.yaml for app: {}", appName);
+            // Clear existing charts for this app if they exist
+            scannedCharts.remove(appName);
             return;
         }
 
@@ -97,8 +133,8 @@ public class HelmChartScanService {
             return;
         }
 
-        Set<String> currentDeps = new HashSet<>();
-        List<HelmChartDependencyEntity> toSave = new ArrayList<>();
+        List<ChartDependency> newCharts = new ArrayList<>();
+        Set<String> newDepsNames = new HashSet<>();
 
         for (Object depObj : dependenciesList) {
             if (!(depObj instanceof Map<?, ?> depMap)) {
@@ -115,33 +151,12 @@ public class HelmChartScanService {
                 continue;
             }
 
-            currentDeps.add(name);
+            newDepsNames.add(name);
+            ChartDependency chart =
+                    new ChartDependency(name, version, repository != null ? repository : "");
+            newCharts.add(chart);
 
-            var existing = dependencyRepo.findByAppNameAndDependencyName(appName, name);
-            HelmChartDependencyEntity dep =
-                    existing.orElseGet(
-                            () ->
-                                    new HelmChartDependencyEntity(
-                                            appName,
-                                            name,
-                                            version,
-                                            repository != null ? repository : ""));
-
-            if (!version.equals(dep.getVersion())) {
-                logger.info(
-                        "Version update for {}/{}: {} -> {}",
-                        appName,
-                        name,
-                        dep.getVersion(),
-                        version);
-            }
-
-            dep.setVersion(version);
-            if (repository != null) {
-                dep.setRepository(repository);
-            }
-            dep.setLastUpdated(Instant.now());
-            toSave.add(dep);
+            logger.debug("Found chart {}/{}: {} from {}", appName, name, version, repository);
 
             // Register with version check service for automatic update detection
             if (repository != null && !repository.isBlank()) {
@@ -149,31 +164,28 @@ public class HelmChartScanService {
             }
         }
 
-        // Batch save dependencies
-        if (!toSave.isEmpty()) {
-            for (int i = 0; i < toSave.size(); i += BATCH_SIZE) {
-                int end = Math.min(i + BATCH_SIZE, toSave.size());
-                dependencyRepo.saveAll(toSave.subList(i, end));
-            }
-        }
+        // Store the charts locally
+        if (!newCharts.isEmpty()) {
+            List<ChartDependency> oldCharts = scannedCharts.put(appName, newCharts);
 
-        // Clean up removed dependencies in batches
-        List<HelmChartDependencyEntity> toDelete =
-                dependencyRepo.findByAppName(appName).stream()
-                        .filter(dep -> !currentDeps.contains(dep.getDependencyName()))
-                        .toList();
-
-        if (!toDelete.isEmpty()) {
-            for (int i = 0; i < toDelete.size(); i += BATCH_SIZE) {
-                int end = Math.min(i + BATCH_SIZE, toDelete.size());
-                List<HelmChartDependencyEntity> batch = toDelete.subList(i, end);
-
-                // Unregister from version check service
-                for (HelmChartDependencyEntity dep : batch) {
-                    versionCheckService.unregisterChart(appName, dep.getDependencyName());
+            // If there were old charts, unregister any that are no longer present
+            if (oldCharts != null) {
+                for (ChartDependency oldChart : oldCharts) {
+                    if (!newDepsNames.contains(oldChart.name)) {
+                        logger.info("Chart removed for {}/{}", appName, oldChart.name);
+                        versionCheckService.unregisterChart(appName, oldChart.name);
+                    }
                 }
+            }
 
-                dependencyRepo.deleteAllInBatch(batch);
+            logger.info("Updated {} with {} Helm chart dependencies", appName, newCharts.size());
+        } else {
+            // Remove if no dependencies found
+            List<ChartDependency> oldCharts = scannedCharts.remove(appName);
+            if (oldCharts != null) {
+                for (ChartDependency chart : oldCharts) {
+                    versionCheckService.unregisterChart(appName, chart.name);
+                }
             }
         }
     }

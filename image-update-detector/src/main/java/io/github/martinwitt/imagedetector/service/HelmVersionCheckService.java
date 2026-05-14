@@ -33,44 +33,18 @@ public class HelmVersionCheckService {
         factory.setReadTimeout(30000); // 30 seconds
 
         this.restTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(factory));
-
-        // Initialize with known charts to monitor
-        initializeTrackedCharts();
-    }
-
-    /**
-     * Initialize the local chart tracking map with charts to monitor. These can be replaced with
-     * config-based loading later.
-     */
-    private void initializeTrackedCharts() {
-        // Format: chartId -> ChartInfo(currentVersion, repoUrl, chartName)
-        trackedCharts.put(
-                "oauth2-proxy",
-                new ChartInfo("7.2.0", "https://oauth2-proxy.github.io/manifests", "oauth2-proxy"));
-        trackedCharts.put(
-                "grafana",
-                new ChartInfo("6.43.3", "https://grafana.github.io/helm-charts", "grafana"));
-        trackedCharts.put(
-                "prometheus",
-                new ChartInfo(
-                        "15.0.0",
-                        "https://prometheus-community.github.io/helm-charts",
-                        "prometheus"));
-        trackedCharts.put(
-                "nginx-ingress",
-                new ChartInfo(
-                        "4.8.0", "https://kubernetes.github.io/ingress-nginx", "ingress-nginx"));
-        // Add more charts as needed
     }
 
     /** Simple holder for tracked chart information */
     public static class ChartInfo {
         public String currentVersion;
+        public String latestVersion;
         public String repoUrl;
         public String chartName;
 
         public ChartInfo(String currentVersion, String repoUrl, String chartName) {
             this.currentVersion = currentVersion;
+            this.latestVersion = currentVersion; // Initially same as current
             this.repoUrl = repoUrl;
             this.chartName = chartName;
         }
@@ -84,7 +58,7 @@ public class HelmVersionCheckService {
         return new Yaml(loaderOptions);
     }
 
-    @Scheduled(fixedDelayString = "${app.helm-check-interval-ms:600000}")
+    @Scheduled(fixedDelayString = "${app.helm-check-interval-ms:600000}", initialDelay = 10000)
     public void checkForUpdates() {
         logger.info("Starting Helm version check for {} charts", trackedCharts.size());
 
@@ -100,15 +74,14 @@ public class HelmVersionCheckService {
                     logger.debug("Checking chart: {} ({})", chartId, chartInfo.chartName);
                     String latestVersion = findLatestVersion(chartInfo, repoCache);
 
-                    if (latestVersion != null && !latestVersion.equals(chartInfo.currentVersion)) {
+                    if (latestVersion != null) {
+                        chartInfo.latestVersion = latestVersion;
                         if (!latestVersion.equals(chartInfo.currentVersion)) {
                             logger.info(
                                     "Update available for {}: {} -> {}",
                                     chartId,
                                     chartInfo.currentVersion,
                                     latestVersion);
-                            // Update the local version
-                            chartInfo.currentVersion = latestVersion;
                         }
                     }
                 } catch (Exception e) {

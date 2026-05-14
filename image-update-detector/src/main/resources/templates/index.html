@@ -185,6 +185,9 @@
         <div class="stat-card">
             <div class="stat-label">Total Dependencies Being Monitored</div>
             <div class="stat-number" th:text="${dependencyCount ?: 0}">0</div>
+            <div class="stat-label" style="margin-top: 10px; font-size: 12px;">Across [[${appCount ?: 0}]] applications</div>
+            <div class="stat-label" style="margin-top: 8px; font-size: 11px; opacity: 0.8;"
+                 th:text="${outOfDateCount > 0} ? '⚠️ ' + ${outOfDateCount} + ' update(s) available' : '✓ All up to date'"></div>
         </div>
 
         <div class="dependencies-section">
@@ -196,18 +199,22 @@
             </div>
 
             <div th:unless="${dependencies.isEmpty()}" class="dependencies-grid">
-                <div th:each="dep : ${dependencies}" class="dependency-card" th:classappend="${dep.hasUpdate()} ? 'outdated' : ''">
-                    <div class="dependency-app" th:text="${dep.appName}"></div>
+                <div th:each="dep : ${dependencies}"
+                     class="dependency-card"
+                     th:classappend="${dep['latestVersion'] != null and dep['latestVersion'] != '' and dep['latestVersion'] != dep['version']} ? 'outdated' : ''">
+                    <div class="dependency-app" th:text="${dep['app']}"></div>
                     <div>
-                        <span class="dependency-name" th:text="${dep.dependencyName}"></span>
-                        <span class="version-badge" th:text="${dep.version}"></span>
+                        <span class="dependency-name" th:text="${dep['name']}"></span>
+                        <span class="version-badge" th:text="${dep['version']}"></span>
                     </div>
-                    <div th:if="${dep.latestVersion != null}" style="margin: 10px 0;">
-                        <small style="color: #666;">Latest: <strong style="color: #17a2b8;" th:text="${dep.latestVersion}"></strong></small>
+                    <div th:if="${dep['latestVersion'] != null and dep['latestVersion'] != '' and dep['latestVersion'] != dep['version']}"
+                         style="margin-top: 8px; padding: 8px; background: #e8f5e9; border-radius: 4px; border-left: 3px solid #4caf50;">
+                        <div style="font-size: 11px; color: #2e7d32; font-weight: 500; margin-bottom: 4px;">New version available:</div>
+                        <div style="font-size: 13px; color: #1b5e20; font-weight: 600;" th:text="${dep['latestVersion']}"></div>
                     </div>
-                    <div class="dependency-repo" th:if="${dep.repository}" th:text="${dep.repository}"></div>
-                    <div class="last-updated">
-                        Updated: <span th:text="${#temporals.format(dep.lastUpdated, 'dd.MM.yyyy HH:mm')}"></span>
+                    <div class="dependency-repo" th:if="${dep['repository']}" th:text="${dep['repository']}"></div>
+                    <div class="last-updated" style="margin-top: 10px;">
+                        Scanned from GitOps
                     </div>
                 </div>
             </div>

@@ -1,43 +1,6 @@
 {
   "reflection": [
     {
-      "type": "io.github.martinwitt.imagedetector.model.HelmChartDependencyEntity",
-      "methods": [
-        {
-          "name": "hasUpdate",
-          "parameterTypes": []
-        },
-        {
-          "name": "getId",
-          "parameterTypes": []
-        },
-        {
-          "name": "getAppName",
-          "parameterTypes": []
-        },
-        {
-          "name": "getDependencyName",
-          "parameterTypes": []
-        },
-        {
-          "name": "getVersion",
-          "parameterTypes": []
-        },
-        {
-          "name": "getRepository",
-          "parameterTypes": []
-        },
-        {
-          "name": "getLatestVersion",
-          "parameterTypes": []
-        },
-        {
-          "name": "getLastUpdated",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "org.thymeleaf.expression.Temporals",
       "methods": [
         {
@@ -66,18 +29,11 @@
           ]
         }
       ]
-    },
-    {
-      "type": "org.hibernate.orm.core.internal.EntityManagerImpl",
-      "allPublicMethods": true
     }
   ],
   "serialization": [
     {
       "type": "java.time.Instant"
-    },
-    {
-      "type": "io.github.martinwitt.imagedetector.model.HelmChartDependencyEntity"
     }
   ]
 }

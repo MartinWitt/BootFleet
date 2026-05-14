@@ -13,6 +13,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class ImageUpdateDetectorApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ImageUpdateDetectorApplication.class, args);
+        SpringApplication application = new SpringApplication(ImageUpdateDetectorApplication.class);
+        application.setAdditionalProfiles("local");
+        application.run(args);
     }
 }
