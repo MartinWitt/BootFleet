@@ -1,7 +1,5 @@
 package io.github.martinwitt.imagedetector.service;
 
-import io.github.martinwitt.imagedetector.model.HelmChartDependencyEntity;
-import io.github.martinwitt.imagedetector.model.HelmChartDependencyRepository;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -10,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -26,17 +22,58 @@ public class HelmVersionCheckService {
     private static final Logger logger = LoggerFactory.getLogger(HelmVersionCheckService.class);
     // Large Helm repos can have big index.yaml files (Bitnami ~60MB), allow up to 256MB
     private static final int MAX_INDEX_SIZE = 256 * 1024 * 1024; // 256MB max
-    private final HelmChartDependencyRepository dependencyRepo;
+
+    // Local in-memory tracking: chartId -> {currentVersion, repoUrl, chartName}
+    private final Map<String, ChartInfo> trackedCharts = new HashMap<>();
     private final RestTemplate restTemplate;
 
-    public HelmVersionCheckService(HelmChartDependencyRepository dependencyRepo) {
-        this.dependencyRepo = dependencyRepo;
-
+    public HelmVersionCheckService() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(10000); // 10 seconds
         factory.setReadTimeout(30000); // 30 seconds
 
         this.restTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(factory));
+
+        // Initialize with known charts to monitor
+        initializeTrackedCharts();
+    }
+
+    /**
+     * Initialize the local chart tracking map with charts to monitor. These can be replaced with
+     * config-based loading later.
+     */
+    private void initializeTrackedCharts() {
+        // Format: chartId -> ChartInfo(currentVersion, repoUrl, chartName)
+        trackedCharts.put(
+                "oauth2-proxy",
+                new ChartInfo("7.2.0", "https://oauth2-proxy.github.io/manifests", "oauth2-proxy"));
+        trackedCharts.put(
+                "grafana",
+                new ChartInfo("6.43.3", "https://grafana.github.io/helm-charts", "grafana"));
+        trackedCharts.put(
+                "prometheus",
+                new ChartInfo(
+                        "15.0.0",
+                        "https://prometheus-community.github.io/helm-charts",
+                        "prometheus"));
+        trackedCharts.put(
+                "nginx-ingress",
+                new ChartInfo(
+                        "4.8.0", "https://kubernetes.github.io/ingress-nginx", "ingress-nginx"));
+        // Add more charts as needed
+    }
+
+    /** Simple holder for tracked chart information */
+    public static class ChartInfo {
+        public String currentVersion;
+        public String repoUrl;
+        public String chartName;
+
+        public ChartInfo(String currentVersion, String repoUrl, String chartName) {
+            this.currentVersion = currentVersion;
+            this.repoUrl = repoUrl;
+            this.chartName = chartName;
+        }
     }
 
     private Yaml createYamlParser() {
@@ -49,46 +86,34 @@ public class HelmVersionCheckService {
 
     @Scheduled(fixedDelayString = "${app.helm-check-interval-ms:600000}")
     public void checkForUpdates() {
-        logger.info("Starting Helm version check");
+        logger.info("Starting Helm version check for {} charts", trackedCharts.size());
 
         try {
             // Cache per repository: repoUrl -> (chartName -> latestVersion)
             Map<String, Map<String, String>> repoCache = new HashMap<>();
-            int pageSize = 100;
-            int pageNum = 0;
-            boolean hasMore = true;
 
-            while (hasMore) {
-                Pageable pageable = PageRequest.of(pageNum, pageSize);
-                var page = dependencyRepo.findAll(pageable);
+            for (Map.Entry<String, ChartInfo> entry : trackedCharts.entrySet()) {
+                String chartId = entry.getKey();
+                ChartInfo chartInfo = entry.getValue();
 
-                for (HelmChartDependencyEntity dep : page.getContent()) {
-                    try {
-                        String latestVersion = findLatestVersion(dep, repoCache);
-                        if (latestVersion != null
-                                && !latestVersion.equals(dep.getLatestVersion())) {
-                            dep.setLatestVersion(latestVersion);
-                            if (!latestVersion.equals(dep.getVersion())) {
-                                logger.info(
-                                        "Update available for {}/{}: {} -> {}",
-                                        dep.getAppName(),
-                                        dep.getDependencyName(),
-                                        dep.getVersion(),
-                                        latestVersion);
-                            }
-                            dependencyRepo.save(dep);
+                try {
+                    logger.debug("Checking chart: {} ({})", chartId, chartInfo.chartName);
+                    String latestVersion = findLatestVersion(chartInfo, repoCache);
+
+                    if (latestVersion != null && !latestVersion.equals(chartInfo.currentVersion)) {
+                        if (!latestVersion.equals(chartInfo.currentVersion)) {
+                            logger.info(
+                                    "Update available for {}: {} -> {}",
+                                    chartId,
+                                    chartInfo.currentVersion,
+                                    latestVersion);
+                            // Update the local version
+                            chartInfo.currentVersion = latestVersion;
                         }
-                    } catch (Exception e) {
-                        logger.warn(
-                                "Failed to check version for {}/{}: {}",
-                                dep.getAppName(),
-                                dep.getDependencyName(),
-                                e.getMessage());
                     }
+                } catch (Exception e) {
+                    logger.warn("Failed to check version for {}: {}", chartId, e.getMessage());
                 }
-
-                hasMore = page.hasNext();
-                pageNum++;
             }
 
             logger.info("Helm version check completed");
@@ -98,19 +123,18 @@ public class HelmVersionCheckService {
     }
 
     private String findLatestVersion(
-            HelmChartDependencyEntity dep, Map<String, Map<String, String>> repoCache)
-            throws IOException {
-        if (dep.getRepository() == null || dep.getRepository().isBlank()) {
+            ChartInfo chartInfo, Map<String, Map<String, String>> repoCache) throws IOException {
+        if (chartInfo.repoUrl == null || chartInfo.repoUrl.isBlank()) {
             return null;
         }
 
-        String repoUrl = dep.getRepository().trim();
+        String repoUrl = chartInfo.repoUrl.trim();
         if (!repoUrl.endsWith("/")) {
             repoUrl += "/";
         }
 
         String indexUrl = repoUrl + "index.yaml";
-        String chartName = dep.getDependencyName();
+        String chartName = chartInfo.chartName;
 
         // Check cache first
         Map<String, String> chartCache = repoCache.computeIfAbsent(repoUrl, k -> new HashMap<>());
@@ -118,7 +142,7 @@ public class HelmVersionCheckService {
             return chartCache.get(chartName);
         }
 
-        // Fetch and parse streaming
+        // Fetch and parse complete YAML
         try {
             String latestVersion = fetchLatestChartVersionStreaming(indexUrl, chartName);
             if (latestVersion != null && isStableVersion(latestVersion)) {
@@ -275,5 +299,64 @@ public class HelmVersionCheckService {
             if (minor != other.minor) return Integer.compare(minor, other.minor);
             return Integer.compare(patch, other.patch);
         }
+    }
+
+    /**
+     * Testing method to check version of a specific chart Usage: call this to verify version
+     * detection works correctly
+     */
+    public String getLatestVersionForChart(String chartId) {
+        ChartInfo chartInfo = trackedCharts.get(chartId);
+        if (chartInfo == null) {
+            logger.warn("Chart not found: {}", chartId);
+            return null;
+        }
+
+        try {
+            Map<String, Map<String, String>> repoCache = new HashMap<>();
+            String latestVersion = findLatestVersion(chartInfo, repoCache);
+            logger.info(
+                    "Latest version for {} ({}): {}", chartId, chartInfo.chartName, latestVersion);
+            return latestVersion;
+        } catch (Exception e) {
+            logger.error("Failed to get latest version for {}: {}", chartId, e.getMessage());
+            return null;
+        }
+    }
+
+    /** Testing method: Get current tracked versions */
+    public Map<String, ChartInfo> getTrackedCharts() {
+        return trackedCharts;
+    }
+
+    /** Add a chart for tracking (can be called dynamically from HelmChartScanService) */
+    public void registerChart(
+            String appName, String dependencyName, String currentVersion, String repoUrl) {
+        if (repoUrl == null || repoUrl.isBlank()) {
+            logger.debug(
+                    "Skipping chart registration for {}/{} - no repository URL",
+                    appName,
+                    dependencyName);
+            return;
+        }
+
+        String chartId = appName + "/" + dependencyName;
+        trackedCharts.put(chartId, new ChartInfo(currentVersion, repoUrl, dependencyName));
+        logger.debug("Registered chart for tracking: {} (v{})", chartId, currentVersion);
+    }
+
+    /** Remove a chart from tracking */
+    public void unregisterChart(String appName, String dependencyName) {
+        String chartId = appName + "/" + dependencyName;
+        if (trackedCharts.remove(chartId) != null) {
+            logger.debug("Unregistered chart: {}", chartId);
+        }
+    }
+
+    /** Testing method: Add a chart for tracking */
+    public void addTrackedChart(
+            String chartId, String currentVersion, String repoUrl, String chartName) {
+        trackedCharts.put(chartId, new ChartInfo(currentVersion, repoUrl, chartName));
+        logger.info("Added chart for tracking: {} -> {}/{}", chartId, repoUrl, chartName);
     }
 }

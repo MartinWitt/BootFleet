@@ -19,13 +19,16 @@ public class HelmChartScanService {
     private static final int BATCH_SIZE = 100;
     private final HelmChartDependencyRepository dependencyRepo;
     private final GitOpsClient gitOpsClient;
+    private final HelmVersionCheckService versionCheckService;
 
     public HelmChartScanService(
             HelmChartRepository helmChartRepo,
             HelmChartDependencyRepository dependencyRepo,
-            GitOpsClient gitOpsClient) {
+            GitOpsClient gitOpsClient,
+            HelmVersionCheckService versionCheckService) {
         this.dependencyRepo = dependencyRepo;
         this.gitOpsClient = gitOpsClient;
+        this.versionCheckService = versionCheckService;
     }
 
     private Yaml createYamlParser() {
@@ -139,6 +142,11 @@ public class HelmChartScanService {
             }
             dep.setLastUpdated(Instant.now());
             toSave.add(dep);
+
+            // Register with version check service for automatic update detection
+            if (repository != null && !repository.isBlank()) {
+                versionCheckService.registerChart(appName, name, version, repository);
+            }
         }
 
         // Batch save dependencies
@@ -158,7 +166,14 @@ public class HelmChartScanService {
         if (!toDelete.isEmpty()) {
             for (int i = 0; i < toDelete.size(); i += BATCH_SIZE) {
                 int end = Math.min(i + BATCH_SIZE, toDelete.size());
-                dependencyRepo.deleteAllInBatch(toDelete.subList(i, end));
+                List<HelmChartDependencyEntity> batch = toDelete.subList(i, end);
+
+                // Unregister from version check service
+                for (HelmChartDependencyEntity dep : batch) {
+                    versionCheckService.unregisterChart(appName, dep.getDependencyName());
+                }
+
+                dependencyRepo.deleteAllInBatch(batch);
             }
         }
     }
