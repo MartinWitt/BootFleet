@@ -64,6 +64,7 @@
               <BP_JVM_CDS_ENABLED>true</BP_JVM_CDS_ENABLED>
               <BP_JVM_AOTCACHE_ENABLED>true</BP_JVM_AOTCACHE_ENABLED>
               <BP_SPRING_AOT_ENABLED>true</BP_SPRING_AOT_ENABLED>
+              <BPE_BPL_JVM_THREAD_COUNT>25</BPE_BPL_JVM_THREAD_COUNT>
             </env>
           </image>
         </configuration>
