@@ -11,7 +11,6 @@ import io.micrometer.core.annotation.Counted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Event handler for StatefulSet informer events. */
 public class StatefulSetEventHandler implements ResourceEventHandler<StatefulSet> {
     private static final Logger logger = LoggerFactory.getLogger(StatefulSetEventHandler.class);
 

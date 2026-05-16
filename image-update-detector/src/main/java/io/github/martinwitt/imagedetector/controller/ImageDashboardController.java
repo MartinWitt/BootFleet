@@ -2,7 +2,10 @@ package io.github.martinwitt.imagedetector.controller;
 
 import io.github.martinwitt.imagedetector.service.HelmChartScanService;
 import io.github.martinwitt.imagedetector.service.HelmVersionCheckService;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +30,6 @@ public class ImageDashboardController {
         Map<String, HelmVersionCheckService.ChartInfo> trackedCharts =
                 versionCheckService.getTrackedCharts();
 
-        // Flatten the structure for the template and enrich with latest version info
         List<Map<String, Object>> allDependencies = new ArrayList<>();
         int outOfDateCount = 0;
 
@@ -37,17 +39,15 @@ public class ImageDashboardController {
             for (HelmChartScanService.ChartDependency dep : entry.getValue()) {
                 Map<String, Object> depMap = new LinkedHashMap<>();
                 depMap.put("app", appName);
-                depMap.put("name", dep.name);
-                depMap.put("version", dep.version);
-                depMap.put("repository", dep.repository);
+                depMap.put("name", dep.name());
+                depMap.put("version", dep.version());
+                depMap.put("repository", dep.repository());
 
-                // Find latest version from tracked charts
-                String chartId = appName + "/" + dep.name;
-                HelmVersionCheckService.ChartInfo chartInfo = trackedCharts.get(chartId);
-                if (chartInfo != null && chartInfo.latestVersion != null) {
-                    depMap.put("latestVersion", chartInfo.latestVersion);
-                    // Count if this chart is out of date
-                    if (!chartInfo.latestVersion.equals(dep.version)) {
+                HelmVersionCheckService.ChartInfo chartInfo =
+                        trackedCharts.get(appName + "/" + dep.name());
+                if (chartInfo != null && chartInfo.latestVersion() != null) {
+                    depMap.put("latestVersion", chartInfo.latestVersion());
+                    if (!chartInfo.latestVersion().equals(dep.version())) {
                         outOfDateCount++;
                     }
                 }

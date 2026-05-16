@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-/** Application service for managing workloads and their configuration dependencies. */
 @Service
 public class WorkloadManagementService {
     private static final Logger logger = LoggerFactory.getLogger(WorkloadManagementService.class);
@@ -19,7 +18,6 @@ public class WorkloadManagementService {
         this.workloadConfigurationService = workloadConfigurationService;
     }
 
-    /** Register a workload and track its configuration dependencies. */
     @Timed(value = "workload.register.duration", description = "Time taken to register a workload")
     public void registerWorkload(WorkloadConfiguration workloadConfig) {
         try {
@@ -31,7 +29,6 @@ public class WorkloadManagementService {
         }
     }
 
-    /** Unregister a workload and clean up its configuration dependencies. */
     @Timed(
             value = "workload.unregister.duration",
             description = "Time taken to unregister a workload")

@@ -16,10 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-/**
- * Service for managing thinking sessions and thought chains. Handles stateful storage of thought
- * sessions with support for revisions, branching, and hypothesis verification.
- */
 @Service
 public class ThoughtChainService {
 
@@ -41,12 +37,6 @@ public class ThoughtChainService {
     @Value("${app.thinking.branch.max-per-session:100}")
     private int maxBranchesPerSession;
 
-    /**
-     * Starts a new thinking session.
-     *
-     * @param initialThoughtEstimate Initial estimate of thoughts needed
-     * @return The new thinking session
-     */
     public ThinkingSession startThinkingSession(int initialThoughtEstimate) {
         String sessionId = UUID.randomUUID().toString();
         ThinkingSession session = new ThinkingSession(sessionId, initialThoughtEstimate);
@@ -58,12 +48,6 @@ public class ThoughtChainService {
         return session;
     }
 
-    /**
-     * Gets a session by ID.
-     *
-     * @param sessionId The session ID
-     * @return The session or null if not found
-     */
     public ThinkingSession getSession(String sessionId) {
         ThinkingSession session = sessions.get(sessionId);
         if (session != null) {
@@ -72,14 +56,6 @@ public class ThoughtChainService {
         return session;
     }
 
-    /**
-     * Adds a new thought to the session.
-     *
-     * @param sessionId The session ID
-     * @param thoughtContent The thought content
-     * @param nextThoughtNeeded Whether more thoughts are needed
-     * @return The added thought
-     */
     public Thought addThought(String sessionId, String thoughtContent, boolean nextThoughtNeeded) {
         ThinkingSession session = validateSessionExists(sessionId);
 
@@ -93,14 +69,7 @@ public class ThoughtChainService {
         String thoughtId = UUID.randomUUID().toString();
         Thought thought =
                 new Thought(
-                        thoughtId,
-                        thoughtNumber,
-                        thoughtContent,
-                        false, // not a revision
-                        null, // no revision target
-                        false, // not a branch
-                        null, // no branch origin
-                        null); // no branch ID
+                        thoughtId, thoughtNumber, thoughtContent, false, null, false, null, null);
 
         session.addThought(thought);
         logger.debug(
@@ -108,14 +77,6 @@ public class ThoughtChainService {
         return thought;
     }
 
-    /**
-     * Revises a previous thought by creating a new thought that references it.
-     *
-     * @param sessionId The session ID
-     * @param thoughtContent The revised thought content
-     * @param revisesThoughtNumber The thought number being revised
-     * @return The new revision thought
-     */
     public Thought reviseThought(
             String sessionId, String thoughtContent, int revisesThoughtNumber) {
         ThinkingSession session = validateSessionExists(sessionId);
@@ -130,11 +91,11 @@ public class ThoughtChainService {
                         thoughtId,
                         newThoughtNumber,
                         thoughtContent,
-                        true, // is a revision
+                        true,
                         revisesThoughtNumber,
-                        false, // not a branch
-                        null, // no branch origin
-                        null); // no branch ID
+                        false,
+                        null,
+                        null);
 
         session.addThought(thought);
         logger.debug(
@@ -146,14 +107,6 @@ public class ThoughtChainService {
         return thought;
     }
 
-    /**
-     * Creates a branch from a previous thought.
-     *
-     * @param sessionId The session ID
-     * @param branchFromThoughtNumber The thought to branch from
-     * @param branchDescription Description of the branch
-     * @return The new branch
-     */
     public ThoughtBranch branchThought(
             String sessionId, int branchFromThoughtNumber, String branchDescription) {
         ThinkingSession session = validateSessionExists(sessionId);
@@ -175,14 +128,6 @@ public class ThoughtChainService {
         return branch;
     }
 
-    /**
-     * Adds a thought to an existing branch.
-     *
-     * @param sessionId The session ID
-     * @param branchId The branch ID
-     * @param thoughtContent The thought content
-     * @return The added thought
-     */
     public Thought addThoughtToBranch(String sessionId, String branchId, String thoughtContent) {
         ThinkingSession session = validateSessionExists(sessionId);
 
@@ -200,15 +145,14 @@ public class ThoughtChainService {
                         thoughtId,
                         thoughtNumber,
                         thoughtContent,
-                        false, // not a revision
-                        null, // no revision target
-                        true, // is a branch
+                        false,
+                        null,
+                        true,
                         branch.branchFromThought(),
                         branchId);
 
         session.addThought(thought);
 
-        // Update branch to include this thought
         List<String> thoughtIds =
                 Stream.concat(branch.thoughtIds().stream(), Stream.of(thoughtId)).toList();
         ThoughtBranch updatedBranch =
@@ -229,13 +173,6 @@ public class ThoughtChainService {
         return thought;
     }
 
-    /**
-     * Completes the thinking session with a final answer.
-     *
-     * @param sessionId The session ID
-     * @param finalAnswer The final answer/conclusion
-     * @return The completed session
-     */
     public ThinkingSession completeThinkingSession(String sessionId, String finalAnswer) {
         ThinkingSession session = validateSessionExists(sessionId);
         session.setFinalAnswer(finalAnswer);
@@ -244,12 +181,6 @@ public class ThoughtChainService {
         return session;
     }
 
-    /**
-     * Pauses a thinking session.
-     *
-     * @param sessionId The session ID
-     * @return The paused session
-     */
     public ThinkingSession pauseSession(String sessionId) {
         ThinkingSession session = validateSessionExists(sessionId);
         session.setStatus(SessionStatus.PAUSED);
@@ -257,12 +188,6 @@ public class ThoughtChainService {
         return session;
     }
 
-    /**
-     * Resumes a paused thinking session.
-     *
-     * @param sessionId The session ID
-     * @return The resumed session
-     */
     public ThinkingSession resumeSession(String sessionId) {
         ThinkingSession session = validateSessionExists(sessionId);
         session.setStatus(SessionStatus.ACTIVE);
@@ -271,50 +196,36 @@ public class ThoughtChainService {
         return session;
     }
 
-    /** Periodically cleans up idle sessions. Scheduled task runs every 5 minutes. */
     @Scheduled(fixedRateString = "${app.thinking.session.cleanup-interval-minutes:5}m")
     public void cleanupIdleSessions() {
         Instant cutoff = Instant.now().minusSeconds(sessionTimeoutMinutes * 60);
 
-        List<String> removed =
+        List<String> expiredIds =
                 sessions.entrySet().stream()
                         .filter(e -> e.getValue().getLastAccessedAt().isBefore(cutoff))
                         .map(Map.Entry::getKey)
-                        .peek(sessions::remove)
-                        .peek(id -> logger.info("Cleaned up idle session {}", id))
                         .toList();
+
+        expiredIds.forEach(
+                id -> {
+                    sessions.remove(id);
+                    logger.info("Cleaned up idle session {}", id);
+                });
 
         logger.debug(
                 "Session cleanup complete. Removed {} idle sessions. Active sessions: {}",
-                removed.size(),
+                expiredIds.size(),
                 sessions.size());
     }
 
-    /**
-     * Gets all active sessions (for monitoring/debugging).
-     *
-     * @return Map of session ID to session
-     */
     public Map<String, ThinkingSession> getAllSessions() {
         return new ConcurrentHashMap<>(sessions);
     }
 
-    /**
-     * Gets session count (for monitoring).
-     *
-     * @return Number of active sessions
-     */
     public int getSessionCount() {
         return sessions.size();
     }
 
-    /**
-     * Validates that a session exists.
-     *
-     * @param sessionId The session ID to validate
-     * @return The session
-     * @throws IllegalArgumentException if session not found
-     */
     private ThinkingSession validateSessionExists(String sessionId) {
         ThinkingSession session = getSession(sessionId);
         if (session == null) {
@@ -323,13 +234,6 @@ public class ThoughtChainService {
         return session;
     }
 
-    /**
-     * Validates that a thought with the given number exists in the session.
-     *
-     * @param session The session
-     * @param thoughtNumber The thought number to validate
-     * @throws IllegalArgumentException if thought not found
-     */
     private void validateThoughtExists(ThinkingSession session, int thoughtNumber) {
         boolean found =
                 session.getThoughts().stream().anyMatch(t -> t.thoughtNumber() == thoughtNumber);

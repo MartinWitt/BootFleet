@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import org.springframework.stereotype.Component;
 
-/** Kubernetes adapter for reading workload configuration dependencies. */
 @Component
 public class KubernetesWorkloadReader implements WorkloadReader {
 
@@ -26,8 +25,6 @@ public class KubernetesWorkloadReader implements WorkloadReader {
 
     @Override
     public Set<ConfigResourceId> extractConfigDependencies(WorkloadConfiguration workloadConfig) {
-        // This method is not used in this implementation as extraction happens in the informer
-        // handlers
         return workloadConfig.configDependencies();
     }
 
@@ -42,7 +39,6 @@ public class KubernetesWorkloadReader implements WorkloadReader {
         };
     }
 
-    /** Extract all configuration resource references from a pod spec. */
     public Set<ConfigResourceId> extractConfigReferences(String namespace, PodSpec podSpec) {
         Set<ConfigResourceId> references = new HashSet<>();
 
@@ -50,21 +46,18 @@ public class KubernetesWorkloadReader implements WorkloadReader {
             return references;
         }
 
-        // Extract from containers
         if (podSpec.getContainers() != null) {
             for (Container container : podSpec.getContainers()) {
                 references.addAll(extractFromContainer(namespace, container));
             }
         }
 
-        // Extract from init containers
         if (podSpec.getInitContainers() != null) {
             for (Container container : podSpec.getInitContainers()) {
                 references.addAll(extractFromContainer(namespace, container));
             }
         }
 
-        // Extract from volumes
         if (podSpec.getVolumes() != null) {
             for (Volume volume : podSpec.getVolumes()) {
                 references.addAll(extractFromVolume(namespace, volume));

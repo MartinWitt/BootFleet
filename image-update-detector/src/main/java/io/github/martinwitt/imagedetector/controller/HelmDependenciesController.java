@@ -2,8 +2,12 @@ package io.github.martinwitt.imagedetector.controller;
 
 import io.github.martinwitt.imagedetector.service.HelmChartScanService;
 import io.github.martinwitt.imagedetector.service.HelmVersionCheckService;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,77 +25,64 @@ public class HelmDependenciesController {
 
     @GetMapping
     public Map<String, Object> getAllDependencies() {
-        Map<String, Object> result = new LinkedHashMap<>();
         Map<String, List<HelmChartScanService.ChartDependency>> scanned =
                 scanService.getScannedCharts();
         Map<String, HelmVersionCheckService.ChartInfo> trackedCharts =
                 versionCheckService.getTrackedCharts();
 
-        // Combine scanned charts with latest version info
         Map<String, List<Map<String, Object>>> enrichedApps = new LinkedHashMap<>();
-        for (String appName : scanned.keySet()) {
+        for (Map.Entry<String, List<HelmChartScanService.ChartDependency>> entry :
+                scanned.entrySet()) {
+            String appName = entry.getKey();
             List<Map<String, Object>> enrichedCharts = new ArrayList<>();
-            for (HelmChartScanService.ChartDependency chart : scanned.get(appName)) {
-                Map<String, Object> chartData = new LinkedHashMap<>();
-                chartData.put("name", chart.name);
-                chartData.put("version", chart.version);
-                chartData.put("repository", chart.repository);
-                chartData.put("lastUpdated", chart.lastUpdated);
-
-                // Find latest version from tracked charts
-                String chartId = appName + "/" + chart.name;
-                HelmVersionCheckService.ChartInfo chartInfo = trackedCharts.get(chartId);
-                if (chartInfo != null && chartInfo.latestVersion != null) {
-                    chartData.put("latestVersion", chartInfo.latestVersion);
-                }
-
-                enrichedCharts.add(chartData);
+            for (HelmChartScanService.ChartDependency chart : entry.getValue()) {
+                enrichedCharts.add(enrichChart(appName, chart, trackedCharts));
             }
             enrichedApps.put(appName, enrichedCharts);
         }
 
-        result.put("scannedApps", scanned.size());
-        result.put("apps", enrichedApps);
-
-        return result;
+        return Map.of("scannedApps", scanned.size(), "apps", enrichedApps);
     }
 
     @GetMapping("/app/{appName}")
-    public Map<String, Object> getDependenciesByApp(String appName) {
-        Map<String, Object> result = new LinkedHashMap<>();
+    public Map<String, Object> getDependenciesByApp(@PathVariable String appName) {
         Map<String, List<HelmChartScanService.ChartDependency>> scanned =
                 scanService.getScannedCharts();
         Map<String, HelmVersionCheckService.ChartInfo> trackedCharts =
                 versionCheckService.getTrackedCharts();
-        List<HelmChartScanService.ChartDependency> appDeps = scanned.get(appName);
 
-        if (appDeps == null) {
-            appDeps = new ArrayList<>();
-        }
+        List<HelmChartScanService.ChartDependency> appDeps =
+                scanned.getOrDefault(appName, List.of());
 
-        // Enrich dependencies with latest version info
         List<Map<String, Object>> enrichedDeps = new ArrayList<>();
         for (HelmChartScanService.ChartDependency chart : appDeps) {
-            Map<String, Object> chartData = new LinkedHashMap<>();
-            chartData.put("name", chart.name);
-            chartData.put("version", chart.version);
-            chartData.put("repository", chart.repository);
-            chartData.put("lastUpdated", chart.lastUpdated);
-
-            // Find latest version from tracked charts
-            String chartId = appName + "/" + chart.name;
-            HelmVersionCheckService.ChartInfo chartInfo = trackedCharts.get(chartId);
-            if (chartInfo != null && chartInfo.latestVersion != null) {
-                chartData.put("latestVersion", chartInfo.latestVersion);
-            }
-
-            enrichedDeps.add(chartData);
+            enrichedDeps.add(enrichChart(appName, chart, trackedCharts));
         }
 
-        result.put("app", appName);
-        result.put("dependencyCount", enrichedDeps.size());
-        result.put("dependencies", enrichedDeps);
+        return Map.of(
+                "app",
+                appName,
+                "dependencyCount",
+                enrichedDeps.size(),
+                "dependencies",
+                enrichedDeps);
+    }
 
-        return result;
+    private Map<String, Object> enrichChart(
+            String appName,
+            HelmChartScanService.ChartDependency chart,
+            Map<String, HelmVersionCheckService.ChartInfo> trackedCharts) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("name", chart.name());
+        data.put("version", chart.version());
+        data.put("repository", chart.repository());
+        data.put("lastUpdated", chart.lastUpdated());
+
+        HelmVersionCheckService.ChartInfo chartInfo =
+                trackedCharts.get(appName + "/" + chart.name());
+        if (chartInfo != null && chartInfo.latestVersion() != null) {
+            data.put("latestVersion", chartInfo.latestVersion());
+        }
+        return data;
     }
 }

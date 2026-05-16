@@ -3,6 +3,7 @@ package io.github.martinwitt.imagedetector.client;
 import io.github.martinwitt.imagedetector.ImageDetectorProperties;
 import java.util.ArrayList;
 import java.util.List;
+import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHFileNotFoundException;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
@@ -45,8 +46,9 @@ public class GitOpsClient {
             String branch = properties.getBranch();
             GHRepository repository = gitHub.getRepository(repo);
             repository.getDirectoryContent("apps", branch).stream()
-                    .filter(c -> c.isDirectory())
-                    .forEach(c -> apps.add(c.getName()));
+                    .filter(GHContent::isDirectory)
+                    .map(GHContent::getName)
+                    .forEach(apps::add);
         } catch (Exception e) {
             logger.warn("Failed to list apps: {}", e.getMessage());
         }

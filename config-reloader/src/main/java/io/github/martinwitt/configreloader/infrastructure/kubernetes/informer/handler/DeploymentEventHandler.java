@@ -11,7 +11,6 @@ import io.micrometer.core.annotation.Counted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Event handler for Deployment informer events. */
 public class DeploymentEventHandler implements ResourceEventHandler<Deployment> {
     private static final Logger logger = LoggerFactory.getLogger(DeploymentEventHandler.class);
 
