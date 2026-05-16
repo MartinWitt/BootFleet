@@ -59,6 +59,13 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
           <mainClass>io.github.martinwitt.urlcleaner.UrlCleanerApplication</mainClass>
+          <image>
+            <env>
+              <BP_JVM_CDS_ENABLED>true</BP_JVM_CDS_ENABLED>
+              <BP_JVM_AOTCACHE_ENABLED>true</BP_JVM_AOTCACHE_ENABLED>
+              <BP_SPRING_AOT_ENABLED>true</BP_SPRING_AOT_ENABLED>
+            </env>
+          </image>
         </configuration>
         <executions>
           <execution>
