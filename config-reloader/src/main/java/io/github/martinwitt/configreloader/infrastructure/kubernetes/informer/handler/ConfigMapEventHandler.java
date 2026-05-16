@@ -9,7 +9,6 @@ import io.micrometer.core.annotation.Counted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Event handler for ConfigMap informer events. */
 public class ConfigMapEventHandler implements ResourceEventHandler<ConfigMap> {
     private static final Logger logger = LoggerFactory.getLogger(ConfigMapEventHandler.class);
 
@@ -21,7 +20,6 @@ public class ConfigMapEventHandler implements ResourceEventHandler<ConfigMap> {
 
     @Override
     public void onAdd(ConfigMap configMap) {
-        // We don't need to handle add events for config resources
         logger.trace(
                 "ConfigMap added: {}/{}",
                 configMap.getMetadata().getNamespace(),
@@ -34,7 +32,6 @@ public class ConfigMapEventHandler implements ResourceEventHandler<ConfigMap> {
         String namespace = newConfigMap.getMetadata().getNamespace();
         String name = newConfigMap.getMetadata().getName();
 
-        // Check if the resourceVersion changed (indicating actual data change)
         if (oldConfigMap != null
                 && oldConfigMap
                         .getMetadata()
@@ -54,7 +51,6 @@ public class ConfigMapEventHandler implements ResourceEventHandler<ConfigMap> {
 
     @Override
     public void onDelete(ConfigMap configMap, boolean deletedFinalStateUnknown) {
-        // ConfigMap deletion doesn't require pod restarts
         logger.debug(
                 "ConfigMap deleted: {}/{}",
                 configMap.getMetadata().getNamespace(),

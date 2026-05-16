@@ -9,7 +9,6 @@ import io.micrometer.core.annotation.Counted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Event handler for Secret informer events. */
 public class SecretEventHandler implements ResourceEventHandler<Secret> {
     private static final Logger logger = LoggerFactory.getLogger(SecretEventHandler.class);
 
@@ -21,7 +20,6 @@ public class SecretEventHandler implements ResourceEventHandler<Secret> {
 
     @Override
     public void onAdd(Secret secret) {
-        // We don't need to handle add events for config resources
         logger.trace(
                 "Secret added: {}/{}",
                 secret.getMetadata().getNamespace(),
@@ -34,7 +32,6 @@ public class SecretEventHandler implements ResourceEventHandler<Secret> {
         String namespace = newSecret.getMetadata().getNamespace();
         String name = newSecret.getMetadata().getName();
 
-        // Check if the resourceVersion changed (indicating actual data change)
         if (oldSecret != null
                 && oldSecret
                         .getMetadata()
@@ -54,7 +51,6 @@ public class SecretEventHandler implements ResourceEventHandler<Secret> {
 
     @Override
     public void onDelete(Secret secret, boolean deletedFinalStateUnknown) {
-        // Secret deletion doesn't require pod restarts
         logger.debug(
                 "Secret deleted: {}/{}",
                 secret.getMetadata().getNamespace(),

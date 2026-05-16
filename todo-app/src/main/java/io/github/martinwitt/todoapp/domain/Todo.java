@@ -1,6 +1,16 @@
 package io.github.martinwitt.todoapp.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -30,15 +40,12 @@ public class Todo {
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private Set<Tag> tags = new HashSet<>();
 
-    // position used for ordering within a list or tag
     private Integer position = 0;
 
-    // cron expression for recurring tasks (optional)
     private String cronExpression;
 
     public Todo() {}
 
-    // getters and setters
     public Long getId() {
         return id;
     }

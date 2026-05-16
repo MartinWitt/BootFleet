@@ -12,12 +12,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
-/**
- * Service for fetching and caching Maven artifact metadata from remote repositories.
- *
- * <p>This service handles the remote HTTP calls and caching in a single, dedicated place. All
- * caching logic is centralized here to avoid Spring proxy/self-invocation issues.
- */
 @Service
 public class MavenMetadataCachingService {
 
@@ -31,17 +25,6 @@ public class MavenMetadataCachingService {
         this.xmlMapper = new XmlMapper();
     }
 
-    /**
-     * Fetch and cache all available versions for a Maven artifact from a custom repository.
-     *
-     * <p>This is the single point of caching for version fetching. The remote call is made here and
-     * the result is cached by Spring.
-     *
-     * @param registryUrl Maven repository URL (e.g., "https://repo1.maven.org/maven2")
-     * @param groupId Maven groupId
-     * @param artifactId Maven artifactId
-     * @return List of version strings, or empty list if metadata cannot be fetched
-     */
     @Cacheable(value = "mavenVersions", key = "#registryUrl + ':' + #groupId + ':' + #artifactId")
     public List<String> fetchAndCacheVersions(
             String registryUrl, String groupId, String artifactId) {

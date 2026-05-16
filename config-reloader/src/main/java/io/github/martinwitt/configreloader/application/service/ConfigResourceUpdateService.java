@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-/** Application service for handling configuration resource updates. */
 @Service
 public class ConfigResourceUpdateService {
     private static final Logger logger = LoggerFactory.getLogger(ConfigResourceUpdateService.class);
@@ -18,7 +17,6 @@ public class ConfigResourceUpdateService {
         this.workloadConfigurationService = workloadConfigurationService;
     }
 
-    /** Handle a configuration resource update by restarting affected workloads. */
     @Timed(
             value = "config.resource.update.duration",
             description = "Time taken to process config resource update")
