@@ -69,15 +69,8 @@ jobs:
         # without attempting to build them as images. Avoids publishing artifacts.
         run: mvn -B -DskipTests install -pl ${{ env.HELPER_LIBS }} -am
 
-      - name: Build and Push Image
-        # url-cleaner uses Project Leyden/CDS (JVM + Spring AOT + CDS training run via Paketo buildpack).
-        # All other modules are built as GraalVM native images.
-        run: |
-          if [ "${{ matrix.module }}" = "url-cleaner" ]; then
-            mvn -pl ${{ matrix.module }} spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest-${{ matrix.arch }} -Dspring-boot.build-image.publish=true -Dspring-boot.build-image.buildCache=cache
-          else
-            mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest-${{ matrix.arch }} -Dspring-boot.build-image.publish=true -Dspring-boot.build-image.buildCache=cache
-          fi
+      - name: Build and Push Native Image
+        run: mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest-${{ matrix.arch }} -Dspring-boot.build-image.publish=true -Dspring-boot.build-image.buildCache=cache
 
   create-manifest:
     needs: [build-images]
