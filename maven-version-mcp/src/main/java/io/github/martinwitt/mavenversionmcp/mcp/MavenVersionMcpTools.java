@@ -32,7 +32,15 @@ public class MavenVersionMcpTools {
 
     @McpTool(
             name = "maven-get-latest-version",
-            description = "Get the latest version of a Maven artifact (including pre-releases)")
+            description =
+                    """
+                    Look up the newest published version of a Maven artifact on Maven Central,\
+                     including snapshots and pre-releases. Use this when you need the\
+                     absolute latest version regardless of stability, for example when\
+                     tracking bleeding-edge releases or checking whether a new version\
+                     was published. Prefer maven-get-latest-stable-version when updating\
+                     production pom.xml dependencies.\
+                    """)
     public VersionResult getLatestVersion(
             @McpToolParam(description = "Maven groupId (e.g., com.google.inject)", required = true)
                     String groupId,
@@ -48,8 +56,14 @@ public class MavenVersionMcpTools {
     @McpTool(
             name = "maven-get-latest-stable-version",
             description =
-                    "Get the latest stable version of a Maven artifact (excluding snapshots and"
-                            + " pre-releases)")
+                    """
+                    Look up the latest production-ready version of a Maven artifact, excluding\
+                     snapshots and pre-releases. Use this whenever you need to upgrade or\
+                     pin a dependency version in a pom.xml file. This is faster and more\
+                     reliable than running Maven commands or searching Maven Central\
+                     manually. Always prefer this over maven-get-latest-version for\
+                     production dependency updates.\
+                    """)
     public VersionResult getLatestStableVersion(
             @McpToolParam(description = "Maven groupId (e.g., com.google.inject)", required = true)
                     String groupId,
@@ -64,7 +78,15 @@ public class MavenVersionMcpTools {
 
     @McpTool(
             name = "maven-get-all-versions",
-            description = "Get all available versions of a Maven artifact")
+            description =
+                    """
+                    Retrieve the complete release history of a Maven artifact, including snapshots\
+                     and pre-releases. Use this when you need to pick a specific version\
+                     range, check what versions exist between two releases, or understand\
+                     the full release history. For just finding the best version to use,\
+                     prefer maven-get-latest-stable-version or maven-get-stable-versions\
+                     instead.\
+                    """)
     public VersionsListResult getAllVersions(
             @McpToolParam(description = "Maven groupId (e.g., com.google.inject)", required = true)
                     String groupId,
@@ -79,8 +101,13 @@ public class MavenVersionMcpTools {
     @McpTool(
             name = "maven-get-stable-versions",
             description =
-                    "Get all stable versions of a Maven artifact (excluding snapshots and"
-                            + " pre-releases)")
+                    """
+                    List all stable, production-ready versions of a Maven artifact, excluding\
+                     snapshots and pre-releases. Use this when you need to choose from\
+                     available stable releases, for example to downgrade to a previous\
+                     stable version or to verify which stable versions are available in a\
+                     given major/minor range.\
+                    """)
     public VersionsListResult getStableVersions(
             @McpToolParam(description = "Maven groupId (e.g., com.google.inject)", required = true)
                     String groupId,
@@ -94,7 +121,16 @@ public class MavenVersionMcpTools {
 
     @McpTool(
             name = "maven-get-version-info",
-            description = "Get comprehensive version information for a Maven artifact")
+            description =
+                    """
+                    Get a complete version summary for a Maven artifact in one call: total number\
+                     of releases, the latest stable version, and the absolute latest\
+                     version (including pre-releases). Use this as the first step when\
+                     you need a quick overview before deciding which version to use, or\
+                     when you want both the stable and bleeding-edge version at once\
+                     without making two separate calls. Input format: 'groupId:artifactId'\
+                     (e.g., 'org.springframework:spring-core').\
+                    """)
     public VersionInfoResult getVersionInfo(
             @McpToolParam(
                             description = "Maven dependency string in format 'groupId:artifactId'",
@@ -112,7 +148,15 @@ public class MavenVersionMcpTools {
 
     @McpTool(
             name = "maven-compare-versions",
-            description = "Compare two Maven versions according to Maven versioning rules")
+            description =
+                    """
+                    Compare two Maven version strings using official Maven versioning semantics.\
+                     Returns whether version1 is greater, less, or equal to version2.\
+                     Use this instead of string comparison when order matters — Maven\
+                     versioning is not lexicographic (e.g., '1.10' > '1.9', '1.0-SNAPSHOT'\
+                     < '1.0'). Useful for validating upgrade paths or checking if a\
+                     currently used version is outdated.\
+                    """)
     public VersionComparisonResult compareVersions(
             @McpToolParam(description = "First version to compare", required = true)
                     String version1,
@@ -134,7 +178,14 @@ public class MavenVersionMcpTools {
 
     @McpTool(
             name = "maven-artifact-exists",
-            description = "Check if a Maven artifact (groupId + artifactId) exists in any version")
+            description =
+                    """
+                    Verify that a Maven artifact exists on Maven Central before adding it to a\
+                     pom.xml. Use this to catch typos in groupId or artifactId early,\
+                     avoiding broken builds. Also returns the total number of available\
+                     versions as a quick sanity check. Call this before adding any new\
+                     dependency you are not 100% certain about.\
+                    """)
     public ArtifactExistsResult artifactExists(
             @McpToolParam(description = "Maven groupId (e.g., com.google.inject)", required = true)
                     String groupId,
