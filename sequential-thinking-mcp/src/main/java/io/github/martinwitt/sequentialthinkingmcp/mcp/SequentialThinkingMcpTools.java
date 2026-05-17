@@ -59,13 +59,14 @@ public class SequentialThinkingMcpTools {
             name = "sequentialthinking",
             description =
                     """
-                    A detailed tool for dynamic and reflective problem-solving through thoughts.
-                     This tool helps analyze problems through a flexible thinking process
-                     that can adapt and evolve. Each thought can build on, question, or
-                     revise previous insights as understanding deepens. Supports breaking
-                     down complex problems, planning with room for revision, analysis that
-                     might need course correction, and multi-step problem solving with
-                     context maintenance.\
+                    Add a single step to an active sequential thinking session. This is the\
+                     core tool in the thinking workflow: call sequentialthinking-start first\
+                     to get a sessionId, then call this tool repeatedly for each reasoning\
+                     step, and finish with sequentialthinking-complete. Use this over native\
+                     LLM reasoning when you need a persistent, reviewable, and revisable\
+                     thought chain — for example for multi-step debugging, architectural\
+                     decisions, or any problem where you might need to backtrack and revise\
+                     earlier steps. Set nextThoughtNeeded=false on the final step.\
                     """)
     public AddThoughtResult addThought(
             @McpToolParam(
@@ -224,9 +225,12 @@ public class SequentialThinkingMcpTools {
     @McpTool(
             name = "sequentialthinking-start",
             description =
-                    "Start a new sequential thinking session. Returns a session ID to use for"
-                        + " subsequent thoughts. Useful for multi-step problem solving with context"
-                        + " maintenance.")
+                    "Start a new sequential thinking session and get a sessionId. Always call this"
+                            + " first before using any other sequentialthinking-* tools. The"
+                            + " returned sessionId links all subsequent thoughts, revisions, and"
+                            + " branches together. Provide an initial estimate of how many steps"
+                            + " the problem will take — this can be adjusted freely during the"
+                            + " session.")
     public StartThinkingResult startThinking(
             @McpToolParam(
                             description =
@@ -250,9 +254,12 @@ public class SequentialThinkingMcpTools {
             name = "sequentialthinking-revise",
             description =
                     """
-                    Revise a previous thought by reconsidering it. Creates a new thought that\
-                     explicitly revises an earlier thought number. Useful when you realize\
-                     something was wrong or needs deeper analysis.\
+                    Go back and correct an earlier thought in an active session. Use this when\
+                     you realize a previous reasoning step was wrong or incomplete — it creates\
+                     a revision record that keeps the full history intact rather than silently\
+                     overwriting. Call this instead of sequentialthinking when the new thought\
+                     explicitly supersedes an earlier one. The session continues normally after\
+                     a revision.\
                     """)
     public ReviseThoughtResult reviseThought(
             @McpToolParam(description = "The thinking session ID", required = true)
@@ -289,9 +296,12 @@ public class SequentialThinkingMcpTools {
     @McpTool(
             name = "sequentialthinking-branch",
             description =
-                    "Create a branch from a previous thought to explore alternative approaches."
-                            + " Useful when you want to investigate multiple solution paths or"
-                            + " different interpretations of the problem.")
+                    "Fork the thought chain at a specific step to explore an alternative approach"
+                            + " in parallel. Use this when there are two or more plausible solution"
+                            + " paths and you want to reason through each independently — for"
+                            + " example comparing two architectural options or two root-cause"
+                            + " hypotheses. Returns a branchId to pass into subsequent"
+                            + " sequentialthinking calls for that branch.")
     public BranchThoughtResult branchThought(
             @McpToolParam(description = "The thinking session ID", required = true)
                     String sessionId,
@@ -324,9 +334,12 @@ public class SequentialThinkingMcpTools {
     @McpTool(
             name = "sequentialthinking-verify",
             description =
-                    "Verify a hypothesis based on the chain of thoughts. Generates a solution"
-                            + " hypothesis, verifies it based on the thinking steps, and provides"
-                            + " confidence scoring.")
+                    "Validate a proposed conclusion against the thought chain before committing to"
+                            + " it. Call this after you have added all reasoning steps but before"
+                            + " sequentialthinking-complete, when you want an explicit confidence"
+                            + " score based on how many verification steps support the hypothesis."
+                            + " Provide a list of concrete checks that confirm or refute the"
+                            + " hypothesis — more steps produce higher confidence scores.")
     public VerifyHypothesisResult verifyHypothesis(
             @McpToolParam(description = "The thinking session ID", required = true)
                     String sessionId,
@@ -375,8 +388,11 @@ public class SequentialThinkingMcpTools {
     @McpTool(
             name = "sequentialthinking-get-chain",
             description =
-                    "Get information about the current thought chain state. Returns the number of"
-                            + " thoughts, branches, and overall session status.")
+                    "Inspect the current state of a thinking session mid-process. Returns thought"
+                            + " count, branch count, and session status without modifying anything."
+                            + " Use this to get an overview before deciding whether to add more"
+                            + " thoughts, create a branch, or call sequentialthinking-complete."
+                            + " Also useful for debugging a session if the flow becomes unclear.")
     public GetThoughtChainResult getThoughtChain(
             @McpToolParam(description = "The thinking session ID", required = true)
                     String sessionId) {
@@ -399,8 +415,12 @@ public class SequentialThinkingMcpTools {
     @McpTool(
             name = "sequentialthinking-complete",
             description =
-                    "Complete the thinking session with a final answer. Concludes the"
-                            + " problem-solving process and returns statistics about the session.")
+                    "Close the thinking session with a final answer and get session statistics."
+                            + " This is always the last call in the workflow"
+                            + " (sequentialthinking-start → sequentialthinking → this)."
+                            + " Call this once you have finished all reasoning steps and optionally"
+                            + " verified your hypothesis. After this call the session is closed"
+                            + " and no more thoughts can be added.")
     public CompleteThinkingResult completeThinking(
             @McpToolParam(description = "The thinking session ID", required = true)
                     String sessionId,
