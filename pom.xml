@@ -19,6 +19,7 @@
     <module>maven-version-mcp</module>
     <module>sequential-thinking-mcp</module>
     <module>todo-app</module>
+    <module>api-gateway</module>
   </modules>
 
   <properties>

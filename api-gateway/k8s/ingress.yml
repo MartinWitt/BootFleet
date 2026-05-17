@@ -1,0 +1,19 @@
+# Traefik IngressRoute — single entry point for all traffic.
+# The gateway handles auth and routing to backend services.
+# Adjust the Host() matcher and certResolver to match your setup.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api-gateway
+  namespace: gateway
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`gateway.example.com`)
+      kind: Rule
+      services:
+        - name: api-gateway
+          port: 80
+  tls:
+    certResolver: letsencrypt

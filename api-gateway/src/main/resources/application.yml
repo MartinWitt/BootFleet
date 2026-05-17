@@ -1,0 +1,77 @@
+spring:
+  application:
+    name: api-gateway
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Point at your Keycloak realm — Spring Boot auto-fetches the JWKS endpoint.
+          # Override via env: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8080/realms/master}
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      # Static routes (optional — annotation-based routes are auto-discovered from K8s).
+      # For static routes that need JWT, add their path patterns to gateway.auth.jwt.protected-paths.
+      routes: []
+
+    kubernetes:
+      discovery:
+        enabled: true
+        # Discover services from all namespaces so the gateway (in its own namespace)
+        # can route to services in default, apps, etc.
+        # Override via env: SPRING_CLOUD_KUBERNETES_DISCOVERY_ALL_NAMESPACES
+        all-namespaces: true
+      client:
+        # The gateway's own namespace. Used as fallback when all-namespaces is false.
+        # Override via env: SPRING_CLOUD_KUBERNETES_CLIENT_NAMESPACE
+        namespace: gateway
+
+gateway:
+  route-refresh-interval-ms: 30000
+
+  auth:
+    jwt:
+      # Paths that always require a valid JWT Bearer token.
+      # Annotation-based routes with auth: jwt are added automatically.
+      # Use this for static routes defined in spring.cloud.gateway.routes above.
+      protected-paths: []
+
+      # Headers forwarded to upstream services after JWT validation.
+      # The JWT itself is also forwarded as-is in the Authorization header.
+      subject-header: X-Auth-Sub
+      email-header: X-Auth-Email
+      username-header: X-Auth-Username
+
+      # JWT claim names (Keycloak defaults).
+      email-claim: email
+      username-claim: preferred_username
+
+    api-key:
+      # Global default header name.
+      # Override per-service with annotation gateway.bootfleet.io/api-key-header
+      default-header-name: X-API-Key
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, gateway
+  endpoint:
+    gateway:
+      enabled: true
+    health:
+      show-details: always
+
+server:
+  port: 8080
+
+logging:
+  level:
+    io.github.martinwitt.apigateway: DEBUG
+    org.springframework.cloud.gateway: INFO
+    org.springframework.security.oauth2: INFO
