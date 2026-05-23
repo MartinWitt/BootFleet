@@ -152,6 +152,9 @@
                     <artifactId>spring-boot-devtools</artifactId>
                   </exclude>
                 </excludes>
+                <buildArgs>
+                  <buildArg>--initialize-at-build-time=ch.qos.logback.classic.Logger</buildArg>
+                </buildArgs>
               </configuration>
               <executions>
                 <execution>
