@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class TodoAppRuntimeHints implements RuntimeHintsRegistrar {
 
-  @Override
-  public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-    hints.reflection().registerType(Todo.class);
-    hints.reflection().registerType(Tag.class);
-    hints.reflection().registerType(TodoStatus.class);
-  }
+    @Override
+    public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+        hints.reflection().registerType(Todo.class);
+        hints.reflection().registerType(Tag.class);
+        hints.reflection().registerType(TodoStatus.class);
+    }
 }

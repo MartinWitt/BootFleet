@@ -28,6 +28,13 @@ import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class TodoController {
+    private static final String WILDCARD = "*";
+    private static final String MONTHLY_DOM = "1";
+    private static final String WEEKDAYS_DOW = "1-5";
+    private static final String WEEKENDS_DOW_ALT1 = "6,0";
+    private static final String WEEKENDS_DOW_ALT2 = "0,6";
+    private static final int CRON_FIELD_COUNT = 5;
+
     private final TodoService todoService;
     private final TagService tagService;
 
@@ -119,21 +126,20 @@ public class TodoController {
 
     @GetMapping("/todos/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        var t = todoService.findById(id);
-        if (t.isEmpty()) return "redirect:/todos";
-        model.addAttribute("todo", t.get());
+        var todo = todoService.findById(id);
+        if (todo.isEmpty()) return "redirect:/todos";
+        var t = todo.get();
+        model.addAttribute("todo", t);
         model.addAttribute(
-                "tagNames",
-                t.get().getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
+                "tagNames", t.getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
         model.addAttribute(
-                "cronExpression",
-                t.get().getCronExpression() != null ? t.get().getCronExpression() : "");
+                "cronExpression", t.getCronExpression() != null ? t.getCronExpression() : "");
 
-        if (t.get().getDeadline() != null) {
+        if (t.getDeadline() != null) {
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-            model.addAttribute("deadlineDate", t.get().getDeadline().format(dateFormatter));
-            model.addAttribute("deadlineTime", t.get().getDeadline().format(timeFormatter));
+            model.addAttribute("deadlineDate", t.getDeadline().format(dateFormatter));
+            model.addAttribute("deadlineTime", t.getDeadline().format(timeFormatter));
         } else {
             model.addAttribute("deadlineDate", "");
             model.addAttribute("deadlineTime", "");
@@ -229,8 +235,9 @@ public class TodoController {
             for (Todo todo : todos) {
                 String cron = todo.getCronExpression();
                 if (cron != null && !cron.isBlank()) {
-                    String[] parts = cron.trim().split("\\s+");
-                    if (parts.length >= 5 && parseCronWeekdays(parts[4]).contains(cronDay)) {
+                    String[] parts = cron.trim().split(" ");
+                    if (parts.length >= CRON_FIELD_COUNT
+                            && parseCronWeekdays(parts[4]).contains(cronDay)) {
                         dayTodos.add(todo);
                     }
                 } else if (todo.getDeadline() != null
@@ -252,7 +259,7 @@ public class TodoController {
 
     private Set<Integer> parseCronWeekdays(String field) {
         Set<Integer> days = new LinkedHashSet<>();
-        if ("*".equals(field)) {
+        if (WILDCARD.equals(field)) {
             for (int d = 0; d <= 6; d++) days.add(d);
             return days;
         }
@@ -264,12 +271,12 @@ public class TodoController {
                     int start = Integer.parseInt(range[0].trim());
                     int end = Integer.parseInt(range[1].trim());
                     for (int d = start; d <= end; d++) days.add(d);
-                } catch (NumberFormatException ignored) {
+                } catch (NumberFormatException _) {
                 }
             } else {
                 try {
                     days.add(Integer.parseInt(part));
-                } catch (NumberFormatException ignored) {
+                } catch (NumberFormatException _) {
                 }
             }
         }
@@ -278,22 +285,23 @@ public class TodoController {
 
     private String humanReadableCron(String cron) {
         if (cron == null || cron.isBlank()) return "";
-        String[] p = cron.trim().split("\\s+");
-        if (p.length < 5) return cron;
+        String[] p = cron.trim().split(" ");
+        if (p.length < CRON_FIELD_COUNT) return cron;
 
         String min = p[0], hour = p[1], dom = p[2], dow = p[4];
         String time = "";
-        if (!"*".equals(hour) && !"*".equals(min)) {
+        if (!WILDCARD.equals(hour) && !WILDCARD.equals(min)) {
             try {
                 time = String.format(" at %s:%02d", hour, Integer.parseInt(min));
-            } catch (NumberFormatException ignored) {
+            } catch (NumberFormatException _) {
             }
         }
 
-        if ("*".equals(dow) && "*".equals(dom)) return "Daily" + time;
-        if ("1".equals(dom) && "*".equals(dow)) return "Monthly (1st)" + time;
-        if ("1-5".equals(dow)) return "Weekdays (Mon–Fri)" + time;
-        if ("6,0".equals(dow) || "0,6".equals(dow)) return "Weekends" + time;
+        if (WILDCARD.equals(dow) && WILDCARD.equals(dom)) return "Daily" + time;
+        if (MONTHLY_DOM.equals(dom) && WILDCARD.equals(dow)) return "Monthly (1st)" + time;
+        if (WEEKDAYS_DOW.equals(dow)) return "Weekdays (Mon–Fri)" + time;
+        if (WEEKENDS_DOW_ALT1.equals(dow) || WEEKENDS_DOW_ALT2.equals(dow))
+            return "Weekends" + time;
 
         Map<String, String> dayNames = new LinkedHashMap<>();
         dayNames.put("0", "Sunday");

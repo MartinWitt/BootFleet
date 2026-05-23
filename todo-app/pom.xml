@@ -35,6 +35,12 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-thymeleaf</artifactId>
@@ -48,19 +54,13 @@
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.github.martinwitt</groupId>
-      <artifactId>spring-boot-utils</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-test-autoconfigure</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.github.martinwitt</groupId>
+      <artifactId>spring-boot-utils</artifactId>
     </dependency>
   </dependencies>
 
@@ -88,6 +88,13 @@
             <artifactId>native-maven-plugin</artifactId>
             <version>0.10.2</version>
             <extensions>true</extensions>
+            <configuration>
+              <classesDirectory>${project.build.outputDirectory}</classesDirectory>
+              <metadataRepository>
+                <enabled>true</enabled>
+              </metadataRepository>
+              <requiredVersion>17</requiredVersion>
+            </configuration>
             <executions>
               <execution>
                 <id>build-native</id>
@@ -104,13 +111,6 @@
                 <phase>test</phase>
               </execution>
             </executions>
-            <configuration>
-              <classesDirectory>${project.build.outputDirectory}</classesDirectory>
-              <metadataRepository>
-                <enabled>true</enabled>
-              </metadataRepository>
-              <requiredVersion>17</requiredVersion>
-            </configuration>
           </plugin>
         </plugins>
       </build>
