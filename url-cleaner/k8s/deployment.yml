@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: url-cleaner
+  namespace: default
+  labels:
+    app: url-cleaner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: url-cleaner
+  template:
+    metadata:
+      labels:
+        app: url-cleaner
+    spec:
+      containers:
+        - name: url-cleaner
+          image: ghcr.io/martinwitt/url-cleaner:latest
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"

@@ -1,0 +1,24 @@
+# No Ingress — url-cleaner is only reachable through the api-gateway.
+# The gateway discovers this service via the expose label and routes
+# /url-cleaner/** to it (strip-prefix=1, no auth).
+apiVersion: v1
+kind: Service
+metadata:
+  name: url-cleaner
+  namespace: default
+  labels:
+    app: url-cleaner
+    gateway.bootfleet.io/expose: "true"
+  annotations:
+    gateway.bootfleet.io/auth: "none"
+    # Default path derived from service name: /url-cleaner/**
+    # Override here if needed:
+    # gateway.bootfleet.io/path: "/tools/url-cleaner/**"
+spec:
+  selector:
+    app: url-cleaner
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
