@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BootFleet Gateway</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2d3148;
+      --accent: #6366f1;
+      --accent-dim: #4f51c8;
+      --text: #e2e4f0;
+      --text-dim: #8b8fa8;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #fbbf24;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 2rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+
+    h1 { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.02em; }
+    h1 span { color: var(--accent); }
+
+    #refresh-info {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    section { margin-bottom: 2.5rem; }
+
+    h2 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 0.75rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-green  { background: rgba(74,222,128,.15); color: var(--green); }
+    .badge-red    { background: rgba(248,113,113,.15); color: var(--red); }
+    .badge-yellow { background: rgba(251,191,36,.15);  color: var(--yellow); }
+    .badge-blue   { background: rgba(99,102,241,.15);  color: var(--accent); }
+
+    .mono { font-family: 'Fira Mono', 'Cascadia Code', monospace; font-size: 12px; }
+
+    .pill-list { display: flex; flex-wrap: wrap; gap: 4px; }
+    .pill {
+      background: rgba(99,102,241,.1);
+      color: var(--accent);
+      border: 1px solid rgba(99,102,241,.25);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-family: monospace;
+    }
+
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .service-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .service-card .name { font-weight: 600; font-size: 13px; }
+    .service-card .routed { font-size: 11px; color: var(--text-dim); }
+
+    #error-box {
+      background: rgba(248,113,113,.1);
+      border: 1px solid rgba(248,113,113,.3);
+      border-radius: 8px;
+      padding: 1rem;
+      color: var(--red);
+      display: none;
+      margin-bottom: 1.5rem;
+    }
+
+    .ts { color: var(--text-dim); font-size: 11px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Boot<span>Fleet</span> Gateway</h1>
+    <div id="refresh-info">Refreshing every 30 s &nbsp;·&nbsp; <span id="last-update">—</span></div>
+  </header>
+
+  <div id="error-box"></div>
+
+  <section>
+    <h2>Configured Routes</h2>
+    <table id="routes-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>URI</th>
+          <th>Predicates</th>
+          <th>Auth</th>
+        </tr>
+      </thead>
+      <tbody id="routes-body">
+        <tr><td colspan="4" style="color:var(--text-dim)">Loading…</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Discovered Services (Kubernetes)</h2>
+    <div id="services-grid" class="service-grid">
+      <div style="color:var(--text-dim)">Loading…</div>
+    </div>
+  </section>
+
+  <script>
+    async function load() {
+      try {
+        const res = await fetch('/gateway/services');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        document.getElementById('error-box').style.display = 'none';
+        document.getElementById('last-update').textContent =
+          new Date(data.timestamp).toLocaleTimeString();
+
+        const routedUris = new Set(data.routes.map(r => r.uri.replace('lb://', '')));
+
+        // Routes table
+        const tbody = document.getElementById('routes-body');
+        if (!data.routes.length) {
+          tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-dim)">No routes configured</td></tr>';
+        } else {
+          tbody.innerHTML = data.routes.map(r => `
+            <tr>
+              <td class="mono">${esc(r.id)}</td>
+              <td class="mono">${esc(r.uri)}</td>
+              <td>
+                <div class="pill-list">
+                  ${r.predicates.map(p => `<span class="pill">${esc(p)}</span>`).join('')}
+                </div>
+              </td>
+              <td>
+                ${r.authEnabled
+                  ? '<span class="badge badge-green">API Key</span>'
+                  : '<span class="badge badge-yellow">None</span>'}
+              </td>
+            </tr>`).join('');
+        }
+
+        // Services grid
+        const grid = document.getElementById('services-grid');
+        if (!data.discoveredServices.length) {
+          grid.innerHTML = '<div style="color:var(--text-dim)">No services discovered (K8s discovery may be disabled or no services are annotated)</div>';
+        } else {
+          grid.innerHTML = data.discoveredServices.map(svc => {
+            const hasRoute = routedUris.has(svc);
+            return `
+              <div class="service-card">
+                <span class="name mono">${esc(svc)}</span>
+                <span class="routed">
+                  ${hasRoute
+                    ? '<span class="badge badge-green">Routed</span>'
+                    : '<span class="badge badge-red">No route</span>'}
+                </span>
+              </div>`;
+          }).join('');
+        }
+
+      } catch (e) {
+        const box = document.getElementById('error-box');
+        box.style.display = 'block';
+        box.textContent = `Failed to load gateway data: ${e.message}`;
+      }
+    }
+
+    function esc(s) {
+      return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+    }
+
+    load();
+    setInterval(load, 30_000);
+  </script>
+</body>
+</html>
