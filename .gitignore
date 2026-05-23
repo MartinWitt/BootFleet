@@ -13,4 +13,5 @@ application-privat.yaml
 **/application-local.yaml
 *.local.yaml
 .env.local
+.claude
 /.claude/settings.local.json

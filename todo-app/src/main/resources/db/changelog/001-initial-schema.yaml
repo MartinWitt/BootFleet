@@ -54,7 +54,7 @@ databaseChangeLog:
               - column:
                   name: position
                   type: INT
-                  defaultValue: 0
+                  defaultValueNumeric: 0
                   constraints:
                     nullable: false
               - column:
@@ -125,4 +125,3 @@ databaseChangeLog:
             columns:
               - column:
                   name: name
-

@@ -1,4 +1,9 @@
 spring:
+  datasource:
+    url:
+    driver-class-name: org.mariadb.jdbc.Driver
+    username:
+    password:
   jpa:
     hibernate:
       ddl-auto: none
@@ -7,13 +12,14 @@ spring:
       hibernate:
         format_sql: false
         dialect: org.hibernate.dialect.MariaDBDialect
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
 
 server:
   port: 8080
   servlet:
     context-path: /
 
-# Production logging
 logging:
   level:
     root: INFO
