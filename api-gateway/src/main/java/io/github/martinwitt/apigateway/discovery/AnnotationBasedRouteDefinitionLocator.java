@@ -11,6 +11,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +23,8 @@ import org.springframework.cloud.gateway.route.RouteDefinitionLocator;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * Builds gateway routes dynamically from Kubernetes service annotations.
@@ -51,6 +54,9 @@ public class AnnotationBasedRouteDefinitionLocator implements RouteDefinitionLoc
     private static final Logger log =
             LoggerFactory.getLogger(AnnotationBasedRouteDefinitionLocator.class);
 
+    private static final Set<String> VALID_AUTH_MODES =
+            Set.of("none", "jwt", "api-key", "jwt+api-key");
+
     static final String LABEL_EXPOSE = "gateway.bootfleet.io/expose";
     static final String ANN_PATH = "gateway.bootfleet.io/path";
     static final String ANN_STRIP_PREFIX = "gateway.bootfleet.io/strip-prefix";
@@ -78,10 +84,8 @@ public class AnnotationBasedRouteDefinitionLocator implements RouteDefinitionLoc
 
     @Override
     public Flux<RouteDefinition> getRouteDefinitions() {
-        return Flux.defer(
-                () -> {
-                    try {
-                        var services =
+        return Mono.fromCallable(
+                        () ->
                                 allNamespaces
                                         ? coreV1Api
                                                 .listServiceForAllNamespaces()
@@ -92,33 +96,55 @@ public class AnnotationBasedRouteDefinitionLocator implements RouteDefinitionLoc
                                                 .listNamespacedService(namespace)
                                                 .labelSelector(LABEL_EXPOSE + "=true")
                                                 .execute()
-                                                .getItems();
-                        return Flux.fromIterable(services).map(this::toRouteDefinition);
-                    } catch (ApiException e) {
-                        log.warn(
-                                "Could not load services from Kubernetes ({}): {}",
-                                e.getCode(),
-                                e.getMessage());
-                        return Flux.empty();
-                    }
-                });
+                                                .getItems())
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMapMany(Flux::fromIterable)
+                .map(this::toRouteDefinition)
+                .onErrorResume(
+                        ApiException.class,
+                        e -> {
+                            log.warn(
+                                    "Could not load services from Kubernetes ({}): {}",
+                                    e.getCode(),
+                                    e.getMessage());
+                            return Flux.empty();
+                        });
     }
 
     private RouteDefinition toRouteDefinition(V1Service service) {
         V1ObjectMeta meta = service.getMetadata();
         String serviceId = meta.getName();
+        String serviceNamespace = meta.getNamespace() != null ? meta.getNamespace() : namespace;
         Map<String, String> annotations =
                 meta.getAnnotations() != null ? meta.getAnnotations() : Map.of();
 
         String path = annotations.getOrDefault(ANN_PATH, "/" + serviceId + "/**");
-        int strip =
-                Integer.parseInt(
-                        annotations.getOrDefault(
-                                ANN_STRIP_PREFIX, String.valueOf(pathDepth(path))));
+        int strip;
+        try {
+            strip =
+                    Integer.parseInt(
+                            annotations.getOrDefault(
+                                    ANN_STRIP_PREFIX, String.valueOf(pathDepth(path))));
+        } catch (NumberFormatException e) {
+            log.warn(
+                    "Service '{}/{}' has invalid strip-prefix annotation '{}', using default",
+                    serviceNamespace,
+                    serviceId,
+                    annotations.get(ANN_STRIP_PREFIX));
+            strip = pathDepth(path);
+        }
         String authMode = annotations.getOrDefault(ANN_AUTH, "none").toLowerCase();
+        if (!VALID_AUTH_MODES.contains(authMode)) {
+            log.warn(
+                    "Service '{}/{}' has unknown auth mode '{}', treating as public (none)",
+                    serviceNamespace,
+                    serviceId,
+                    authMode);
+            authMode = "none";
+        }
 
         var route = new RouteDefinition();
-        route.setId(serviceId);
+        route.setId(serviceNamespace + "/" + serviceId);
         route.setUri(URI.create("lb://" + serviceId));
         route.setPredicates(List.of(pathPredicate(path)));
 
@@ -133,7 +159,8 @@ public class AnnotationBasedRouteDefinitionLocator implements RouteDefinitionLoc
         route.setFilters(filters);
 
         log.debug(
-                "Route from annotation: {} → {} (path={}, auth={})",
+                "Route from annotation: {}/{} → {} (path={}, auth={})",
+                serviceNamespace,
                 serviceId,
                 route.getUri(),
                 path,

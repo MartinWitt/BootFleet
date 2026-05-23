@@ -11,6 +11,7 @@ import org.springframework.cloud.gateway.event.RefreshRoutesEvent;
 import org.springframework.cloud.gateway.route.RouteDefinitionLocator;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.server.PathContainer;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationResult;
 import org.springframework.security.authorization.ReactiveAuthorizationManager;
@@ -86,7 +87,11 @@ public class DynamicRouteAuthorizationManager
             return Mono.just(new AuthorizationDecision(true));
         }
         return authentication
-                .<AuthorizationResult>map(auth -> new AuthorizationDecision(auth.isAuthenticated()))
+                .<AuthorizationResult>map(
+                        auth ->
+                                new AuthorizationDecision(
+                                        auth.isAuthenticated()
+                                                && !(auth instanceof AnonymousAuthenticationToken)))
                 .defaultIfEmpty(new AuthorizationDecision(false));
     }
 

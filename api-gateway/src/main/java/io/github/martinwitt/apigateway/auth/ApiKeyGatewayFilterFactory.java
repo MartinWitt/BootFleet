@@ -6,9 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Per-route API key authentication filter.
@@ -42,11 +41,6 @@ public class ApiKeyGatewayFilterFactory
 
     private static final Logger log = LoggerFactory.getLogger(ApiKeyGatewayFilterFactory.class);
 
-    private static final String UNAUTHORIZED_BODY =
-            """
-            {"error":"Unauthorized","message":"Invalid or missing API key"}\
-            """;
-
     public ApiKeyGatewayFilterFactory() {
         super(Config.class);
     }
@@ -58,18 +52,22 @@ public class ApiKeyGatewayFilterFactory
 
     @Override
     public GatewayFilter apply(Config config) {
+        if (config.getRequiredKey() == null || config.getRequiredKey().isBlank()) {
+            log.error(
+                    "ApiKey filter applied with a blank/missing requiredKey — all requests on this"
+                            + " route will be rejected");
+        }
         return (exchange, chain) -> {
             String provided = exchange.getRequest().getHeaders().getFirst(config.getHeaderName());
-            if (config.getRequiredKey() == null || !config.getRequiredKey().equals(provided)) {
+            if (config.getRequiredKey() == null
+                    || config.getRequiredKey().isBlank()
+                    || !config.getRequiredKey().equals(provided)) {
                 log.warn(
                         "Rejected {} – bad/missing key in header '{}'",
                         exchange.getRequest().getPath(),
                         config.getHeaderName());
-                var response = exchange.getResponse();
-                response.setStatusCode(HttpStatus.UNAUTHORIZED);
-                response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                var buffer = response.bufferFactory().wrap(UNAUTHORIZED_BODY.getBytes());
-                return response.writeWith(Mono.just(buffer));
+                throw new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Invalid or missing API key");
             }
             return chain.filter(exchange);
         };

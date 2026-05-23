@@ -3,6 +3,7 @@ package io.github.martinwitt.apigateway.discovery;
 import io.github.martinwitt.apigateway.auth.ApiKeyGatewayFilterFactory;
 import io.github.martinwitt.apigateway.auth.DynamicRouteAuthorizationManager;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.cloud.client.discovery.ReactiveDiscoveryClient;
@@ -41,7 +42,18 @@ public class ServiceFinderService {
         List<String> predicates =
                 rd.getPredicates().stream().map(p -> p.getName() + "=" + p.getArgs()).toList();
         List<String> filters =
-                rd.getFilters().stream().map(f -> f.getName() + "=" + f.getArgs()).toList();
+                rd.getFilters().stream()
+                        .map(
+                                f -> {
+                                    if (ApiKeyGatewayFilterFactory.NAME.equals(f.getName())) {
+                                        var safeArgs = new HashMap<>(f.getArgs());
+                                        safeArgs.replaceAll(
+                                                (k, v) -> "requiredKey".equals(k) ? "***" : v);
+                                        return f.getName() + "=" + safeArgs;
+                                    }
+                                    return f.getName() + "=" + f.getArgs();
+                                })
+                        .toList();
 
         // Auth is enabled when the route has an API-key filter OR is JWT-protected via metadata
         Object authMode = rd.getMetadata().get(DynamicRouteAuthorizationManager.METADATA_AUTH_MODE);
