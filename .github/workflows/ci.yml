@@ -19,7 +19,7 @@ jobs:
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
           java-version: '25'
-          distribution: 'temurin'
+          distribution: 'graalvm'
           cache: 'maven'
 
       - name: Spotless Check
@@ -45,7 +45,7 @@ jobs:
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
           java-version: '25'
-          distribution: 'temurin'
+          distribution: 'graalvm'
           cache: 'maven'
 
       - name: Log in to the Container registry
