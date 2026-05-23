@@ -5,23 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TodoApp — Manage Your Tasks</title>
   <link rel="stylesheet" href="/css/todo.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-  <script src="/js/todo-dnd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" defer></script>
+  <script src="/js/todo-dnd.js" defer></script>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>📋 TodoApp</h1>
+      <h1>TodoApp</h1>
       <p>Organize your tasks with style</p>
     </header>
 
     <main>
+      <!-- Controls -->
       <div class="controls">
         <div class="controls-left">
           <a href="/todos/new" class="btn">+ New Todo</a>
           <a href="/tags" class="btn btn-secondary">Manage Tags</a>
         </div>
-
         <div class="filter">
           <form method="get" action="/todos">
             <select name="tag" onchange="this.form.submit()">
@@ -34,34 +34,73 @@
         </div>
       </div>
 
-      <div id="todo-list" class="todo-list" th:attr="data-reorder-url=@{/todos/reorder}">
-        <th:block th:if="${todos.size()==0}">
-          <div class="no-todos">
-            <p>✨ No todos yet — create one to get started!</p>
-            <a href="/todos/new" class="btn">Create Your First Todo</a>
-          </div>
-        </th:block>
+      <!-- Weekly overview -->
+      <section class="week-calendar">
+        <h2 class="section-title">This Week</h2>
+        <div class="week-grid">
+          <th:block th:each="day : ${weekDays}">
+            <div class="week-day" th:classappend="${day.isToday} ? 'week-day--today' : ''">
+              <div class="week-day-header">
+                <span class="week-day-name" th:text="${day.name}"></span>
+                <span class="week-day-date" th:text="${day.date}"></span>
+              </div>
+              <div class="week-day-body">
+                <span class="week-day-empty" th:if="${day.todos.size() == 0}">—</span>
+                <th:block th:each="todo : ${day.todos}">
+                  <a th:href="@{/todos/{id}/edit(id=${todo.id})}"
+                     class="week-todo-chip"
+                     th:classappend="'week-todo-chip--' + ${todo.status.name()}"
+                     th:text="${todo.title}"></a>
+                </th:block>
+              </div>
+            </div>
+          </th:block>
+        </div>
+      </section>
 
-        <ul id="todos" class="todos" th:if="${todos.size()>0}">
+      <!-- Todo list -->
+      <div id="todo-list" class="todo-list" th:attr="data-reorder-url=@{/todos/reorder}">
+        <h2 class="section-title">All Tasks</h2>
+
+        <div class="no-todos" th:if="${todos.size() == 0}">
+          <p>No todos yet — create one to get started!</p>
+          <a href="/todos/new" class="btn">Create Your First Todo</a>
+        </div>
+
+        <ul id="todos" class="todos" th:if="${todos.size() > 0}">
           <th:block th:each="todo : ${todos}">
-            <li class="todo-row" th:attr="data-id=${todo.id}">
+            <li class="todo-row"
+                th:attr="data-id=${todo.id},data-status=${todo.status.name()}">
+
               <div class="todo-main">
                 <strong th:text="${todo.title}"></strong>
+
                 <div class="meta">
-                    <span th:if="${formattedDeadlines.get(todo.id)}" th:text="'📅 ' + ${formattedDeadlines.get(todo.id)}"></span>
-                  <span th:if="${todo.cronExpression}" th:text="'⏱️ ' + ${todo.cronExpression}" style="color: var(--success);"></span>
+                  <span th:if="${formattedDeadlines.get(todo.id)}"
+                        th:text="'📅 ' + ${formattedDeadlines.get(todo.id)}"></span>
+                  <span th:if="${cronDescriptions.get(todo.id)}" class="recurring-badge">
+                    🔁 <span th:text="${cronDescriptions.get(todo.id)}"></span>
+                  </span>
                 </div>
-                <div class="tags" th:if="${todo.tags.size()>0}">
+
+                <div class="tags" th:if="${todo.tags.size() > 0}">
                   <th:block th:each="tag : ${todo.tags}">
                     <span class="tag" th:text="${tag.name}"></span>
                   </th:block>
                 </div>
               </div>
+
               <div class="actions">
-                <a th:href="@{/todos/{id}/edit(id=${todo.id})}">✏️ Edit</a>
+                <a th:href="@{/todos/{id}/edit(id=${todo.id})}">Edit</a>
+                <form th:action="@{/todos/{id}/delete(id=${todo.id})}" method="post"
+                      onsubmit="return confirm('Delete this task?');" style="display:inline;">
+                  <button type="submit" class="btn-danger">Delete</button>
+                </form>
                 <select class="status-select" th:attr="data-id=${todo.id}">
                   <th:block th:each="s : ${statuses}">
-                    <option th:value="${s}" th:selected="${s.name()==todo.status.name()}" th:text="${s}"></option>
+                    <option th:value="${s}"
+                            th:selected="${s.name() == todo.status.name()}"
+                            th:text="${s}"></option>
                   </th:block>
                 </select>
               </div>
@@ -73,4 +112,3 @@
   </div>
 </body>
 </html>
-

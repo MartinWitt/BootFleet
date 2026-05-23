@@ -7,6 +7,7 @@
 :root {
   --primary: #6366f1;
   --primary-dark: #4f46e5;
+  --primary-glow: rgba(99, 102, 241, 0.15);
   --secondary: #ec4899;
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
@@ -42,6 +43,8 @@ body {
   min-height: 100vh;
 }
 
+/* ─── Header ─────────────────────────────────────────────── */
+
 header {
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   padding: 24px 20px;
@@ -66,6 +69,24 @@ main {
   flex: 1;
   padding: 32px 20px;
 }
+
+/* ─── Section title ──────────────────────────────────────── */
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  margin-top: 24px;
+}
+
+.week-calendar .section-title {
+  margin-top: 0;
+}
+
+/* ─── Controls ───────────────────────────────────────────── */
 
 .controls {
   display: flex;
@@ -110,7 +131,33 @@ main {
 
 .btn-secondary:hover {
   background: var(--border);
+  transform: translateY(-2px);
+  box-shadow: none;
 }
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--danger);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ff6b6b;
+}
+
+/* ─── Filter ─────────────────────────────────────────────── */
 
 .filter {
   display: flex;
@@ -137,12 +184,106 @@ main {
 .filter select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
-.filter button {
-  padding: 8px 16px;
+/* ─── Week calendar ──────────────────────────────────────── */
+
+.week-calendar {
+  margin-bottom: 40px;
 }
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.week-day {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 8px;
+  min-height: 110px;
+  transition: border-color 0.2s ease;
+}
+
+.week-day--today {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.week-day-header {
+  text-align: center;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.week-day-name {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.week-day--today .week-day-name {
+  color: var(--primary);
+}
+
+.week-day-date {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.week-day-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.week-todo-chip {
+  display: block;
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  background: var(--primary-glow);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  line-height: 1.4;
+}
+
+.week-todo-chip:hover {
+  background: rgba(99, 102, 241, 0.28);
+  color: var(--text-primary);
+}
+
+.week-todo-chip--IN_PROGRESS {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fcd34d;
+}
+
+.week-todo-chip--DONE {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+
+.week-day-empty {
+  color: var(--border);
+  font-size: 0.78rem;
+  text-align: center;
+  padding: 10px 0;
+}
+
+/* ─── Todo list ──────────────────────────────────────────── */
 
 .todo-list {
   background: transparent;
@@ -153,7 +294,7 @@ main {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .todo-row {
@@ -161,18 +302,48 @@ main {
   grid-template-columns: 1fr auto;
   gap: 16px;
   align-items: start;
-  padding: 20px;
+  padding: 18px 20px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
   border-radius: 10px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   cursor: grab;
+}
+
+.todo-row[data-status="OPEN"] {
+  border-left-color: var(--primary);
+}
+
+.todo-row[data-status="IN_PROGRESS"] {
+  border-left-color: var(--warning);
+}
+
+.todo-row[data-status="DONE"] {
+  border-left-color: var(--success);
+  opacity: 0.65;
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.todo-row[data-status="DONE"] .todo-main strong {
+  text-decoration: line-through;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .todo-row:hover {
   border-color: var(--primary);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
-  transform: translateY(-2px);
+  border-left-color: var(--primary);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.15);
+  transform: translateY(-1px);
+}
+
+.todo-row[data-status="DONE"]:hover {
+  border-left-color: var(--success);
+}
+
+.todo-row[data-status="IN_PROGRESS"]:hover {
+  border-left-color: var(--warning);
 }
 
 .todo-row.dragging {
@@ -184,21 +355,23 @@ main {
 .todo-main {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .todo-main strong {
   display: block;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .meta {
   display: flex;
-  gap: 16px;
-  font-size: 0.85rem;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.82rem;
   color: var(--text-muted);
+  align-items: center;
 }
 
 .meta span {
@@ -207,83 +380,73 @@ main {
   gap: 4px;
 }
 
+.recurring-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 12px;
+  margin-top: 4px;
 }
 
 .tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(99, 102, 241, 0.15);
+  gap: 4px;
+  background: rgba(99, 102, 241, 0.1);
   color: #a5b4fc;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  border: 1px solid rgba(99, 102, 241, 0.3);
-}
-
-.status {
-  display: inline-flex;
-  align-items: center;
   padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status.ACTIVE {
-  background: rgba(16, 185, 129, 0.15);
-  color: #6ee7b7;
-}
-
-.status.COMPLETED {
-  background: rgba(107, 114, 128, 0.15);
-  color: #9ca3af;
-}
-
-.status.PENDING {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fcd34d;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 .actions {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  gap: 6px;
+  align-items: stretch;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .actions a {
   color: var(--primary);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   padding: 6px 12px;
   border-radius: 6px;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .actions a:hover {
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--primary-glow);
   color: #c7d2fe;
 }
 
 .actions select {
-  padding: 6px 10px;
+  padding: 6px 8px;
   background: var(--bg-tertiary);
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 500;
+  min-width: 0;
 }
 
 .actions select:hover {
@@ -293,8 +456,14 @@ main {
 .actions select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
+
+.actions form {
+  display: contents;
+}
+
+/* ─── Empty state ────────────────────────────────────────── */
 
 .no-todos {
   text-align: center;
@@ -307,27 +476,17 @@ main {
   margin-bottom: 20px;
 }
 
+/* ─── Form ───────────────────────────────────────────────── */
+
 form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 600px;
+  gap: 22px;
+  max-width: 620px;
   background: var(--bg-secondary);
   padding: 32px;
   border-radius: 12px;
   border: 1px solid var(--border);
-}
-
-form h1 {
-  font-size: 1.8rem;
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-form > p {
-  color: var(--text-muted);
-  margin: -12px 0 12px 0;
-  font-size: 0.95rem;
 }
 
 .form-group {
@@ -340,7 +499,7 @@ form label {
   display: block;
   font-weight: 600;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 form input[type="text"],
@@ -349,7 +508,7 @@ form input[type="time"],
 form input[type="datetime-local"],
 form textarea,
 form select {
-  padding: 12px;
+  padding: 11px 12px;
   background: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border);
@@ -367,17 +526,19 @@ form textarea:focus,
 form select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 form textarea {
-  min-height: 120px;
+  min-height: 100px;
   resize: vertical;
 }
 
+/* ─── Tag selector ───────────────────────────────────────── */
+
 .tag-selector {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   gap: 8px;
 }
 
@@ -389,7 +550,7 @@ form textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  padding: 10px 12px;
   background: var(--bg-tertiary);
   border: 2px solid var(--border);
   border-radius: 8px;
@@ -397,7 +558,7 @@ form textarea {
   font-weight: 500;
   transition: all 0.2s ease;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 
 .tag-checkbox:checked + .tag-label {
@@ -410,11 +571,99 @@ form textarea {
   border-color: var(--primary);
 }
 
+/* ─── Day picker (recurrence) ────────────────────────────── */
+
+.recur-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.day-picker {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.day-btn {
+  cursor: pointer;
+  user-select: none;
+}
+
+.day-btn input {
+  display: none;
+}
+
+.day-btn span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: all 0.18s ease;
+  color: var(--text-secondary);
+}
+
+.day-btn input:checked + span {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.day-btn:hover span {
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.quick-picks {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quick-pick-btn {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.quick-pick-btn:hover {
+  border-color: var(--primary);
+  color: var(--text-primary);
+  background: var(--primary-glow);
+}
+
+.cron-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cron-advanced label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ─── Form actions ───────────────────────────────────────── */
+
 .form-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .btn-primary {
@@ -424,7 +673,7 @@ form textarea {
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -442,7 +691,7 @@ form textarea {
   border: 1px solid var(--border);
   border-radius: 8px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
@@ -455,18 +704,21 @@ form textarea {
   background: var(--border);
 }
 
+/* ─── Responsive ─────────────────────────────────────────── */
+
 @media (max-width: 768px) {
   header h1 {
     font-size: 1.6rem;
   }
 
   main {
-    padding: 20px;
+    padding: 20px 14px;
   }
 
   .controls {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
 
   .controls-left {
@@ -477,12 +729,49 @@ form textarea {
     width: 100%;
   }
 
+  .week-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .week-day {
+    padding: 8px 6px;
+    min-height: 90px;
+  }
+
+  .week-day-name {
+    font-size: 0.65rem;
+  }
+
+  .week-day-date {
+    font-size: 0.65rem;
+  }
+
+  .week-todo-chip {
+    font-size: 0.65rem;
+    padding: 2px 4px;
+  }
+
   .todo-row {
     grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
   }
 
   .actions {
+    flex-direction: row;
+    gap: 4px;
     justify-content: flex-start;
+  }
+
+  .actions a {
+    font-size: 0.75rem;
+    padding: 5px 8px;
+  }
+
+  .actions select {
+    font-size: 0.75rem;
+    padding: 5px 6px;
   }
 
   .filter form {
@@ -494,33 +783,21 @@ form textarea {
   }
 
   form {
-    padding: 24px;
+    padding: 20px 16px;
     max-width: 100%;
   }
 
   .tag-selector {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+  }
+
+  .section-title {
+    margin-bottom: 12px;
   }
 }
 
-.cron-btn {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  opacity: 0.5;
-  font-size: 0.9rem;
-}
-
-.cron-btn:hover {
-  border-color: var(--primary);
-  opacity: 0.8;
-}
-
-.cron-btn[data-cron]:not(:hover) {
-  opacity: 0.5;
+@media (max-width: 480px) {
+  .week-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
