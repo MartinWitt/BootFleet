@@ -112,8 +112,23 @@
             color: #475569;
         }
 
+        .empty-state-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            color: #334155;
+        }
+
+        .empty-state h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin: 0 0 8px;
+        }
+
         .empty-state p {
-            font-size: 0.95rem;
+            font-size: 0.875rem;
+            margin: 0;
         }
 
         .summary {
@@ -124,7 +139,14 @@
     </style>
 
     <div th:if="${services.isEmpty()}" class="empty-state">
-        <p>No Ingress objects found in the cluster.</p>
+        <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="3" width="20" height="6" rx="2"/>
+            <rect x="2" y="15" width="20" height="6" rx="2"/>
+            <line x1="6" y1="6" x2="6.01" y2="6"/>
+            <line x1="6" y1="18" x2="6.01" y2="18"/>
+        </svg>
+        <h2>No services found</h2>
+        <p>No Ingress or HTTPRoute objects were discovered in the cluster.<br>Check that the service account has permission to list Ingress resources.</p>
     </div>
 
     <div th:unless="${services.isEmpty()}">

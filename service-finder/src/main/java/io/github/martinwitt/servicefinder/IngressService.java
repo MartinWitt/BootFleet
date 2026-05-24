@@ -45,11 +45,12 @@ public class IngressService {
         String scheme = hasTls ? "https" : "http";
 
         List<String> urls =
-                Optional.ofNullable(ingress.getSpec().getRules()).orElse(List.of()).stream()
-                        .filter(rule -> rule.getHost() != null)
-                        .map(rule -> scheme + "://" + rule.getHost())
-                        .distinct()
-                        .toList();
+                new ArrayList<>(
+                        Optional.ofNullable(ingress.getSpec().getRules()).orElse(List.of()).stream()
+                                .filter(rule -> rule.getHost() != null)
+                                .map(rule -> scheme + "://" + rule.getHost())
+                                .distinct()
+                                .toList());
 
         return new ServiceEntry(name, namespace, urls);
     }
@@ -59,10 +60,13 @@ public class IngressService {
         String namespace = route.getMetadata().getNamespace();
 
         List<String> urls =
-                Optional.ofNullable(route.getSpec().getHostnames()).orElse(List.of()).stream()
-                        .map(host -> "https://" + host)
-                        .distinct()
-                        .toList();
+                new ArrayList<>(
+                        Optional.ofNullable(route.getSpec().getHostnames())
+                                .orElse(List.of())
+                                .stream()
+                                .map(host -> "https://" + host)
+                                .distinct()
+                                .toList());
 
         return new ServiceEntry(name, namespace, urls);
     }
