@@ -30,14 +30,13 @@ jobs:
 
   build-images:
     needs: [build-and-test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ${{ matrix.arch == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
     permissions:
       contents: read
       packages: write
     strategy:
       matrix:
-        module: [url-cleaner, config-reloader, image-update-detector, maven-version-mcp, sequential-thinking-mcp, todo-app]
+        module: [url-cleaner, config-reloader, image-update-detector, maven-version-mcp, sequential-thinking-mcp, todo-app, service-finder]
         arch: [amd64, arm64]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -49,6 +48,7 @@ jobs:
           cache: 'maven'
 
       - name: Log in to the Container registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
         with:
           registry: ghcr.io
@@ -69,8 +69,8 @@ jobs:
         # without attempting to build them as images. Avoids publishing artifacts.
         run: mvn -B -DskipTests install -pl ${{ env.HELPER_LIBS }} -am
 
-      - name: Build and Push Native Image
-        run: mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest-${{ matrix.arch }} -Dspring-boot.build-image.publish=true -Dspring-boot.build-image.buildCache=cache
+      - name: Build Native Image
+        run: mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest-${{ matrix.arch }} -Dspring-boot.build-image.publish=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }} -Dspring-boot.build-image.buildCache=cache
 
   create-manifest:
     needs: [build-images]
@@ -81,7 +81,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        module: [url-cleaner, config-reloader, image-update-detector, maven-version-mcp, sequential-thinking-mcp, todo-app]
+        module: [url-cleaner, config-reloader, image-update-detector, maven-version-mcp, sequential-thinking-mcp, todo-app, service-finder]
     steps:
       - name: Log in to the Container registry
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4

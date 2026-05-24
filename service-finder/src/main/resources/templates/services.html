@@ -1,0 +1,131 @@
+<div th:fragment="services">
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 20px;
+            transition: border-color 0.15s;
+        }
+
+        .card:hover { border-color: #3b82f6; }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            gap: 8px;
+        }
+
+        .service-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            word-break: break-all;
+        }
+
+        .ns-badge {
+            flex-shrink: 0;
+            background: #1e40af20;
+            color: #93c5fd;
+            border: 1px solid #1e40af50;
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .urls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .url-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 0.875rem;
+            word-break: break-all;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .url-link:hover {
+            background: #1e40af20;
+            border-color: #3b82f6;
+            color: #93c5fd;
+        }
+
+        .url-icon {
+            flex-shrink: 0;
+            width: 14px;
+            height: 14px;
+            opacity: 0.7;
+        }
+
+        .no-urls {
+            font-size: 0.8rem;
+            color: #475569;
+            font-style: italic;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            color: #475569;
+        }
+
+        .empty-state p {
+            font-size: 0.95rem;
+        }
+
+        .summary {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 16px;
+        }
+    </style>
+
+    <div th:if="${services.isEmpty()}" class="empty-state">
+        <p>No Ingress objects found in the cluster.</p>
+    </div>
+
+    <div th:unless="${services.isEmpty()}">
+        <p class="summary" th:text="${services.size()} + ' ingress(es) found'">0 ingresses found</p>
+        <div class="grid">
+            <div th:each="svc : ${services}" class="card">
+                <div class="card-header">
+                    <span class="service-name" th:text="${svc.name()}">name</span>
+                    <span class="ns-badge" th:text="${svc.namespace()}">namespace</span>
+                </div>
+                <div class="urls">
+                    <div th:if="${svc.urls().isEmpty()}" class="no-urls">No hosts configured</div>
+                    <a th:each="url : ${svc.urls()}"
+                       th:href="${url}"
+                       class="url-link"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                        <svg class="url-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path d="M10.5 1.5H14a.5.5 0 01.5.5v3.5a.5.5 0 01-1 0V2.707L8.354 7.854a.5.5 0 01-.708-.708L12.793 2H10.5a.5.5 0 010-1zM3 5a2 2 0 012-2h3a.5.5 0 010 1H5a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1v-3a.5.5 0 011 0v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
+                        </svg>
+                        <span th:text="${url}">https://example.com</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
