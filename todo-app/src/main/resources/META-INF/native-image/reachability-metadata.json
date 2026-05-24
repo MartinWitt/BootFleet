@@ -1,6 +1,15 @@
 {
   "reflection": [
     {
+      "type": "tools.jackson.databind.json.JsonMapper",
+      "methods": [
+        {
+          "name": "builder",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "org.hibernate.validator.internal.util.logging.Log_$logger",
       "allDeclaredConstructors": true,
       "allDeclaredMethods": true
