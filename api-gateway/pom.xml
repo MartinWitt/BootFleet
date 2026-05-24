@@ -140,9 +140,6 @@
                     <artifactId>spring-boot-devtools</artifactId>
                   </exclude>
                 </excludes>
-                <buildArgs>
-                  <buildArg>--initialize-at-build-time=ch.qos.logback.classic.Logger</buildArg>
-                </buildArgs>
               </configuration>
               <executions>
                 <execution>
@@ -162,7 +159,7 @@
             <configuration>
               <image>
                 <env>
-                  <BP_NATIVE_IMAGE_BUILD_ARGUMENTS>--initialize-at-build-time=ch.qos.logback.classic.Logger</BP_NATIVE_IMAGE_BUILD_ARGUMENTS>
+                  <BP_NATIVE_IMAGE_BUILD_ARGUMENTS>--initialize-at-build-time=ch.qos.logback.classic</BP_NATIVE_IMAGE_BUILD_ARGUMENTS>
                 </env>
               </image>
             </configuration>
@@ -209,9 +206,6 @@
               <version>1.1.0</version>
               <configuration>
                 <classesDirectory>${project.build.outputDirectory}</classesDirectory>
-                <buildArgs>
-                  <buildArg>--initialize-at-build-time=ch.qos.logback.classic.Logger</buildArg>
-                </buildArgs>
               </configuration>
               <executions>
                 <execution>
