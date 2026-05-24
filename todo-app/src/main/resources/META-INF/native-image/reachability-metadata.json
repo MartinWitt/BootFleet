@@ -8,7 +8,12 @@
     {
       "type": "org.hibernate.validator.internal.util.logging.Messages_$bundle",
       "allDeclaredConstructors": true,
-      "allDeclaredMethods": true
+      "allDeclaredMethods": true,
+      "fields": [
+        {
+          "name": "INSTANCE"
+        }
+      ]
     }
   ]
 }
