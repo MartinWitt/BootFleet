@@ -4,6 +4,11 @@
       "type": "org.hibernate.validator.internal.util.logging.Log_$logger",
       "allDeclaredConstructors": true,
       "allDeclaredMethods": true
+    },
+    {
+      "type": "org.hibernate.validator.internal.util.logging.Messages_$bundle",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
     }
   ]
 }
