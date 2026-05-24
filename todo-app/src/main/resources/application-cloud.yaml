@@ -13,6 +13,8 @@ spring:
         format_sql: false
         dialect: org.hibernate.dialect.MariaDBDialect
   liquibase:
+    enabled: true
+    drop-first: false
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 server:
