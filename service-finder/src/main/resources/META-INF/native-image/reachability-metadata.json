@@ -1,4 +1,12 @@
 {
   "reflection": [
+    {
+      "type": "io.github.martinwitt.servicefinder.ServiceEntry",
+      "methods": [
+        {"name": "name", "parameterTypes": []},
+        {"name": "namespace", "parameterTypes": []},
+        {"name": "urls", "parameterTypes": []}
+      ]
+    }
   ]
 }
