@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+spring:
+  main:
+    web-application-type: servlet
+  cloud:
+    kubernetes:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+      secrets:
+        enabled: false

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Finder</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <script src="https://unpkg.com/htmx.org@1.9.10"
+            integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
+            crossorigin="anonymous"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #f8fafc;
+            letter-spacing: -0.02em;
+        }
+
+        .badge-live {
+            background: #22c55e20;
+            color: #22c55e;
+            border: 1px solid #22c55e40;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .toolbar-title {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .btn-refresh {
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-refresh:hover { background: #2563eb; }
+
+        #services-content {
+            min-height: 120px;
+        }
+
+        .htmx-indicator {
+            color: #64748b;
+            font-size: 0.875rem;
+            padding: 40px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28" fill="none" aria-hidden="true">
+            <polygon points="28.5,16 22.3,26.8 9.7,26.8 3.5,16 9.7,5.2 22.3,5.2"
+                     stroke="#3b82f6" stroke-width="1.5" fill="#3b82f610" stroke-linejoin="round"/>
+            <circle cx="16" cy="16" r="3.5" fill="#3b82f6"/>
+            <circle cx="28.5" cy="16"   r="1.8" fill="#60a5fa" opacity="0.85"/>
+            <circle cx="22.3" cy="26.8" r="1.8" fill="#60a5fa" opacity="0.85"/>
+            <circle cx="9.7"  cy="26.8" r="1.8" fill="#60a5fa" opacity="0.85"/>
+            <circle cx="3.5"  cy="16"   r="1.8" fill="#60a5fa" opacity="0.85"/>
+            <circle cx="9.7"  cy="5.2"  r="1.8" fill="#60a5fa" opacity="0.85"/>
+            <circle cx="22.3" cy="5.2"  r="1.8" fill="#60a5fa" opacity="0.85"/>
+            <line x1="19"  y1="16"   x2="26.7" y2="16"   stroke="#60a5fa" stroke-width="1" opacity="0.4"/>
+            <line x1="17.5" y1="18.6" x2="21.4" y2="25.2" stroke="#60a5fa" stroke-width="1" opacity="0.4"/>
+            <line x1="14.5" y1="18.6" x2="10.6" y2="25.2" stroke="#60a5fa" stroke-width="1" opacity="0.4"/>
+            <line x1="13"  y1="16"   x2="5.3"  y2="16"   stroke="#60a5fa" stroke-width="1" opacity="0.4"/>
+            <line x1="14.5" y1="13.4" x2="10.6" y2="6.8"  stroke="#60a5fa" stroke-width="1" opacity="0.4"/>
+            <line x1="17.5" y1="13.4" x2="21.4" y2="6.8"  stroke="#60a5fa" stroke-width="1" opacity="0.4"/>
+        </svg>
+        <h1>Service Finder</h1>
+        <span class="badge-live">live</span>
+    </header>
+
+    <main>
+        <div class="toolbar">
+            <span class="toolbar-title">Kubernetes Ingress objects</span>
+            <button class="btn-refresh"
+                    hx-get="/services"
+                    hx-target="#services-content"
+                    hx-swap="innerHTML">
+                Refresh
+            </button>
+        </div>
+
+        <div id="services-content"
+             hx-get="/services"
+             hx-trigger="load, every 30s"
+             hx-target="this"
+             hx-swap="innerHTML">
+            <p class="htmx-indicator">Loading services…</p>
+        </div>
+    </main>
+</body>
+</html>
