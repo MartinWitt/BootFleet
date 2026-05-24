@@ -18,7 +18,7 @@
 
         .card-header {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: space-between;
             margin-bottom: 14px;
             gap: 8px;
@@ -83,6 +83,29 @@
             font-style: italic;
         }
 
+        .card-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .favicon-slot {
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .svc-favicon {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+        }
+
         .empty-state {
             text-align: center;
             padding: 64px 24px;
@@ -109,7 +132,23 @@
         <div class="grid">
             <div th:each="svc : ${services}" class="card">
                 <div class="card-header">
-                    <span class="service-name" th:text="${svc.name()}">name</span>
+                    <div class="card-header-left">
+                        <span class="favicon-slot">
+                            <svg class="svc-favicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <rect x="2" y="3" width="12" height="4" rx="1.5" stroke="#475569" stroke-width="1.2"/>
+                                <circle cx="12" cy="5" r="1" fill="#475569"/>
+                                <rect x="2" y="9" width="12" height="4" rx="1.5" stroke="#475569" stroke-width="1.2"/>
+                                <circle cx="12" cy="11" r="1" fill="#475569"/>
+                            </svg>
+                            <img th:if="${!svc.urls().isEmpty()}"
+                                 th:src="${svc.urls().get(0) + '/favicon.ico'}"
+                                 width="16" height="16" alt="" class="svc-favicon"
+                                 style="display:none"
+                                 onload="this.style.display=''; this.previousElementSibling.style.display='none'"
+                                 onerror="this.remove()">
+                        </span>
+                        <span class="service-name" th:text="${svc.name()}">name</span>
+                    </div>
                     <span class="ns-badge" th:text="${svc.namespace()}">namespace</span>
                 </div>
                 <div class="urls">
