@@ -40,6 +40,11 @@
       "allDeclaredMethods": true
     },
     {
+      "type": "org.thymeleaf.expression.Lists",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
       "type": "org.hibernate.validator.internal.util.logging.Log_$logger",
       "allDeclaredConstructors": true,
       "allDeclaredMethods": true
