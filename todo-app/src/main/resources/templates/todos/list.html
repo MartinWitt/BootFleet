@@ -45,7 +45,7 @@
                 <span class="week-day-date" th:text="${day.date}"></span>
               </div>
               <div class="week-day-body">
-                <span class="week-day-empty" th:if="${day.todos.size() == 0}">—</span>
+                <span class="week-day-empty" th:if="${#lists.isEmpty(day.todos)}">—</span>
                 <th:block th:each="todo : ${day.todos}">
                   <a th:href="@{/todos/{id}/edit(id=${todo.id})}"
                      class="week-todo-chip"
@@ -62,12 +62,12 @@
       <div id="todo-list" class="todo-list" th:attr="data-reorder-url=@{/todos/reorder}">
         <h2 class="section-title">All Tasks</h2>
 
-        <div class="no-todos" th:if="${todos.size() == 0}">
+        <div class="no-todos" th:if="${#lists.isEmpty(todos)}">
           <p>No todos yet — create one to get started!</p>
           <a href="/todos/new" class="btn">Create Your First Todo</a>
         </div>
 
-        <ul id="todos" class="todos" th:if="${todos.size() > 0}">
+        <ul id="todos" class="todos" th:if="${not #lists.isEmpty(todos)}">
           <th:block th:each="todo : ${todos}">
             <li class="todo-row"
                 th:attr="data-id=${todo.id},data-status=${todo.status.name()}">
@@ -83,7 +83,7 @@
                   </span>
                 </div>
 
-                <div class="tags" th:if="${todo.tags.size() > 0}">
+                <div class="tags" th:if="${not #lists.isEmpty(todo.tags)}">
                   <th:block th:each="tag : ${todo.tags}">
                     <span class="tag" th:text="${tag.name}"></span>
                   </th:block>
