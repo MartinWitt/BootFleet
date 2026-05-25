@@ -10,16 +10,9 @@
   <description>Parent POM</description>
 
   <modules>
-    <!-- Add your module names here -->
     <module>spring-boot-utils</module>
     <module>mcp-utils</module>
-    <module>url-cleaner</module>
-    <module>config-reloader</module>
-    <module>image-update-detector</module>
-    <module>maven-version-mcp</module>
-    <module>sequential-thinking-mcp</module>
-    <module>todo-app</module>
-    <module>service-finder</module>
+    <module>spring-native-parent</module>
   </modules>
 
   <properties>
