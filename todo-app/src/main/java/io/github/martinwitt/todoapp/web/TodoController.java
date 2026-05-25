@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +79,7 @@ public class TodoController {
         model.addAttribute("todo", new Todo());
         model.addAttribute("tags", tagService.findAll());
         model.addAttribute("statuses", TodoStatus.values());
-        model.addAttribute("tagNames", java.util.Set.of());
+        model.addAttribute("tagNames", new HashSet<>());
         model.addAttribute("deadlineDate", "");
         model.addAttribute("deadlineTime", "");
         model.addAttribute("cronExpression", "");
@@ -97,7 +98,7 @@ public class TodoController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("tags", tagService.findAll());
             model.addAttribute("statuses", TodoStatus.values());
-            model.addAttribute("tagNames", tagNames != null ? Set.copyOf(tagNames) : Set.of());
+            model.addAttribute("tagNames", tagNames != null ? new HashSet<>(tagNames) : new HashSet<>());
             model.addAttribute("deadlineDate", deadlineDate != null ? deadlineDate : "");
             model.addAttribute("deadlineTime", deadlineTime != null ? deadlineTime : "");
             model.addAttribute("cronExpression", cronExpression != null ? cronExpression : "");
@@ -131,7 +132,7 @@ public class TodoController {
         var t = todo.get();
         model.addAttribute("todo", t);
         model.addAttribute(
-                "tagNames", t.getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
+                "tagNames", t.getTags().stream().map(Tag::getName).collect(Collectors.toCollection(HashSet::new)));
         model.addAttribute(
                 "cronExpression", t.getCronExpression() != null ? t.getCronExpression() : "");
 
@@ -164,7 +165,7 @@ public class TodoController {
             todo.setId(id);
             model.addAttribute("tags", tagService.findAll());
             model.addAttribute("statuses", TodoStatus.values());
-            model.addAttribute("tagNames", tagNames != null ? Set.copyOf(tagNames) : Set.of());
+            model.addAttribute("tagNames", tagNames != null ? new HashSet<>(tagNames) : new HashSet<>());
             model.addAttribute("deadlineDate", deadlineDate != null ? deadlineDate : "");
             model.addAttribute("deadlineTime", deadlineTime != null ? deadlineTime : "");
             model.addAttribute("cronExpression", cronExpression != null ? cronExpression : "");
