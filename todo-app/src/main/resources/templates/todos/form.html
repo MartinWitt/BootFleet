@@ -180,12 +180,20 @@
 
         function setDeadline(type) {
           const dateInput = document.getElementById('deadlineDate');
+
+          const formatLocalDate = (d) => {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+          };
+
           const now = new Date();
           if (type === 'today') {
-            dateInput.value = now.toISOString().slice(0, 10);
+            dateInput.value = formatLocalDate(now);
           } else if (type === 'endofmonth') {
             const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            dateInput.value = lastDay.toISOString().slice(0, 10);
+            dateInput.value = formatLocalDate(lastDay);
           }
         }
 
