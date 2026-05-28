@@ -40,6 +40,10 @@
               <input type="time" id="deadlineTime" name="deadlineTime" th:value="${deadlineTime}" />
             </div>
           </div>
+          <div class="quick-picks" style="margin-top: 8px;">
+            <button type="button" class="quick-pick-btn" onclick="setDeadline('today')">Today</button>
+            <button type="button" class="quick-pick-btn" onclick="setDeadline('endofmonth')">End of Month</button>
+          </div>
         </div>
 
         <div class="form-group">
@@ -172,6 +176,17 @@
             return;
           }
           updateCronFromPicker();
+        }
+
+        function setDeadline(type) {
+          const dateInput = document.getElementById('deadlineDate');
+          const now = new Date();
+          if (type === 'today') {
+            dateInput.value = now.toISOString().slice(0, 10);
+          } else if (type === 'endofmonth') {
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            dateInput.value = lastDay.toISOString().slice(0, 10);
+          }
         }
 
         document.addEventListener('DOMContentLoaded', syncPickerFromCron);
