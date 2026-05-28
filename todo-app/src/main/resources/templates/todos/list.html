@@ -91,14 +91,23 @@
               </div>
 
               <div class="actions">
-                <a th:href="@{/todos/{id}/edit(id=${todo.id})}">Edit</a>
+                <a th:href="@{/todos/{id}/edit(id=${todo.id})}" class="action-btn action-btn--edit" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                  </svg>
+                </a>
                 <form th:action="@{/todos/{id}/delete(id=${todo.id})}" method="post"
-                      onsubmit="return confirm('Delete this task?');" style="display:inline;">
-                  <button type="submit" class="btn-danger">Delete</button>
+                      onsubmit="return confirm('Delete this task?');">
+                  <button type="submit" class="action-btn action-btn--delete" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    </svg>
+                  </button>
                 </form>
-                <select class="status-select" th:attr="data-id=${todo.id}">
+                <select class="status-select status-chip"
+                        th:attr="data-id=${todo.id}, data-status=${todo.status.name()}">
                   <th:block th:each="s : ${statuses}">
-                    <option th:value="${s}"
+                    <option th:value="${s.name()}"
                             th:selected="${s.name() == todo.status.name()}"
                             th:text="${s}"></option>
                   </th:block>
