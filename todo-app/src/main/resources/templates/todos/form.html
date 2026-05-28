@@ -30,13 +30,13 @@
 
         <div class="form-group">
           <label>Deadline</label>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
             <div>
-              <label for="deadlineDate" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 400; margin-bottom: 4px;">Date</label>
+              <label for="deadlineDate" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500; margin-bottom: 6px; text-transform: none; letter-spacing: 0;">Date</label>
               <input type="date" id="deadlineDate" name="deadlineDate" th:value="${deadlineDate}" />
             </div>
             <div>
-              <label for="deadlineTime" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 400; margin-bottom: 4px;">Time (optional)</label>
+              <label for="deadlineTime" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500; margin-bottom: 6px; text-transform: none; letter-spacing: 0;">Time (optional)</label>
               <input type="time" id="deadlineTime" name="deadlineTime" th:value="${deadlineTime}" />
             </div>
           </div>
@@ -62,7 +62,7 @@
           <label for="status">Status</label>
           <select id="status" name="status">
             <th:block th:each="s : ${statuses}">
-              <option th:value="${s}"
+              <option th:value="${s.name()}"
                       th:selected="${todo.status != null ? s.name() == todo.status.name() : false}"
                       th:text="${s}"></option>
             </th:block>
@@ -86,9 +86,9 @@
             </div>
 
             <!-- Time for recurring tasks -->
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 400; white-space: nowrap;">at time</label>
-              <input type="time" id="recur-time" style="max-width: 140px;" />
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 500; white-space: nowrap; text-transform: none; letter-spacing: 0;">at time</label>
+              <input type="time" id="recur-time" style="max-width: 160px; flex-shrink: 0;" />
             </div>
 
             <!-- Quick picks -->
@@ -137,14 +137,26 @@
           const val = (cronInput.value || '').trim();
           if (!val) return;
           const parts = val.split(/\s+/);
-          if (parts.length < 5) return;
-          const [min, hour, , , dow] = parts;
+          let min, hour, dom, dow;
+          if (parts.length === 6) {
+            // Spring format: sec min hour dom month dow
+            [, min, hour, dom, , dow] = parts;
+          } else if (parts.length === 5) {
+            // Unix format: min hour dom month dow
+            [min, hour, dom, , dow] = parts;
+          } else {
+            return;
+          }
           if (hour !== '*' && min !== '*') {
             const h = String(parseInt(hour) || 0).padStart(2, '0');
             const m = String(parseInt(min) || 0).padStart(2, '0');
             timeInput.value = `${h}:${m}`;
           }
-          if (dow && dow !== '*') {
+          const domIsWild = !dom || dom === '*' || dom === '?';
+          if (!domIsWild) {
+            // Day-of-month expression — picker can't represent it, leave unchecked
+            dayChecks.forEach(c => { c.checked = false; });
+          } else if (dow && dow !== '*') {
             const selected = new Set();
             dow.split(',').forEach(p => {
               if (p.includes('-')) {
@@ -155,7 +167,7 @@
               }
             });
             dayChecks.forEach(c => { c.checked = selected.has(c.value); });
-          } else if (dow === '*') {
+          } else {
             dayChecks.forEach(c => { c.checked = true; });
           }
         }

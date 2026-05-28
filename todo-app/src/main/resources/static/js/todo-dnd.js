@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', function () {
     sel.addEventListener('change', function () {
       const id = this.getAttribute('data-id');
       const status = this.value;
+      this.dataset.status = status;
+      const row = this.closest('.todo-row');
+      if (row) row.dataset.status = status;
       fetch(`/todos/${id}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
