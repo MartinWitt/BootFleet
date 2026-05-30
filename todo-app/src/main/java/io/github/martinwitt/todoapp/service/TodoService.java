@@ -5,6 +5,7 @@ import io.github.martinwitt.todoapp.domain.Todo;
 import io.github.martinwitt.todoapp.domain.TodoStatus;
 import io.github.martinwitt.todoapp.repository.TagRepository;
 import io.github.martinwitt.todoapp.repository.TodoRepository;
+import java.time.LocalDateTime;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +62,21 @@ public class TodoService {
                             return true;
                         })
                 .orElse(false);
+    }
+
+    @Transactional
+    public Optional<LocalDateTime> snooze(Long id, int days) {
+        return todoRepository
+                .findById(id)
+                .map(
+                        t -> {
+                            LocalDateTime base =
+                                    t.getDeadline() != null ? t.getDeadline() : LocalDateTime.now();
+                            LocalDateTime newDeadline = base.plusDays(days);
+                            t.setDeadline(newDeadline);
+                            todoRepository.save(t);
+                            return newDeadline;
+                        });
     }
 
     @Transactional
