@@ -16,15 +16,18 @@ class TodoAppRuntimeHintsTest {
 
     @Test
     void domainTypesAreRegistered() {
-        new TodoAppRuntimeHints().registerHints(hints, Thread.currentThread().getContextClassLoader());
+        new TodoAppRuntimeHints()
+                .registerHints(hints, Thread.currentThread().getContextClassLoader());
         assertThat(RuntimeHintsPredicates.reflection().onType(Todo.class).test(hints)).isTrue();
         assertThat(RuntimeHintsPredicates.reflection().onType(Tag.class).test(hints)).isTrue();
-        assertThat(RuntimeHintsPredicates.reflection().onType(TodoStatus.class).test(hints)).isTrue();
+        assertThat(RuntimeHintsPredicates.reflection().onType(TodoStatus.class).test(hints))
+                .isTrue();
     }
 
     @Test
     void notBlankValidatorIsRegisteredForReflection() {
-        new TodoAppRuntimeHints().registerHints(hints, Thread.currentThread().getContextClassLoader());
+        new TodoAppRuntimeHints()
+                .registerHints(hints, Thread.currentThread().getContextClassLoader());
         assertThat(RuntimeHintsPredicates.reflection().onType(NotBlankValidator.class).test(hints))
                 .isTrue();
     }
