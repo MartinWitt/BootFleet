@@ -1,24 +1,24 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const list = document.getElementById('todos');
-  if (!list) return;
-
   const reorderUrl = document.getElementById('todo-list')?.getAttribute('data-reorder-url');
   if (!reorderUrl) return;
 
-  new Sortable(list, {
-    animation: 150,
-    chosenClass: 'dragging',
-    onEnd: function () {
-      const ids = Array.from(list.querySelectorAll('li.todo-row')).map(li => li.getAttribute('data-id'));
-      fetch(reorderUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ids)
-      }).catch(err => console.error('reorder failed', err));
-    }
+  ['todos-recurring', 'todos-onetime'].forEach(function (listId) {
+    const list = document.getElementById(listId);
+    if (!list) return;
+    new Sortable(list, {
+      animation: 150,
+      chosenClass: 'dragging',
+      onEnd: function () {
+        const ids = Array.from(list.querySelectorAll('li.todo-row')).map(li => li.getAttribute('data-id'));
+        fetch(reorderUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ids)
+        }).catch(err => console.error('reorder failed', err));
+      }
+    });
   });
 
-  // Status selects
   document.querySelectorAll('.status-select').forEach(sel => {
     sel.addEventListener('change', function () {
       const id = this.getAttribute('data-id');
@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Snooze: toggle dropdown
   document.querySelectorAll('.action-btn--snooze').forEach(btn => {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -45,12 +44,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Snooze: close on outside click
   document.addEventListener('click', () => {
     document.querySelectorAll('.snooze-wrap.open').forEach(w => w.classList.remove('open'));
   });
 
-  // Snooze: apply option
   document.querySelectorAll('.snooze-menu button').forEach(btn => {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
