@@ -52,10 +52,20 @@ public class TodoController {
                         ? todoService.findAllSorted()
                         : todoService.findByTagName(tag);
 
+        List<Todo> recurringTodos = new ArrayList<>();
+        List<Todo> oneTimeTodos = new ArrayList<>();
+        List<Todo> doneTodos = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
         Map<Long, String> formattedDeadlines = new HashMap<>();
         Map<Long, String> cronDescriptions = new HashMap<>();
         for (Todo todo : todos) {
+            if (todo.getStatus() == TodoStatus.DONE) {
+                doneTodos.add(todo);
+            } else if (todo.getCronExpression() != null && !todo.getCronExpression().isBlank()) {
+                recurringTodos.add(todo);
+            } else {
+                oneTimeTodos.add(todo);
+            }
             if (todo.getDeadline() != null) {
                 formattedDeadlines.put(todo.getId(), todo.getDeadline().format(formatter));
             }
@@ -64,7 +74,9 @@ public class TodoController {
             }
         }
 
-        model.addAttribute("todos", todos);
+        model.addAttribute("recurringTodos", recurringTodos);
+        model.addAttribute("oneTimeTodos", oneTimeTodos);
+        model.addAttribute("doneTodos", doneTodos);
         model.addAttribute("formattedDeadlines", formattedDeadlines);
         model.addAttribute("cronDescriptions", cronDescriptions);
         model.addAttribute("weekDays", buildWeekDays(todos));

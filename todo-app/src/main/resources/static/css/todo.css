@@ -516,6 +516,50 @@ main {
   color: var(--text-primary);
 }
 
+/* ─── Done section toggle ────────────────────────────────── */
+
+.done-section {
+  margin-top: 32px;
+}
+
+.done-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.done-toggle:hover {
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.done-toggle-chevron {
+  transition: transform 0.2s ease;
+}
+
+.done-toggle--open .done-toggle-chevron {
+  transform: rotate(180deg);
+}
+
+.done-section-body {
+  display: none;
+  margin-top: 16px;
+}
+
+.done-section-body.done-section--visible {
+  display: block;
+}
+
 /* ─── Empty state ────────────────────────────────────────── */
 
 .no-todos {

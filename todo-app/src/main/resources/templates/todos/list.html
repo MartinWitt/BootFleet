@@ -60,62 +60,166 @@
 
       <!-- Todo list -->
       <div id="todo-list" class="todo-list" th:attr="data-reorder-url=@{/todos/reorder}">
-        <h2 class="section-title">All Tasks</h2>
 
-        <div class="no-todos" th:if="${#lists.isEmpty(todos)}">
+        <!-- Empty state -->
+        <div class="no-todos"
+             th:if="${#lists.isEmpty(recurringTodos) and #lists.isEmpty(oneTimeTodos) and #lists.isEmpty(doneTodos)}">
           <p>No todos yet — create one to get started!</p>
           <a href="/todos/new" class="btn">Create Your First Todo</a>
         </div>
 
-        <ul id="todos" class="todos" th:if="${not #lists.isEmpty(todos)}">
-          <th:block th:each="todo : ${todos}">
-            <li class="todo-row"
-                th:attr="data-id=${todo.id},data-status=${todo.status.name()}">
-
-              <div class="todo-main">
-                <strong th:text="${todo.title}"></strong>
-
-                <div class="meta">
-                  <span th:if="${formattedDeadlines.get(todo.id)}"
-                        th:text="'📅 ' + ${formattedDeadlines.get(todo.id)}"></span>
-                  <span th:if="${cronDescriptions.get(todo.id)}" class="recurring-badge">
-                    🔁 <span th:text="${cronDescriptions.get(todo.id)}"></span>
-                  </span>
+        <!-- Wiederkehrend -->
+        <div th:if="${not #lists.isEmpty(recurringTodos)}">
+          <h2 class="section-title">Wiederkehrend</h2>
+          <ul id="todos-recurring" class="todos">
+            <th:block th:each="todo : ${recurringTodos}">
+              <li class="todo-row" th:attr="data-id=${todo.id},data-status=${todo.status.name()}">
+                <div class="todo-main">
+                  <strong th:text="${todo.title}"></strong>
+                  <div class="meta">
+                    <span th:if="${formattedDeadlines.get(todo.id)}"
+                          th:text="'📅 ' + ${formattedDeadlines.get(todo.id)}"></span>
+                    <span th:if="${cronDescriptions.get(todo.id)}" class="recurring-badge">
+                      🔁 <span th:text="${cronDescriptions.get(todo.id)}"></span>
+                    </span>
+                  </div>
+                  <div class="tags" th:if="${not #lists.isEmpty(todo.tags)}">
+                    <th:block th:each="tag : ${todo.tags}">
+                      <span class="tag" th:text="${tag.name}"></span>
+                    </th:block>
+                  </div>
                 </div>
-
-                <div class="tags" th:if="${not #lists.isEmpty(todo.tags)}">
-                  <th:block th:each="tag : ${todo.tags}">
-                    <span class="tag" th:text="${tag.name}"></span>
-                  </th:block>
-                </div>
-              </div>
-
-              <div class="actions">
-                <a th:href="@{/todos/{id}/edit(id=${todo.id})}" class="action-btn action-btn--edit" title="Edit">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                  </svg>
-                </a>
-                <form th:action="@{/todos/{id}/delete(id=${todo.id})}" method="post"
-                      onsubmit="return confirm('Delete this task?');">
-                  <button type="submit" class="action-btn action-btn--delete" title="Delete">
+                <div class="actions">
+                  <a th:href="@{/todos/{id}/edit(id=${todo.id})}" class="action-btn action-btn--edit" title="Edit">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                     </svg>
-                  </button>
-                </form>
-                <select class="status-select status-chip"
-                        th:attr="data-id=${todo.id}, data-status=${todo.status.name()}">
-                  <th:block th:each="s : ${statuses}">
-                    <option th:value="${s.name()}"
-                            th:selected="${s.name() == todo.status.name()}"
-                            th:text="${s}"></option>
-                  </th:block>
-                </select>
-              </div>
-            </li>
-          </th:block>
-        </ul>
+                  </a>
+                  <form th:action="@{/todos/{id}/delete(id=${todo.id})}" method="post"
+                        onsubmit="return confirm('Delete this task?');">
+                    <button type="submit" class="action-btn action-btn--delete" title="Delete">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                      </svg>
+                    </button>
+                  </form>
+                  <select class="status-select status-chip"
+                          th:attr="data-id=${todo.id}, data-status=${todo.status.name()}">
+                    <th:block th:each="s : ${statuses}">
+                      <option th:value="${s.name()}"
+                              th:selected="${s.name() == todo.status.name()}"
+                              th:text="${s}"></option>
+                    </th:block>
+                  </select>
+                </div>
+              </li>
+            </th:block>
+          </ul>
+        </div>
+
+        <!-- Einmalig -->
+        <div th:if="${not #lists.isEmpty(oneTimeTodos)}">
+          <h2 class="section-title">Einmalig</h2>
+          <ul id="todos-onetime" class="todos">
+            <th:block th:each="todo : ${oneTimeTodos}">
+              <li class="todo-row" th:attr="data-id=${todo.id},data-status=${todo.status.name()}">
+                <div class="todo-main">
+                  <strong th:text="${todo.title}"></strong>
+                  <div class="meta">
+                    <span th:if="${formattedDeadlines.get(todo.id)}"
+                          th:text="'📅 ' + ${formattedDeadlines.get(todo.id)}"></span>
+                  </div>
+                  <div class="tags" th:if="${not #lists.isEmpty(todo.tags)}">
+                    <th:block th:each="tag : ${todo.tags}">
+                      <span class="tag" th:text="${tag.name}"></span>
+                    </th:block>
+                  </div>
+                </div>
+                <div class="actions">
+                  <a th:href="@{/todos/{id}/edit(id=${todo.id})}" class="action-btn action-btn--edit" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                  </a>
+                  <form th:action="@{/todos/{id}/delete(id=${todo.id})}" method="post"
+                        onsubmit="return confirm('Delete this task?');">
+                    <button type="submit" class="action-btn action-btn--delete" title="Delete">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                      </svg>
+                    </button>
+                  </form>
+                  <select class="status-select status-chip"
+                          th:attr="data-id=${todo.id}, data-status=${todo.status.name()}">
+                    <th:block th:each="s : ${statuses}">
+                      <option th:value="${s.name()}"
+                              th:selected="${s.name() == todo.status.name()}"
+                              th:text="${s}"></option>
+                    </th:block>
+                  </select>
+                </div>
+              </li>
+            </th:block>
+          </ul>
+        </div>
+
+        <!-- Erledigt (toggle) -->
+        <div th:if="${not #lists.isEmpty(doneTodos)}" class="done-section">
+          <button type="button" class="done-toggle"
+                  onclick="var b=document.getElementById('done-section-body');b.classList.toggle('done-section--visible');this.classList.toggle('done-toggle--open')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="done-toggle-chevron">
+              <path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>
+            </svg>
+            Erledigt (<span th:text="${#lists.size(doneTodos)}"></span>)
+          </button>
+          <div id="done-section-body" class="done-section-body">
+            <ul id="todos-done" class="todos">
+              <th:block th:each="todo : ${doneTodos}">
+                <li class="todo-row" th:attr="data-id=${todo.id},data-status=${todo.status.name()}">
+                  <div class="todo-main">
+                    <strong th:text="${todo.title}"></strong>
+                    <div class="meta">
+                      <span th:if="${formattedDeadlines.get(todo.id)}"
+                            th:text="'📅 ' + ${formattedDeadlines.get(todo.id)}"></span>
+                      <span th:if="${cronDescriptions.get(todo.id)}" class="recurring-badge">
+                        🔁 <span th:text="${cronDescriptions.get(todo.id)}"></span>
+                      </span>
+                    </div>
+                    <div class="tags" th:if="${not #lists.isEmpty(todo.tags)}">
+                      <th:block th:each="tag : ${todo.tags}">
+                        <span class="tag" th:text="${tag.name}"></span>
+                      </th:block>
+                    </div>
+                  </div>
+                  <div class="actions">
+                    <a th:href="@{/todos/{id}/edit(id=${todo.id})}" class="action-btn action-btn--edit" title="Edit">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                      </svg>
+                    </a>
+                    <form th:action="@{/todos/{id}/delete(id=${todo.id})}" method="post"
+                          onsubmit="return confirm('Delete this task?');">
+                      <button type="submit" class="action-btn action-btn--delete" title="Delete">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                      </button>
+                    </form>
+                    <select class="status-select status-chip"
+                            th:attr="data-id=${todo.id}, data-status=${todo.status.name()}">
+                      <th:block th:each="s : ${statuses}">
+                        <option th:value="${s.name()}"
+                                th:selected="${s.name() == todo.status.name()}"
+                                th:text="${s}"></option>
+                      </th:block>
+                    </select>
+                  </div>
+                </li>
+              </th:block>
+            </ul>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
