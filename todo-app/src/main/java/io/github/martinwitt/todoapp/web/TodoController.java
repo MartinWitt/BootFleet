@@ -230,6 +230,16 @@ public class TodoController {
         return found ? ResponseEntity.ok("ok") : ResponseEntity.notFound().build();
     }
 
+    @PostMapping("/todos/{id}/snooze")
+    @ResponseBody
+    public ResponseEntity<?> snooze(@PathVariable Long id, @RequestParam int days) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        return todoService
+                .snooze(id, days)
+                .map(dt -> ResponseEntity.ok(Map.of("deadline", dt.format(fmt))))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/todos/reorder")
     @ResponseBody
     public String reorder(@RequestBody List<Long> orderedIds) {

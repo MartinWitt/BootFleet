@@ -471,6 +471,61 @@ main {
   color: var(--danger);
 }
 
+.action-btn--snooze {
+  color: var(--text-muted);
+}
+
+.action-btn--snooze:hover {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--warning);
+}
+
+/* ─── Snooze dropdown ────────────────────────────────────── */
+
+.snooze-wrap {
+  position: relative;
+}
+
+.snooze-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 4px);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  z-index: 100;
+  min-width: 110px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  flex-direction: column;
+  gap: 2px;
+}
+
+.snooze-wrap.open .snooze-menu {
+  display: flex;
+}
+
+.snooze-menu button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.snooze-menu button:hover {
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--warning);
+}
+
 /* Status chip — Material-style filled chip */
 .status-chip {
   appearance: none;
