@@ -1,0 +1,168 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${note.id == null} ? 'Neue Notiz' : 'Notiz bearbeiten'"></title>
+  <link rel="stylesheet" href="/css/notes.css"/>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1 th:text="${note.id == null} ? 'Neue Notiz' : 'Notiz bearbeiten'"></h1>
+  </header>
+
+  <main>
+    <form th:action="${note.id == null} ? '/notes' : '/notes/' + ${note.id}" method="post">
+
+      <div class="form-group">
+        <label for="title">Titel *</label>
+        <input type="text" id="title" name="title" th:value="${note.title}"
+               placeholder="Titel der Notiz" required/>
+      </div>
+
+      <div class="form-group">
+        <label for="content">Inhalt</label>
+        <textarea id="content" name="content" rows="10"
+                  placeholder="Notizinhalt..." th:text="${note.content}"></textarea>
+        <div style="margin-top:4px;">
+          <button type="button" id="expand-btn" class="btn btn-ai">Ausformulieren</button>
+          <span id="expand-status" class="suggestion-status" style="margin-left:8px;"></span>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="form-group">
+        <label>Tags</label>
+        <!-- Vorhandene Tags als Checkboxen -->
+        <div class="tag-selector" th:if="${not #lists.isEmpty(allTags)}">
+          <th:block th:each="tag : ${allTags}">
+            <input type="checkbox" th:id="'tag-' + ${tag.id}" name="tagNames"
+                   th:value="${tag.name}" class="tag-checkbox"
+                   th:checked="${tagNames != null and tagNames.contains(tag.name)}"/>
+            <label th:for="'tag-' + ${tag.id}" class="tag-label" th:text="${tag.name}"></label>
+          </th:block>
+        </div>
+        <!-- Neuen Tag manuell hinzufügen -->
+        <div class="new-tag-row">
+          <input type="text" id="new-tag-input" placeholder="Neuen Tag eingeben…" autocomplete="off"/>
+          <button type="button" id="add-tag-btn" class="btn-add-tag">+</button>
+        </div>
+        <div id="inline-tags" class="tag-selector" style="margin-top:8px;"></div>
+
+        <!-- KI-Tag-Vorschläge -->
+        <div style="margin-top:12px;">
+          <button type="button" id="suggest-tags-btn" class="btn btn-ai">KI-Vorschläge laden</button>
+          <span id="suggest-status" class="suggestion-status" style="margin-left:8px;"></span>
+          <div id="ai-suggestions" class="suggestions-chips" style="margin-top:8px;"></div>
+        </div>
+      </div>
+
+      <script>
+        const input = document.getElementById('new-tag-input');
+        const addBtn = document.getElementById('add-tag-btn');
+        const inlineTags = document.getElementById('inline-tags');
+
+        function addInlineTag(name) {
+          const id = 'inline-' + name;
+          if (document.getElementById(id)) return;
+          const cb = document.createElement('input');
+          cb.type = 'checkbox'; cb.name = 'tagNames'; cb.value = name;
+          cb.id = id; cb.className = 'tag-checkbox'; cb.checked = true;
+          const lbl = document.createElement('label');
+          lbl.htmlFor = id; lbl.className = 'tag-label'; lbl.textContent = name;
+          inlineTags.appendChild(cb);
+          inlineTags.appendChild(lbl);
+        }
+
+        function addTag() {
+          const name = input.value.trim().toLowerCase();
+          if (!name) return;
+          addInlineTag(name);
+          input.value = '';
+        }
+        addBtn.addEventListener('click', addTag);
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } });
+
+        const expandBtn = document.getElementById('expand-btn');
+        const expandStatus = document.getElementById('expand-status');
+
+        expandBtn.addEventListener('click', async () => {
+          const title = document.getElementById('title').value.trim();
+          const content = document.getElementById('content').value.trim();
+          if (!title) { expandStatus.textContent = 'Bitte zuerst einen Titel eingeben.'; return; }
+
+          expandBtn.disabled = true;
+          expandStatus.textContent = 'KI formuliert aus…';
+
+          try {
+            const resp = await fetch('/notes/expand-content', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+              body: new URLSearchParams({title, content})
+            });
+            if (resp.status === 503) { expandStatus.textContent = 'Ollama ist nicht erreichbar.'; return; }
+            if (!resp.ok) { expandStatus.textContent = 'Fehler beim Ausformulieren.'; return; }
+            const expanded = await resp.json();
+            document.getElementById('content').value = expanded;
+            expandStatus.textContent = 'Fertig.';
+          } catch (e) {
+            expandStatus.textContent = 'Ollama nicht erreichbar.';
+          } finally {
+            expandBtn.disabled = false;
+          }
+        });
+
+        const suggestBtn = document.getElementById('suggest-tags-btn');
+        const suggestStatus = document.getElementById('suggest-status');
+        const aiSuggestions = document.getElementById('ai-suggestions');
+
+        suggestBtn.addEventListener('click', async () => {
+          const title = document.getElementById('title').value.trim();
+          const content = document.getElementById('content').value.trim();
+          if (!title) { suggestStatus.textContent = 'Bitte zuerst einen Titel eingeben.'; return; }
+
+          suggestBtn.disabled = true;
+          suggestStatus.textContent = 'KI analysiert…';
+          aiSuggestions.innerHTML = '';
+
+          try {
+            const resp = await fetch('/notes/suggest-tags', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+              body: new URLSearchParams({title, content})
+            });
+            if (resp.status === 503) { suggestStatus.textContent = 'Ollama ist nicht erreichbar.'; return; }
+            if (!resp.ok) { suggestStatus.textContent = 'Fehler beim Abrufen der Vorschläge.'; return; }
+            const tags = await resp.json();
+            suggestStatus.textContent = tags.length === 0 ? 'Keine Vorschläge gefunden.' : 'Klick auf einen Tag, um ihn hinzuzufügen:';
+            tags.forEach(tag => {
+              const btn = document.createElement('button');
+              btn.type = 'button';
+              btn.textContent = tag;
+              btn.className = 'tag-suggestion-chip';
+              btn.addEventListener('click', () => {
+                btn.disabled = true;
+                btn.classList.add('tag-suggestion-chip--added');
+                addInlineTag(tag);
+              });
+              aiSuggestions.appendChild(btn);
+            });
+          } catch (e) {
+            suggestStatus.textContent = 'Ollama nicht erreichbar.';
+          } finally {
+            suggestBtn.disabled = false;
+          }
+        });
+      </script>
+
+      <div class="form-actions">
+        <a href="/notes" class="btn-cancel">Abbrechen</a>
+        <button type="submit" class="btn-primary"
+                th:text="${note.id == null} ? 'Erstellen' : 'Speichern'"></button>
+      </div>
+    </form>
+  </main>
+</div>
+</body>
+</html>

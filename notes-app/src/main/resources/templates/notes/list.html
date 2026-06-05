@@ -1,0 +1,66 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NotesApp</title>
+  <link rel="stylesheet" href="/css/notes.css"/>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>NotesApp</h1>
+    <p>Deine Notizen, organisiert mit KI-Tags</p>
+  </header>
+
+  <main>
+    <div class="controls">
+      <a href="/notes/new" class="btn">+ Neue Notiz</a>
+    </div>
+
+    <!-- Tag-Filter-Chips -->
+    <div class="tag-filter" th:if="${not #lists.isEmpty(allTags)}">
+      <a href="/notes" class="tag-chip" th:classappend="${selectedTag == null} ? 'tag-chip--active' : ''">Alle</a>
+      <th:block th:each="t : ${allTags}">
+        <a th:href="@{/notes(tag=${t})}" class="tag-chip"
+           th:classappend="${t == selectedTag} ? 'tag-chip--active' : ''"
+           th:text="${t}"></a>
+      </th:block>
+    </div>
+
+    <!-- Leer-Zustand -->
+    <div class="empty-state" th:if="${#lists.isEmpty(notes)}">
+      <p>Keine Notizen vorhanden — erstelle deine erste!</p>
+      <a href="/notes/new" class="btn">Erste Notiz erstellen</a>
+    </div>
+
+    <!-- Notizen-Grid -->
+    <div class="notes-grid" th:if="${not #lists.isEmpty(notes)}">
+      <th:block th:each="note : ${notes}">
+        <div class="note-card">
+          <div class="note-card-body">
+            <h3 class="note-title">
+              <a th:href="@{/notes/{id}(id=${note.id})}" th:text="${note.title}"></a>
+            </h3>
+            <p class="note-date" th:text="${#temporals.format(note.updatedAt, 'dd.MM.yyyy HH:mm')}"></p>
+            <p class="note-preview" th:text="${#strings.abbreviate(note.content, 120)}"></p>
+            <div class="note-tags" th:if="${not #lists.isEmpty(note.tags)}">
+              <th:block th:each="tag : ${note.tags}">
+                <span class="tag" th:text="${tag.name}"></span>
+              </th:block>
+            </div>
+          </div>
+          <div class="note-card-actions">
+            <a th:href="@{/notes/{id}/edit(id=${note.id})}" class="action-btn action-btn--edit" title="Bearbeiten">✏️</a>
+            <form th:action="@{/notes/{id}/delete(id=${note.id})}" method="post"
+                  onsubmit="return confirm('Notiz löschen?');">
+              <button type="submit" class="action-btn action-btn--delete" title="Löschen">🗑️</button>
+            </form>
+          </div>
+        </div>
+      </th:block>
+    </div>
+  </main>
+</div>
+</body>
+</html>
