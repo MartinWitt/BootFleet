@@ -45,13 +45,7 @@ public class NoteController {
                         : noteService.findByTagName(tag);
         model.addAttribute("notes", notes);
         model.addAttribute(
-                "allTags",
-                noteService.findAll().stream()
-                        .flatMap(n -> n.getTags().stream())
-                        .map(Tag::getName)
-                        .distinct()
-                        .sorted()
-                        .toList());
+                "allTags", noteService.findAllTags().stream().map(Tag::getName).sorted().toList());
         model.addAttribute("selectedTag", tag);
         return "notes/list";
     }
@@ -192,7 +186,9 @@ public class NoteController {
     @PostMapping("/notes/{id}/tags/{tagName}")
     @ResponseBody
     public ResponseEntity<String> addTag(@PathVariable Long id, @PathVariable String tagName) {
-        boolean added = noteService.addTag(id, tagName);
+        String normalized = tagName == null ? "" : tagName.trim().toLowerCase();
+        if (normalized.isBlank()) return ResponseEntity.badRequest().build();
+        boolean added = noteService.addTag(id, normalized);
         return added ? ResponseEntity.ok("added") : ResponseEntity.notFound().build();
     }
 }

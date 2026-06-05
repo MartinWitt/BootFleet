@@ -45,7 +45,10 @@ public class NoteService {
 
     @Transactional
     public Tag ensureTag(String name) {
-        return tagRepository.findByName(name).orElseGet(() -> tagRepository.save(new Tag(name)));
+        String normalized = name == null ? "" : name.trim().toLowerCase();
+        return tagRepository
+                .findByName(normalized)
+                .orElseGet(() -> tagRepository.save(new Tag(normalized)));
     }
 
     @Transactional

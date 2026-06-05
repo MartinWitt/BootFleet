@@ -17,12 +17,11 @@ class NoteTest {
     }
 
     @Test
-    void shouldUpdateUpdatedAtOnUpdate() throws InterruptedException {
+    void shouldUpdateUpdatedAtOnUpdate() {
         Note note = new Note();
-        note.prePersist();
+        note.setUpdatedAt(LocalDateTime.now().minusSeconds(1));
         LocalDateTime before = note.getUpdatedAt();
 
-        Thread.sleep(2);
         note.preUpdate();
 
         assertThat(note.getUpdatedAt()).isAfter(before);

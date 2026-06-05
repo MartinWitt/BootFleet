@@ -45,7 +45,9 @@ class TagSuggestionServiceTest {
         when(chatClient.prompt(any(String.class))).thenReturn(requestSpec);
         when(requestSpec.call()).thenReturn(callSpec);
         when(callSpec.entity(TagSuggestions.class))
-                .thenReturn(new TagSuggestions(List.of("spring", "rest", "backend", "tutorial")));
+                .thenReturn(
+                        new TagSuggestions(
+                                List.of("spring", "rest", "backend", "java", "tutorial")));
 
         List<String> suggestions = tagSuggestionService.suggestTags(note);
 

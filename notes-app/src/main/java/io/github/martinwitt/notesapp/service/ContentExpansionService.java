@@ -30,11 +30,11 @@ public class ContentExpansionService {
 
         try {
             String result = chatClient.prompt(prompt).call().content();
-            log.info("ContentExpansion result: {}", result);
+            log.debug("ContentExpansion returned {} chars", result != null ? result.length() : 0);
             if (result == null || result.isBlank()) return content;
             return result;
         } catch (Exception e) {
-            log.warn("Content expansion failed: {}", e.getMessage());
+            log.warn("Content expansion failed", e);
             throw new OllamaUnavailableException("Ollama nicht erreichbar: " + e.getMessage(), e);
         }
     }

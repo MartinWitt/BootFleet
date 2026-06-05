@@ -1,7 +1,6 @@
 package io.github.martinwitt.notesapp.service;
 
 import io.github.martinwitt.notesapp.domain.Note;
-import io.github.martinwitt.notesapp.domain.Tag;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +29,9 @@ public class TagSuggestionService {
 
     public List<String> suggestTags(Note note) {
         Set<String> existingTagNames =
-                note.getTags().stream().map(Tag::getName).collect(Collectors.toSet());
+                note.getTags().stream()
+                        .map(t -> t.getName().toLowerCase())
+                        .collect(Collectors.toSet());
         return suggestTags(note.getTitle(), note.getContent(), existingTagNames);
     }
 
@@ -65,7 +66,7 @@ public class TagSuggestionService {
                     .filter(s -> !existingTagNames.contains(s))
                     .toList();
         } catch (Exception e) {
-            log.warn("Tag suggestion failed: {}", e.getMessage());
+            log.warn("Tag suggestion failed", e);
             throw new OllamaUnavailableException("Ollama nicht erreichbar: " + e.getMessage(), e);
         }
     }

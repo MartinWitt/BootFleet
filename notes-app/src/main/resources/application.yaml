@@ -46,7 +46,7 @@ spring.thymeleaf.cache: false
 
 logging:
   level:
-    org.springframework.ai.chat.client.advisor: DEBUG
+    org.springframework.ai.chat.client.advisor: WARN
 
 management:
   endpoints:
