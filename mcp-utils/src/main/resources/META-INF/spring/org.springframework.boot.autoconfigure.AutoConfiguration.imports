@@ -1,2 +1,3 @@
 io.github.martinwitt.mcputils.McpApiKeyAutoConfiguration
+io.github.martinwitt.mcputils.McpToolLoggingAutoConfiguration
 
