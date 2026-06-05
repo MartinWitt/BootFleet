@@ -1,0 +1,60 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:notesapp;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    drop-first: true
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: llama3.2:1b
+        options:
+          format: json
+
+notes-app:
+  ai:
+    tag-suggestion-prompt: |
+      Schlage 3 bis 5 kurze, prägnante Tags auf Deutsch für die folgende Notiz vor.
+      Schließe diese bereits vorhandenen Tags aus: {existingTags}
+
+      Titel: {title}
+      Inhalt: {content}
+    content-expansion-prompt: |
+      Formuliere die folgende Notiz zu einem gut strukturierten, ausführlichen Text auf Deutsch aus.
+      Behalte Inhalt und Kernaussagen bei, ergänze Details und verbessere die Formulierung.
+      Antworte ausschließlich mit dem ausformulierten Text, ohne Kommentare oder Erklärungen.
+
+      Titel: {title}
+      Notiz: {content}
+
+server:
+  port: 8080
+
+spring.thymeleaf.cache: false
+
+logging:
+  level:
+    org.springframework.ai.chat.client.advisor: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never

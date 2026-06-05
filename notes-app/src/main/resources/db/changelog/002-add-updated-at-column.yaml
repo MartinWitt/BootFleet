@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-add-updated-at-to-notes
+      author: martinwitt
+      changes:
+        - addColumn:
+            tableName: notes
+            columns:
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+        - sql:
+            sql: UPDATE notes SET updated_at = created_at WHERE updated_at IS NULL
+        - createIndex:
+            tableName: notes
+            indexName: idx_notes_updated_at
+            columns:
+              - column:
+                  name: updated_at

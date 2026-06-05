@@ -1,0 +1,95 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${note.title} + ' — NotesApp'"></title>
+  <link rel="stylesheet" href="/css/notes.css"/>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1 th:text="${note.title}"></h1>
+    <p class="note-date" th:text="${#temporals.format(note.updatedAt, 'dd.MM.yyyy HH:mm')}"></p>
+  </header>
+
+  <main>
+    <div class="note-content" th:text="${note.content}"></div>
+
+    <!-- Aktuelle Tags -->
+    <div class="note-tags-section">
+      <h3>Tags</h3>
+      <div class="note-tags" id="current-tags">
+        <th:block th:each="tag : ${note.tags}">
+          <span class="tag" th:text="${tag.name}"></span>
+        </th:block>
+        <span class="no-tags" th:if="${#lists.isEmpty(note.tags)}">Noch keine Tags</span>
+      </div>
+    </div>
+
+    <!-- KI-Tag-Vorschläge -->
+    <div class="ai-suggestions-section">
+      <h3>KI-Tag-Vorschläge</h3>
+      <button type="button" id="suggest-btn" class="btn btn-ai"
+              th:attr="data-note-id=${note.id}">
+        Tags vorschlagen
+      </button>
+      <div id="suggestion-status" class="suggestion-status"></div>
+      <div id="suggestions" class="suggestions-chips"></div>
+    </div>
+
+    <!-- Aktionen -->
+    <div class="note-actions">
+      <a th:href="@{/notes/{id}/edit(id=${note.id})}" class="btn">Bearbeiten</a>
+      <form th:action="@{/notes/{id}/delete(id=${note.id})}" method="post" style="display:inline"
+            onsubmit="return confirm('Notiz wirklich löschen?');">
+        <button type="submit" class="btn btn-danger">Löschen</button>
+      </form>
+      <a href="/notes" class="btn-cancel">Zurück</a>
+    </div>
+  </main>
+</div>
+
+<script>
+  const suggestBtn = document.getElementById('suggest-btn');
+  const suggestionsDiv = document.getElementById('suggestions');
+  const statusDiv = document.getElementById('suggestion-status');
+  const noteId = suggestBtn.dataset.noteId;
+
+  suggestBtn.addEventListener('click', async () => {
+    suggestBtn.disabled = true;
+    statusDiv.textContent = 'KI analysiert…';
+    suggestionsDiv.innerHTML = '';
+
+    try {
+      const resp = await fetch(`/notes/${noteId}/suggest-tags`, { method: 'POST' });
+      if (resp.status === 503) { statusDiv.textContent = 'Ollama ist nicht erreichbar. Bitte später erneut versuchen.'; return; }
+      if (!resp.ok) { statusDiv.textContent = 'Fehler beim Abrufen der Vorschläge.'; return; }
+      const tags = await resp.json();
+      statusDiv.textContent = tags.length === 0 ? 'Keine neuen Vorschläge.' : 'Klick auf einen Tag, um ihn hinzuzufügen:';
+      tags.forEach(tag => {
+        const btn = document.createElement('button');
+        btn.textContent = tag;
+        btn.className = 'tag-suggestion-chip';
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          const r = await fetch(`/notes/${noteId}/tags/${encodeURIComponent(tag)}`, { method: 'POST' });
+          if (r.ok) {
+            btn.classList.add('tag-suggestion-chip--added');
+            const tagEl = document.createElement('span');
+            tagEl.className = 'tag';
+            tagEl.textContent = tag;
+            document.getElementById('current-tags').appendChild(tagEl);
+          }
+        });
+        suggestionsDiv.appendChild(btn);
+      });
+    } catch (e) {
+      statusDiv.textContent = 'Ollama nicht erreichbar. Bitte später erneut versuchen.';
+    } finally {
+      suggestBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

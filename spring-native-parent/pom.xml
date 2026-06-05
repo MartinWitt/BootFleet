@@ -20,6 +20,7 @@
     <module>../sequential-thinking-mcp</module>
     <module>../url-cleaner</module>
     <module>../todo-app</module>
+    <module>../notes-app</module>
   </modules>
 
   <build>
