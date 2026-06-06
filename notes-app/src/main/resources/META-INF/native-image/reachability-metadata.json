@@ -1,0 +1,73 @@
+{
+  "reflection": [
+    {
+      "type": "tools.jackson.databind.json.JsonMapper",
+      "methods": [
+        {
+          "name": "builder",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "liquibase.change.core.CreateTableChange",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "liquibase.change.core.AddPrimaryKeyChange",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "liquibase.change.core.AddForeignKeyConstraintChange",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "liquibase.change.core.CreateIndexChange",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "liquibase.change.core.AddColumnChange",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "liquibase.change.core.RawSQLChange",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "liquibase.change.ColumnConfig",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "liquibase.change.AddColumnConfig",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "org.thymeleaf.expression.Lists",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "org.hibernate.validator.internal.util.logging.Log_$logger",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "org.hibernate.validator.internal.util.logging.Messages_$bundle",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "fields": [
+        {
+          "name": "INSTANCE"
+        }
+      ]
+    }
+  ]
+}
