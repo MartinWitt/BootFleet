@@ -1,4 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" fill="#17a2b8" rx="20"/>
-  <text x="50" y="65" font-size="60" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial">📦</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="7" fill="#0e7490"/>
+  <rect x="6" y="16" width="20" height="11" rx="2" stroke="white" stroke-width="1.8" fill="white" fill-opacity="0.12"/>
+  <polyline points="6,16 16,12 26,16" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="16" y1="12" x2="16" y2="16" stroke="white" stroke-width="1.8"/>
+  <path d="M16 24 L16 19 M13.5 21 L16 19 L18.5 21" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
