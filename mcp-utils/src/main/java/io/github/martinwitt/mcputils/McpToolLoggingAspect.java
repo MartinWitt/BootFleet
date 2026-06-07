@@ -13,7 +13,7 @@ public class McpToolLoggingAspect {
     private static final Logger log = LoggerFactory.getLogger(McpToolLoggingAspect.class);
     private static final int MAX_LENGTH = 500;
 
-    @Around("@annotation(org.springaicommunity.mcp.annotation.McpTool)")
+    @Around("@annotation(org.springframework.ai.mcp.annotation.McpTool)")
     public Object logMcpToolCall(ProceedingJoinPoint pjp) throws Throwable {
         String method = pjp.getSignature().getName();
         log.info("MCP tool '{}' called with: {}", method, truncate(Arrays.toString(pjp.getArgs())));
