@@ -7,6 +7,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.message.InaccessibleMessage;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -22,6 +23,7 @@ class TelegramRuntimeHints implements RuntimeHintsRegistrar {
         hints.reflection()
                 .registerType(Update.class, all)
                 .registerType(Message.class, all)
+                .registerType(InaccessibleMessage.class, all)
                 .registerType(CallbackQuery.class, all)
                 .registerType(SendMessage.class, all)
                 .registerType(EditMessageReplyMarkup.class, all)

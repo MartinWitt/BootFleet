@@ -21,6 +21,13 @@ server:
 
 spring.thymeleaf.cache: false
 
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN:changeme}
+    username: ${TELEGRAM_BOT_USERNAME:changeme}
+  user:
+    chat-id: ${TELEGRAM_CHAT_ID:0}
+
 management:
   endpoints:
     web:

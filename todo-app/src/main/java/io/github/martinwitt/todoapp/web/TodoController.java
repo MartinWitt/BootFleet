@@ -251,8 +251,7 @@ public class TodoController {
     @PostMapping("/todos/push-now")
     public String pushNow(RedirectAttributes redirectAttributes) {
         eventPublisher.publishEvent(new SendTodosNowEvent());
-        redirectAttributes.addFlashAttribute(
-                "pushMessage", "Todos wurden an Telegram gesendet! 📬");
+        redirectAttributes.addFlashAttribute("pushMessage", "Telegram Push ausgelöst! 📬");
         return "redirect:/todos";
     }
 

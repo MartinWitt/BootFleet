@@ -34,9 +34,14 @@ class TodoTelegramBot implements SpringLongPollingBot, LongPollingSingleThreadUp
                 notificationService.sendTodaysTodos();
             }
         } else if (update.hasCallbackQuery()) {
-            long todoId = Long.parseLong(update.getCallbackQuery().getData());
-            int messageId = update.getCallbackQuery().getMessage().getMessageId();
-            notificationService.markDone(todoId, messageId);
+            String data = update.getCallbackQuery().getData();
+            if (data == null) return;
+            try {
+                long todoId = Long.parseLong(data);
+                int messageId = update.getCallbackQuery().getMessage().getMessageId();
+                notificationService.markDone(todoId, messageId);
+            } catch (NumberFormatException ignored) {
+            }
         }
     }
 }
