@@ -5,6 +5,7 @@ import io.github.martinwitt.todoapp.domain.Todo;
 import io.github.martinwitt.todoapp.domain.TodoStatus;
 import io.github.martinwitt.todoapp.repository.TagRepository;
 import io.github.martinwitt.todoapp.repository.TodoRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,11 @@ public class TodoService {
     public TodoService(TodoRepository todoRepository, TagRepository tagRepository) {
         this.todoRepository = todoRepository;
         this.tagRepository = tagRepository;
+    }
+
+    public List<Todo> findDueTodos() {
+        LocalDateTime endOfToday = LocalDate.now().atTime(23, 59, 59);
+        return todoRepository.findByStatusAndDeadlineLessThanEqual(TodoStatus.OPEN, endOfToday);
     }
 
     public List<Todo> findAllSorted() {
