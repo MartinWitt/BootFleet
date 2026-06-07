@@ -163,11 +163,11 @@
                                 <circle cx="12" cy="11" r="1" fill="#475569"/>
                             </svg>
                             <img th:if="${!svc.urls().isEmpty()}"
-                                 th:src="${svc.urls().get(0) + '/favicon.ico'}"
+                                 th:src="${svc.urls().get(0) + '/favicon.svg'}"
                                  width="16" height="16" alt="" class="svc-favicon"
                                  style="display:none"
                                  onload="this.style.display=''; this.previousElementSibling.style.display='none'"
-                                 onerror="this.remove()">
+                                 onerror="this.src.endsWith('/favicon.svg') ? (this.src = this.src.replace('/favicon.svg', '/favicon.ico')) : this.remove()">
                         </span>
                         <span class="service-name" th:text="${svc.name()}">name</span>
                     </div>
