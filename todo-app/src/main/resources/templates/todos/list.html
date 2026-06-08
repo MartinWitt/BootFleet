@@ -17,11 +17,17 @@
     </header>
 
     <main>
+      <!-- Flash message -->
+      <div th:if="${pushMessage}" class="alert alert-success" th:text="${pushMessage}"></div>
+
       <!-- Controls -->
       <div class="controls">
         <div class="controls-left">
           <a href="/todos/new" class="btn">+ New Todo</a>
           <a href="/tags" class="btn btn-secondary">Manage Tags</a>
+          <form method="post" action="/todos/push-now" style="display:contents">
+            <button type="submit" class="btn btn-secondary">📬 Push to Telegram</button>
+          </form>
         </div>
         <div class="filter">
           <form method="get" action="/todos">

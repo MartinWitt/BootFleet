@@ -5,6 +5,7 @@ import io.github.martinwitt.todoapp.domain.Todo;
 import io.github.martinwitt.todoapp.domain.TodoStatus;
 import io.github.martinwitt.todoapp.service.TagService;
 import io.github.martinwitt.todoapp.service.TodoService;
+import io.github.martinwitt.todoapp.telegram.SendTodosNowEvent;
 import jakarta.validation.Valid;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -21,11 +22,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class TodoController {
@@ -38,10 +41,15 @@ public class TodoController {
 
     private final TodoService todoService;
     private final TagService tagService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public TodoController(TodoService todoService, TagService tagService) {
+    public TodoController(
+            TodoService todoService,
+            TagService tagService,
+            ApplicationEventPublisher eventPublisher) {
         this.todoService = todoService;
         this.tagService = tagService;
+        this.eventPublisher = eventPublisher;
     }
 
     @GetMapping({"/", "/todos"})
@@ -238,6 +246,13 @@ public class TodoController {
                 .snooze(id, days)
                 .map(dt -> ResponseEntity.ok(Map.of("deadline", dt.format(fmt))))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/todos/push-now")
+    public String pushNow(RedirectAttributes redirectAttributes) {
+        eventPublisher.publishEvent(new SendTodosNowEvent());
+        redirectAttributes.addFlashAttribute("pushMessage", "Telegram Push ausgelöst! 📬");
+        return "redirect:/todos";
     }
 
     @PostMapping("/todos/reorder")
