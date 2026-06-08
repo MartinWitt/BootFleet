@@ -18,6 +18,8 @@ class TelegramRuntimeHints implements RuntimeHintsRegistrar {
         try (ScanResult scan =
                 new ClassGraph()
                         .enableClassInfo()
+                        .ignoreClassVisibility()
+                        .overrideClassLoaders(classLoader)
                         .acceptPackages("org.telegram.telegrambots.meta.api")
                         .scan()) {
             scan.getAllClasses()
