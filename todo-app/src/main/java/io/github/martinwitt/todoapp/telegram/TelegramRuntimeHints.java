@@ -5,6 +5,7 @@ import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.objects.ApiResponse;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.InaccessibleMessage;
@@ -21,6 +22,7 @@ class TelegramRuntimeHints implements RuntimeHintsRegistrar {
 
         // Telegram API objects — deserialized from JSON by Jackson
         hints.reflection()
+                .registerType(ApiResponse.class, all)
                 .registerType(Update.class, all)
                 .registerType(Message.class, all)
                 .registerType(InaccessibleMessage.class, all)
