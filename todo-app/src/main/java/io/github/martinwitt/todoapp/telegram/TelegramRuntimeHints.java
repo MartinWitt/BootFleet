@@ -1,18 +1,10 @@
 package io.github.martinwitt.todoapp.telegram;
 
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ScanResult;
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
-import org.telegram.telegrambots.meta.api.objects.ApiResponse;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.message.InaccessibleMessage;
-import org.telegram.telegrambots.meta.api.objects.message.Message;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 class TelegramRuntimeHints implements RuntimeHintsRegistrar {
 
@@ -20,26 +12,27 @@ class TelegramRuntimeHints implements RuntimeHintsRegistrar {
     public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
         MemberCategory[] all = MemberCategory.values();
 
-        // Telegram API objects — deserialized from JSON by Jackson
-        hints.reflection()
-                .registerType(ApiResponse.class, all)
-                .registerType(Update.class, all)
-                .registerType(Message.class, all)
-                .registerType(InaccessibleMessage.class, all)
-                .registerType(CallbackQuery.class, all)
-                .registerType(SendMessage.class, all)
-                .registerType(EditMessageReplyMarkup.class, all)
-                .registerType(InlineKeyboardMarkup.class, all)
-                .registerType(InlineKeyboardButton.class, all)
-                .registerType(InlineKeyboardRow.class, all);
+        // Register all Telegram Bot API types for Jackson deserialization in a native image.
+        // The library uses Lombok @Builder which generates *Builder/*BuilderImpl inner classes —
+        // their build() method must be accessible via reflection.
+        try (ScanResult scan =
+                new ClassGraph()
+                        .enableClassInfo()
+                        .acceptPackages("org.telegram.telegrambots.meta.api")
+                        .scan()) {
+            scan.getAllClasses()
+                    .forEach(
+                            classInfo ->
+                                    hints.reflection()
+                                            .registerTypeIfPresent(
+                                                    classLoader, classInfo.getName(), all));
+        }
 
-        // Config binding
         hints.reflection()
                 .registerType(TelegramProperties.class, all)
                 .registerType(TelegramProperties.Bot.class, all)
                 .registerType(TelegramProperties.User.class, all);
 
-        // Event
         hints.reflection().registerType(SendTodosNowEvent.class, all);
     }
 }
