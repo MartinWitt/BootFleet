@@ -1,29 +1,34 @@
-package io.github.martinwitt.todoapp.service;
+package io.github.martinwitt.todoapp.todo;
 
-import io.github.martinwitt.todoapp.domain.Tag;
-import io.github.martinwitt.todoapp.domain.Todo;
-import io.github.martinwitt.todoapp.domain.TodoStatus;
-import io.github.martinwitt.todoapp.repository.TagRepository;
-import io.github.martinwitt.todoapp.repository.TodoRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TodoService {
     private final TodoRepository todoRepository;
-    private final TagRepository tagRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public TodoService(TodoRepository todoRepository, TagRepository tagRepository) {
+    public TodoService(TodoRepository todoRepository, ApplicationEventPublisher eventPublisher) {
         this.todoRepository = todoRepository;
-        this.tagRepository = tagRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public List<Todo> findDueTodos() {
         LocalDateTime endOfToday = LocalDate.now().atTime(23, 59, 59);
         return todoRepository.findByStatusAndDeadlineLessThanEqual(TodoStatus.OPEN, endOfToday);
+    }
+
+    public List<Todo> findRecurring() {
+        return todoRepository.findByCronExpressionIsNotNull().stream()
+                .filter(Todo::isRecurring)
+                .toList();
     }
 
     public List<Todo> findAllSorted() {
@@ -35,11 +40,14 @@ public class TodoService {
     }
 
     public Todo save(Todo todo) {
-        return todoRepository.save(todo);
+        Todo saved = todoRepository.save(todo);
+        eventPublisher.publishEvent(new TodoSavedEvent(saved));
+        return saved;
     }
 
     public void deleteById(Long id) {
         todoRepository.deleteById(id);
+        eventPublisher.publishEvent(new TodoDeletedEvent(id));
     }
 
     public List<Todo> findByTagName(String tagName) {
@@ -83,10 +91,5 @@ public class TodoService {
                             todoRepository.save(t);
                             return newDeadline;
                         });
-    }
-
-    @Transactional
-    public Tag ensureTag(String name) {
-        return tagRepository.findByName(name).orElseGet(() -> tagRepository.save(new Tag(name)));
     }
 }

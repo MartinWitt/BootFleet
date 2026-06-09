@@ -3,7 +3,8 @@ package io.github.martinwitt.todoapp.telegram;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.github.martinwitt.todoapp.service.TodoService;
+import io.github.martinwitt.todoapp.todo.SendTodosNowEvent;
+import io.github.martinwitt.todoapp.todo.TodoService;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

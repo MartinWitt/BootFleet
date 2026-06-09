@@ -2,6 +2,7 @@ package io.github.martinwitt.todoapp.telegram;
 
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
+import io.github.martinwitt.todoapp.todo.SendTodosNowEvent;
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;

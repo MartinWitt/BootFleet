@@ -2,9 +2,9 @@ package io.github.martinwitt.todoapp;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import io.github.martinwitt.todoapp.domain.Tag;
-import io.github.martinwitt.todoapp.domain.Todo;
-import io.github.martinwitt.todoapp.domain.TodoStatus;
+import io.github.martinwitt.todoapp.tag.Tag;
+import io.github.martinwitt.todoapp.todo.Todo;
+import io.github.martinwitt.todoapp.todo.TodoStatus;
 import org.hibernate.validator.internal.constraintvalidators.bv.NotBlankValidator;
 import org.junit.jupiter.api.Test;
 import org.springframework.aot.hint.RuntimeHints;

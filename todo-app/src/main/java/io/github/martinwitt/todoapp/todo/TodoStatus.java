@@ -1,4 +1,4 @@
-package io.github.martinwitt.todoapp.domain;
+package io.github.martinwitt.todoapp.todo;
 
 public enum TodoStatus {
     OPEN,

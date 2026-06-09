@@ -1,5 +1,6 @@
-package io.github.martinwitt.todoapp.domain;
+package io.github.martinwitt.todoapp.todo;
 
+import io.github.martinwitt.todoapp.tag.Tag;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -45,6 +46,10 @@ public class Todo {
     private String cronExpression;
 
     public Todo() {}
+
+    public boolean isRecurring() {
+        return cronExpression != null && !cronExpression.isBlank();
+    }
 
     public Long getId() {
         return id;

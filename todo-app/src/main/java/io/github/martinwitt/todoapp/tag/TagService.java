@@ -1,9 +1,8 @@
-package io.github.martinwitt.todoapp.service;
+package io.github.martinwitt.todoapp.tag;
 
-import io.github.martinwitt.todoapp.domain.Tag;
-import io.github.martinwitt.todoapp.repository.TagRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TagService {
@@ -23,5 +22,11 @@ public class TagService {
 
     public void deleteById(Long id) {
         tagRepository.deleteById(id);
+    }
+
+    /** Returns the tag with the given name, creating it first if it does not exist. */
+    @Transactional
+    public Tag ensureTag(String name) {
+        return tagRepository.findByName(name).orElseGet(() -> tagRepository.save(new Tag(name)));
     }
 }

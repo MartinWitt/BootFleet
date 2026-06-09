@@ -1,4 +1,4 @@
-package io.github.martinwitt.todoapp.domain;
+package io.github.martinwitt.todoapp.tag;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -1,15 +1,15 @@
-package io.github.martinwitt.todoapp.repository;
+package io.github.martinwitt.todoapp.todo;
 
-import io.github.martinwitt.todoapp.domain.Todo;
-import io.github.martinwitt.todoapp.domain.TodoStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TodoRepository extends JpaRepository<Todo, Long> {
+interface TodoRepository extends JpaRepository<Todo, Long> {
     List<Todo> findAllByOrderByPositionAscDeadlineAsc();
 
     List<Todo> findByTags_NameOrderByPositionAscDeadlineAsc(String name);
 
     List<Todo> findByStatusAndDeadlineLessThanEqual(TodoStatus status, LocalDateTime deadline);
+
+    List<Todo> findByCronExpressionIsNotNull();
 }

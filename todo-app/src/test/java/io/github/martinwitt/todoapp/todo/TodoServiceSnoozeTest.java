@@ -1,12 +1,9 @@
-package io.github.martinwitt.todoapp.service;
+package io.github.martinwitt.todoapp.todo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import io.github.martinwitt.todoapp.domain.Todo;
-import io.github.martinwitt.todoapp.repository.TagRepository;
-import io.github.martinwitt.todoapp.repository.TodoRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -14,13 +11,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class TodoServiceSnoozeTest {
 
     @Mock private TodoRepository todoRepository;
-
-    @Mock private TagRepository tagRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks private TodoService todoService;
 
