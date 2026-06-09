@@ -10,9 +10,7 @@ import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.aot.hint.TypeReference;
-import org.springframework.stereotype.Component;
 
-@Component
 public class TodoAppRuntimeHints implements RuntimeHintsRegistrar {
 
     @Override
