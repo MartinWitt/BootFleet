@@ -11,6 +11,7 @@ import io.github.martinwitt.todoapp.todo.Todo;
 import io.github.martinwitt.todoapp.todo.TodoDeletedEvent;
 import io.github.martinwitt.todoapp.todo.TodoSavedEvent;
 import io.github.martinwitt.todoapp.todo.TodoService;
+import io.github.martinwitt.todoapp.todo.TodoStatus;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import org.junit.jupiter.api.BeforeEach;
@@ -87,6 +88,16 @@ class RecurringTodoSchedulerTest {
         todo.setTitle("One-time");
 
         scheduler.onTodoSaved(new TodoSavedEvent(todo));
+
+        verify(taskScheduler, never()).schedule(any(Runnable.class), any(Trigger.class));
+    }
+
+    @Test
+    void shouldNotScheduleWhenRecurringTodoIsDone() {
+        Todo done = recurringTodo(1L, "0 18 * * 1");
+        done.setStatus(TodoStatus.DONE);
+
+        scheduler.onTodoSaved(new TodoSavedEvent(done));
 
         verify(taskScheduler, never()).schedule(any(Runnable.class), any(Trigger.class));
     }

@@ -46,6 +46,12 @@ class CronExpressionFormatterTest {
     }
 
     @Test
+    void shouldHandleMultipleSpacesBetweenFields() {
+        assertThat(CronExpressionFormatter.describe("0  18  *  *  1"))
+                .isEqualTo("Every Monday at 18:00");
+    }
+
+    @Test
     void shouldParseWildcardAsAllWeekdays() {
         assertThat(CronExpressionFormatter.parseWeekdays("*")).containsExactly(0, 1, 2, 3, 4, 5, 6);
     }

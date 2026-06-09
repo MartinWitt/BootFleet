@@ -36,7 +36,7 @@ final class CronExpressionFormatter {
 
     static String describe(String cron) {
         if (cron == null || cron.isBlank()) return "";
-        String[] p = cron.trim().split(" ");
+        String[] p = cron.trim().split("\\s+");
         if (p.length < CRON_FIELD_COUNT) return cron;
 
         String min = p[0], hour = p[1], dom = p[2], dow = p[4];

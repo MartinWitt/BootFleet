@@ -59,4 +59,17 @@ class TodoNotificationServiceRecurringTest {
 
         verify(telegramClient, never()).execute(any(SendMessage.class));
     }
+
+    @Test
+    void shouldNotSendNotificationForDoneTodo() throws Exception {
+        Todo done = new Todo();
+        done.setId(5L);
+        done.setTitle("Küche");
+        done.setStatus(TodoStatus.DONE);
+        when(todoService.findById(5L)).thenReturn(Optional.of(done));
+
+        service.sendRecurringTodo(5L);
+
+        verify(telegramClient, never()).execute(any(SendMessage.class));
+    }
 }

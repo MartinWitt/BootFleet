@@ -28,7 +28,7 @@ final class WeekViewBuilder {
             List<Todo> dayTodos = new ArrayList<>();
             for (Todo todo : todos) {
                 if (todo.isRecurring()) {
-                    String[] parts = todo.getCronExpression().trim().split(" ");
+                    String[] parts = todo.getCronExpression().trim().split("\\s+");
                     if (parts.length >= CronExpressionFormatter.CRON_FIELD_COUNT
                             && CronExpressionFormatter.parseWeekdays(parts[4]).contains(cronDay)) {
                         dayTodos.add(todo);
