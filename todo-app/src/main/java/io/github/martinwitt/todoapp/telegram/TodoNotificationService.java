@@ -1,8 +1,9 @@
 package io.github.martinwitt.todoapp.telegram;
 
-import io.github.martinwitt.todoapp.domain.Todo;
-import io.github.martinwitt.todoapp.domain.TodoStatus;
-import io.github.martinwitt.todoapp.service.TodoService;
+import io.github.martinwitt.todoapp.todo.SendTodosNowEvent;
+import io.github.martinwitt.todoapp.todo.Todo;
+import io.github.martinwitt.todoapp.todo.TodoService;
+import io.github.martinwitt.todoapp.todo.TodoStatus;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +45,13 @@ class TodoNotificationService {
     @EventListener
     void onSendNow(SendTodosNowEvent event) {
         sendTodaysTodos();
+    }
+
+    void sendRecurringTodo(Long todoId) {
+        todoService
+                .findById(todoId)
+                .filter(t -> t.getStatus() != TodoStatus.DONE)
+                .ifPresent(this::sendTodoMessage);
     }
 
     void sendTodaysTodos() {

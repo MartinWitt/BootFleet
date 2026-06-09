@@ -1,12 +1,9 @@
-package io.github.martinwitt.todoapp.web;
+package io.github.martinwitt.todoapp.todo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import io.github.martinwitt.todoapp.domain.Todo;
-import io.github.martinwitt.todoapp.domain.TodoStatus;
-import io.github.martinwitt.todoapp.service.TagService;
-import io.github.martinwitt.todoapp.service.TodoService;
+import io.github.martinwitt.todoapp.tag.TagService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

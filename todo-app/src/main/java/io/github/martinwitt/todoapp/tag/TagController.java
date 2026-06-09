@@ -1,7 +1,5 @@
-package io.github.martinwitt.todoapp.web;
+package io.github.martinwitt.todoapp.tag;
 
-import io.github.martinwitt.todoapp.domain.Tag;
-import io.github.martinwitt.todoapp.service.TagService;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;

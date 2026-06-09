@@ -5,9 +5,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.github.martinwitt.todoapp.domain.Todo;
-import io.github.martinwitt.todoapp.domain.TodoStatus;
-import io.github.martinwitt.todoapp.service.TodoService;
+import io.github.martinwitt.todoapp.todo.Todo;
+import io.github.martinwitt.todoapp.todo.TodoService;
+import io.github.martinwitt.todoapp.todo.TodoStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

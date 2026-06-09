@@ -1,12 +1,10 @@
-package io.github.martinwitt.todoapp.web;
+package io.github.martinwitt.todoapp.todo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
-import io.github.martinwitt.todoapp.service.TagService;
-import io.github.martinwitt.todoapp.service.TodoService;
-import io.github.martinwitt.todoapp.telegram.SendTodosNowEvent;
+import io.github.martinwitt.todoapp.tag.TagService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
