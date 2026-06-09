@@ -83,7 +83,7 @@
     <dependency>
       <groupId>org.telegram</groupId>
       <artifactId>telegrambots-springboot-longpolling-starter</artifactId>
-      <version>9.6.0</version>
+      <version>10.0.0</version>
     </dependency>
   </dependencies>
 
