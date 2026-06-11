@@ -6,6 +6,7 @@ import io.github.martinwitt.todoapp.todo.TodoSavedEvent;
 import io.github.martinwitt.todoapp.todo.TodoService;
 import io.github.martinwitt.todoapp.todo.TodoStatus;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
@@ -63,7 +64,7 @@ class RecurringTodoScheduler implements ApplicationRunner {
             ScheduledFuture<?> future =
                     taskScheduler.schedule(
                             () -> notificationService.sendRecurringTodo(todoId),
-                            new CronTrigger(springCron));
+                            new CronTrigger(springCron, TimeZone.getTimeZone("Europe/Berlin")));
             scheduled.put(todoId, future);
             log.debug("Scheduled recurring todo {} with cron '{}'", todoId, springCron);
         } catch (Exception e) {
