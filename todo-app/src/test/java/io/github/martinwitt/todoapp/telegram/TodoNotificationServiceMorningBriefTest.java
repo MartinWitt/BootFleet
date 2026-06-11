@@ -100,7 +100,7 @@ class TodoNotificationServiceMorningBriefTest {
         assertThat(result).isEmpty();
     }
 
-    // ── sendTodaysTodos integration (fixed date via findRecurringDueOn) ─────
+    // ── sendTodaysTodos integration (uses daily cron "0 9 * * *" so fires on any date) ──
 
     @Test
     void sendTodaysTodos_shouldSendRecurringTodoThatFiresToday() throws Exception {

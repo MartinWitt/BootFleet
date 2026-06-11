@@ -5,8 +5,8 @@ import io.github.martinwitt.todoapp.todo.Todo;
 import io.github.martinwitt.todoapp.todo.TodoService;
 import io.github.martinwitt.todoapp.todo.TodoStatus;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -94,11 +94,12 @@ class TodoNotificationService {
     static boolean cronFiresOn(String fiveFieldCron, LocalDate date) {
         try {
             CronExpression expr = CronExpression.parse("0 " + fiveFieldCron.trim());
-            LocalDateTime justBefore = date.atStartOfDay().minusNanos(1);
-            LocalDateTime next = expr.next(justBefore);
+            ZoneId berlin = ZoneId.of("Europe/Berlin");
+            ZonedDateTime justBefore = date.atStartOfDay(berlin).minusNanos(1);
+            ZonedDateTime next = expr.next(justBefore);
             return next != null && next.toLocalDate().equals(date);
         } catch (Exception e) {
-            log.warn("Cannot evaluate cron '{}': {}", fiveFieldCron, e.getMessage());
+            log.warn("Cannot evaluate cron '{}'", fiveFieldCron, e);
             return false;
         }
     }
