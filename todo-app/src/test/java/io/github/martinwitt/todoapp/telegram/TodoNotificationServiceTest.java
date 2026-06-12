@@ -2,6 +2,7 @@ package io.github.martinwitt.todoapp.telegram;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +33,7 @@ class TodoNotificationServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(todoService.findRecurring()).thenReturn(java.util.List.of());
         service =
                 new TodoNotificationService(
                         todoService,

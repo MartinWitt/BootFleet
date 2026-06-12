@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,7 +50,7 @@ class TodoServiceDueTodosTest {
         todoService.findDueTodos();
 
         LocalDateTime captured = cutoffCaptor.getValue();
-        assertThat(captured.toLocalDate()).isEqualTo(LocalDate.now());
+        assertThat(captured.toLocalDate()).isEqualTo(LocalDate.now(ZoneId.of("Europe/Berlin")));
         assertThat(captured.getHour()).isEqualTo(23);
     }
 

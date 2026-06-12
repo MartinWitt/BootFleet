@@ -4,13 +4,20 @@ import io.github.martinwitt.todoapp.todo.SendTodosNowEvent;
 import io.github.martinwitt.todoapp.todo.Todo;
 import io.github.martinwitt.todoapp.todo.TodoService;
 import io.github.martinwitt.todoapp.todo.TodoStatus;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
@@ -37,7 +44,7 @@ class TodoNotificationService {
         this.chatId = props.user().chatId();
     }
 
-    @Scheduled(cron = "0 0 9 * * *")
+    @Scheduled(cron = "0 0 9 * * *", zone = "Europe/Berlin")
     void sendDailyNotification() {
         sendTodaysTodos();
     }
@@ -55,8 +62,16 @@ class TodoNotificationService {
     }
 
     void sendTodaysTodos() {
-        List<Todo> todos = todoService.findDueTodos();
-        if (todos.isEmpty()) {
+        LocalDate today = LocalDate.now(ZoneId.of("Europe/Berlin"));
+        List<Todo> dueTodos = todoService.findDueTodos();
+        List<Todo> recurringToday = findRecurringDueOn(today);
+
+        Set<Long> seen = new HashSet<>();
+        List<Todo> all = new ArrayList<>(dueTodos);
+        dueTodos.forEach(t -> seen.add(t.getId()));
+        recurringToday.stream().filter(t -> !seen.contains(t.getId())).forEach(all::add);
+
+        if (all.isEmpty()) {
             send(
                     SendMessage.builder()
                             .chatId(chatId)
@@ -64,8 +79,28 @@ class TodoNotificationService {
                             .build());
             return;
         }
-        for (Todo todo : todos) {
+        for (Todo todo : all) {
             sendTodoMessage(todo);
+        }
+    }
+
+    List<Todo> findRecurringDueOn(LocalDate date) {
+        return todoService.findRecurring().stream()
+                .filter(t -> t.getStatus() != TodoStatus.DONE)
+                .filter(t -> cronFiresOn(t.getCronExpression(), date))
+                .toList();
+    }
+
+    static boolean cronFiresOn(String fiveFieldCron, LocalDate date) {
+        try {
+            CronExpression expr = CronExpression.parse("0 " + fiveFieldCron.trim());
+            ZoneId berlin = ZoneId.of("Europe/Berlin");
+            ZonedDateTime justBefore = date.atStartOfDay(berlin).minusNanos(1);
+            ZonedDateTime next = expr.next(justBefore);
+            return next != null && next.toLocalDate().equals(date);
+        } catch (Exception e) {
+            log.warn("Cannot evaluate cron '{}'", fiveFieldCron, e);
+            return false;
         }
     }
 

@@ -2,6 +2,7 @@ package io.github.martinwitt.todoapp.todo;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,7 @@ public class TodoService {
     }
 
     public List<Todo> findDueTodos() {
-        LocalDateTime endOfToday = LocalDate.now().atTime(23, 59, 59);
+        LocalDateTime endOfToday = LocalDate.now(ZoneId.of("Europe/Berlin")).atTime(23, 59, 59);
         return todoRepository.findByStatusAndDeadlineLessThanEqual(TodoStatus.OPEN, endOfToday);
     }
 
