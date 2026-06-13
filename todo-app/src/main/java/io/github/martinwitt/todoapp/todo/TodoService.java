@@ -32,6 +32,12 @@ public class TodoService {
                 .toList();
     }
 
+    public List<Todo> findSomeday() {
+        return todoRepository
+                .findByStatusAndDeadlineIsNullAndCronExpressionIsNullOrderByPositionAsc(
+                        TodoStatus.OPEN);
+    }
+
     public List<Todo> findAllSorted() {
         return todoRepository.findAllByOrderByPositionAscDeadlineAsc();
     }
