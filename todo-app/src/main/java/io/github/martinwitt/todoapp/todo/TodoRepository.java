@@ -12,4 +12,7 @@ interface TodoRepository extends JpaRepository<Todo, Long> {
     List<Todo> findByStatusAndDeadlineLessThanEqual(TodoStatus status, LocalDateTime deadline);
 
     List<Todo> findByCronExpressionIsNotNull();
+
+    List<Todo> findByStatusAndDeadlineIsNullAndCronExpressionIsNullOrderByPositionAsc(
+            TodoStatus status);
 }

@@ -65,13 +65,14 @@ class TodoNotificationService {
         LocalDate today = LocalDate.now(ZoneId.of("Europe/Berlin"));
         List<Todo> dueTodos = todoService.findDueTodos();
         List<Todo> recurringToday = findRecurringDueOn(today);
+        List<Todo> someday = todoService.findSomeday();
 
         Set<Long> seen = new HashSet<>();
         List<Todo> all = new ArrayList<>(dueTodos);
         dueTodos.forEach(t -> seen.add(t.getId()));
         recurringToday.stream().filter(t -> !seen.contains(t.getId())).forEach(all::add);
 
-        if (all.isEmpty()) {
+        if (all.isEmpty() && someday.isEmpty()) {
             send(
                     SendMessage.builder()
                             .chatId(chatId)
@@ -81,6 +82,12 @@ class TodoNotificationService {
         }
         for (Todo todo : all) {
             sendTodoMessage(todo);
+        }
+        if (!someday.isEmpty()) {
+            send(SendMessage.builder().chatId(chatId).text("📋 Someday (noch offen):").build());
+            for (Todo todo : someday) {
+                sendTodoMessage(todo);
+            }
         }
     }
 
