@@ -45,6 +45,8 @@ public class Todo {
 
     private String cronExpression;
 
+    private LocalDateTime lastCompletedAt;
+
     public Todo() {}
 
     public boolean isRecurring() {
@@ -113,5 +115,13 @@ public class Todo {
 
     public void setCronExpression(String cronExpression) {
         this.cronExpression = cronExpression;
+    }
+
+    public LocalDateTime getLastCompletedAt() {
+        return lastCompletedAt;
+    }
+
+    public void setLastCompletedAt(LocalDateTime lastCompletedAt) {
+        this.lastCompletedAt = lastCompletedAt;
     }
 }

@@ -79,6 +79,9 @@ public class TodoService {
                 .map(
                         t -> {
                             t.setStatus(status);
+                            if (status == TodoStatus.DONE && t.isRecurring()) {
+                                t.setLastCompletedAt(LocalDateTime.now());
+                            }
                             todoRepository.save(t);
                             return true;
                         })
