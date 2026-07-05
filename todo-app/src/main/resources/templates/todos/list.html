@@ -54,10 +54,14 @@
               <div class="week-day-body">
                 <span class="week-day-empty" th:if="${#lists.isEmpty(day.todos)}">—</span>
                 <th:block th:each="todo : ${day.todos}">
-                  <a th:href="@{/todos/{id}/edit(id=${todo.id})}"
-                     class="week-todo-chip"
-                     th:classappend="'week-todo-chip--' + ${todo.status.name()}"
-                     th:text="${todo.title}"></a>
+                  <label class="week-todo-chip"
+                         th:classappend="'week-todo-chip--' + ${todo.status.name()}">
+                    <input type="checkbox" class="week-todo-checkbox"
+                           th:attr="data-id=${todo.id}"
+                           th:checked="${todo.status.name() == 'DONE'}"/>
+                    <span class="week-todo-check" aria-hidden="true"></span>
+                    <span class="week-todo-title" th:text="${todo.title}"></span>
+                  </label>
                 </th:block>
               </div>
             </div>
