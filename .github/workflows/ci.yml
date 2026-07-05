@@ -32,7 +32,7 @@ jobs:
             echo "modules=" >> "$GITHUB_OUTPUT"
             echo "image_modules=[]" >> "$GITHUB_OUTPUT"
           else
-            git diff --name-only "$BASE" "${{ github.sha }}" | .github/scripts/detect-changed-modules.sh >> "$GITHUB_OUTPUT"
+            git diff --name-only "$BASE" "${{ github.sha }}" | bash .github/scripts/detect-changed-modules.sh >> "$GITHUB_OUTPUT"
           fi
 
   build-and-test:
