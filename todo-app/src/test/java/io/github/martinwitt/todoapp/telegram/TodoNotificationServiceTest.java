@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,14 +56,30 @@ class TodoNotificationServiceTest {
     }
 
     @Test
-    void shouldSendOneMessagePerDueTodo() throws Exception {
+    void shouldSendOneBatchedMessageForMultipleDueTodos() throws Exception {
         Todo first = todoWithTitle("Buy milk");
         Todo second = todoWithTitle("Call dentist");
         when(todoService.findDueTodos()).thenReturn(List.of(first, second));
 
         service.sendTodaysTodos();
 
-        verify(telegramClient, org.mockito.Mockito.times(2)).execute(any(SendMessage.class));
+        verify(telegramClient, org.mockito.Mockito.times(1)).execute(any(SendMessage.class));
+    }
+
+    @Test
+    void shouldNumberEachLineAndAttachOneButtonPerTodoInBatchedMessage() throws Exception {
+        Todo first = todoWithTitle("Buy milk");
+        Todo second = todoWithTitle("Call dentist");
+        when(todoService.findDueTodos()).thenReturn(List.of(first, second));
+
+        service.sendTodaysTodos();
+
+        ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
+        verify(telegramClient).execute(captor.capture());
+        SendMessage message = captor.getValue();
+        assertThat(message.getText()).contains("1. Buy milk").contains("2. Call dentist");
+        InlineKeyboardMarkup keyboard = (InlineKeyboardMarkup) message.getReplyMarkup();
+        assertThat(keyboard.getKeyboard()).hasSize(2);
     }
 
     @Test
