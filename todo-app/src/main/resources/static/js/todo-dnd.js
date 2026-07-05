@@ -34,6 +34,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  document.querySelectorAll('.week-todo-checkbox').forEach(cb => {
+    cb.addEventListener('change', function () {
+      const id = this.getAttribute('data-id');
+      const status = this.checked ? 'DONE' : 'OPEN';
+      fetch(`/todos/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `status=${encodeURIComponent(status)}`
+      }).catch(err => console.error('status update failed', err));
+    });
+  });
+
   document.querySelectorAll('.action-btn--snooze').forEach(btn => {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
