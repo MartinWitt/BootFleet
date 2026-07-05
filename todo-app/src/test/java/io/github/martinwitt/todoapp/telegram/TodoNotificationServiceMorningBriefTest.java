@@ -155,7 +155,8 @@ class TodoNotificationServiceMorningBriefTest {
     }
 
     @Test
-    void sendTodaysTodos_shouldSendBothDeadlineAndRecurringTodosWhenDifferent() throws Exception {
+    void sendTodaysTodos_shouldSendBothDeadlineAndRecurringTodosInOneBatchedMessage()
+            throws Exception {
         Todo deadline = new Todo();
         deadline.setId(1L);
         deadline.setTitle("Deadline task");
@@ -168,7 +169,9 @@ class TodoNotificationServiceMorningBriefTest {
 
         service.sendTodaysTodos();
 
-        verify(telegramClient, times(2)).execute(any(SendMessage.class));
+        ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
+        verify(telegramClient, times(1)).execute(captor.capture());
+        assertThat(captor.getValue().getText()).contains("Deadline task").contains("Daily task");
     }
 
     private Todo recurringTodo(Long id, String cron) {

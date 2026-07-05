@@ -49,10 +49,10 @@ class TodoNotificationServiceSomedayTest {
         service.sendTodaysTodos();
 
         ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
-        verify(telegramClient, times(2)).execute(captor.capture());
-        List<SendMessage> messages = captor.getAllValues();
-        assertThat(messages.get(0).getText()).isEqualTo("📋 Someday (noch offen):");
-        assertThat(messages.get(1).getText()).contains("Read a book");
+        verify(telegramClient, times(1)).execute(captor.capture());
+        assertThat(captor.getValue().getText())
+                .contains("📋 Someday (noch offen):")
+                .contains("Read a book");
     }
 
     @Test
@@ -82,9 +82,8 @@ class TodoNotificationServiceSomedayTest {
         service.sendTodaysTodos();
 
         ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
-        verify(telegramClient, times(2)).execute(captor.capture());
-        captor.getAllValues()
-                .forEach(m -> assertThat(m.getText()).doesNotContain("Keine offenen Todos"));
+        verify(telegramClient, times(1)).execute(captor.capture());
+        assertThat(captor.getValue().getText()).doesNotContain("Keine offenen Todos");
     }
 
     @Test
@@ -110,9 +109,8 @@ class TodoNotificationServiceSomedayTest {
         service.sendTodaysTodos();
 
         ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
-        verify(telegramClient, times(2)).execute(captor.capture());
-        SendMessage todoMessage = captor.getAllValues().get(1);
-        assertThat(todoMessage.getReplyMarkup()).isNotNull();
+        verify(telegramClient, times(1)).execute(captor.capture());
+        assertThat(captor.getValue().getReplyMarkup()).isNotNull();
     }
 
     @Test
@@ -126,11 +124,9 @@ class TodoNotificationServiceSomedayTest {
         service.sendTodaysTodos();
 
         ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
-        verify(telegramClient, times(3)).execute(captor.capture());
-        List<SendMessage> messages = captor.getAllValues();
-        assertThat(messages.get(0).getText()).isEqualTo("📋 Someday (noch offen):");
-        assertThat(messages.get(1).getText()).contains("Alpha");
-        assertThat(messages.get(2).getText()).contains("Beta");
+        verify(telegramClient, times(1)).execute(captor.capture());
+        assertThat(captor.getValue().getText())
+                .isEqualTo("📋 Someday (noch offen):\n1. Alpha\n2. Beta");
     }
 
     private Todo somedayTodo(Long id, String title) {
