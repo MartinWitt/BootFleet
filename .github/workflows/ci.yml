@@ -11,7 +11,30 @@ on:
 
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      full: ${{ steps.detect.outputs.full }}
+      modules: ${{ steps.detect.outputs.modules }}
+      image_modules: ${{ steps.detect.outputs.image_modules }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+
+      - id: detect
+        name: Detect changed modules
+        run: |
+          BASE="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
+            echo "No usable diff base ($BASE) — falling back to a full build."
+            echo "no-diff-base" | bash .github/scripts/detect-changed-modules.sh >> "$GITHUB_OUTPUT"
+          else
+            git diff --name-only "$BASE" "${{ github.sha }}" | bash .github/scripts/detect-changed-modules.sh >> "$GITHUB_OUTPUT"
+          fi
+
   build-and-test:
+    needs: [changes]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -22,21 +45,28 @@ jobs:
           distribution: 'graalvm'
           cache: 'maven'
 
-      - name: Spotless Check
-        run: mvn -B spotless:check
-
-      - name: Compile and Test
-        run: mvn -B verify
+      - name: Spotless Check and Verify
+        run: |
+          if [ "${{ needs.changes.outputs.full }}" = "true" ]; then
+            mvn -B spotless:check
+            mvn -B verify
+          elif [ -n "${{ needs.changes.outputs.modules }}" ]; then
+            mvn -B -pl "${{ needs.changes.outputs.modules }}" -am -amd spotless:check
+            mvn -B -pl "${{ needs.changes.outputs.modules }}" -am -amd verify
+          else
+            echo "No affected modules — skipping build."
+          fi
 
   build-images:
-    needs: [build-and-test]
+    needs: [changes, build-and-test]
+    if: needs.changes.outputs.image_modules != '[]'
     runs-on: ${{ matrix.arch == 'amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
     permissions:
       contents: read
       packages: write
     strategy:
       matrix:
-        module: [url-cleaner, config-reloader, image-update-detector, maven-version-mcp, sequential-thinking-mcp, todo-app, service-finder, notes-app]
+        module: ${{ fromJSON(needs.changes.outputs.image_modules) }}
         arch: [amd64, arm64]
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -73,7 +103,7 @@ jobs:
         run: mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest-${{ matrix.arch }} -Dspring-boot.build-image.publish=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }} -Dspring-boot.build-image.buildCache=cache
 
   create-manifest:
-    needs: [build-images]
+    needs: [changes, build-images]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
@@ -81,7 +111,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        module: [url-cleaner, config-reloader, image-update-detector, maven-version-mcp, sequential-thinking-mcp, todo-app, service-finder, notes-app]
+        module: ${{ fromJSON(needs.changes.outputs.image_modules) }}
     steps:
       - name: Log in to the Container registry
         uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
