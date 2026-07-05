@@ -208,8 +208,7 @@ main {
 }
 
 .week-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  display: flex;
   gap: 8px;
 }
 
@@ -219,10 +218,13 @@ main {
   border-radius: 10px;
   padding: 10px 8px;
   min-height: 110px;
+  min-width: 0;
+  flex: 1 1 0;
   transition: border-color 0.2s ease;
 }
 
 .week-day--today {
+  flex-grow: 2;
   border-color: var(--primary);
   background: rgba(99, 102, 241, 0.06);
 }
@@ -972,13 +974,18 @@ form textarea {
   }
 
   .week-grid {
-    grid-template-columns: repeat(3, 1fr);
+    flex-wrap: wrap;
     gap: 6px;
   }
 
   .week-day {
+    flex: 1 1 calc(33.333% - 4px);
     padding: 8px 6px;
     min-height: 90px;
+  }
+
+  .week-day--today {
+    flex-grow: 1;
   }
 
   .week-day-name {
@@ -1035,11 +1042,5 @@ form textarea {
 
   .section-title {
     margin-bottom: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .week-grid {
-    grid-template-columns: repeat(3, 1fr);
   }
 }
