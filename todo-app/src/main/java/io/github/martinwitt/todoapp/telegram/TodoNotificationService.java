@@ -41,8 +41,9 @@ class TodoNotificationService {
     private final TelegramClient telegramClient;
     private final long chatId;
 
-    // ponytail: in-memory, lost on bot restart — fine for a single-user personal bot;
-    // move to a DB table only if that ever bites.
+    // In-memory only: lost on restart, and entries are removed once every todo in the
+    // batch is done. Acceptable for a single-user personal bot; move to a DB table if
+    // that ever becomes a problem.
     private final Map<Integer, TrackedMessage> trackedMessages = new ConcurrentHashMap<>();
 
     private record TrackedMessage(String header, List<Todo> todos) {}
@@ -126,11 +127,14 @@ class TodoNotificationService {
             clearKeyboard(messageId);
             return;
         }
-        tracked.todos().stream()
-                .filter(t -> t.getId().equals(todoId))
-                .findFirst()
-                .ifPresent(t -> t.setStatus(TodoStatus.DONE));
-        BatchContent content = buildBatchContent(tracked.header(), tracked.todos());
+        BatchContent content;
+        synchronized (tracked) {
+            tracked.todos().stream()
+                    .filter(t -> t.getId().equals(todoId))
+                    .findFirst()
+                    .ifPresent(t -> t.setStatus(TodoStatus.DONE));
+            content = buildBatchContent(tracked.header(), tracked.todos());
+        }
         EditMessageText edit =
                 EditMessageText.builder()
                         .chatId(chatId)
@@ -140,6 +144,9 @@ class TodoNotificationService {
                         .build();
         try {
             telegramClient.execute(edit);
+            if (content.keyboard().getKeyboard().isEmpty()) {
+                trackedMessages.remove(messageId);
+            }
         } catch (TelegramApiException e) {
             log.error("Failed to edit message after marking todo {} done", todoId, e);
         }

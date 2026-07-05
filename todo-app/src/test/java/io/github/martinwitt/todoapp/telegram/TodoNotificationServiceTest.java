@@ -57,8 +57,8 @@ class TodoNotificationServiceTest {
 
     @Test
     void shouldSendOneBatchedMessageForMultipleDueTodos() throws Exception {
-        Todo first = todoWithTitle("Buy milk");
-        Todo second = todoWithTitle("Call dentist");
+        Todo first = todoWithTitle(1L, "Buy milk");
+        Todo second = todoWithTitle(2L, "Call dentist");
         when(todoService.findDueTodos()).thenReturn(List.of(first, second));
 
         service.sendTodaysTodos();
@@ -68,8 +68,8 @@ class TodoNotificationServiceTest {
 
     @Test
     void shouldNumberEachLineAndAttachOneButtonPerTodoInBatchedMessage() throws Exception {
-        Todo first = todoWithTitle("Buy milk");
-        Todo second = todoWithTitle("Call dentist");
+        Todo first = todoWithTitle(1L, "Buy milk");
+        Todo second = todoWithTitle(2L, "Call dentist");
         when(todoService.findDueTodos()).thenReturn(List.of(first, second));
 
         service.sendTodaysTodos();
@@ -84,7 +84,7 @@ class TodoNotificationServiceTest {
 
     @Test
     void shouldIncludeTitleInTodoMessage() throws Exception {
-        Todo todo = todoWithTitle("Walk the dog");
+        Todo todo = todoWithTitle(1L, "Walk the dog");
         when(todoService.findDueTodos()).thenReturn(List.of(todo));
 
         service.sendTodaysTodos();
@@ -96,7 +96,7 @@ class TodoNotificationServiceTest {
 
     @Test
     void shouldIncludeDeadlineInMessageWhenPresent() throws Exception {
-        Todo todo = todoWithTitle("Pay rent");
+        Todo todo = todoWithTitle(1L, "Pay rent");
         todo.setDeadline(LocalDateTime.of(2026, 6, 7, 0, 0));
         when(todoService.findDueTodos()).thenReturn(List.of(todo));
 
@@ -124,9 +124,9 @@ class TodoNotificationServiceTest {
         assertThat(captor.getValue().getMessageId()).isEqualTo(100);
     }
 
-    private Todo todoWithTitle(String title) {
+    private Todo todoWithTitle(long id, String title) {
         Todo todo = new Todo();
-        todo.setId(1L);
+        todo.setId(id);
         todo.setTitle(title);
         todo.setStatus(TodoStatus.OPEN);
         return todo;

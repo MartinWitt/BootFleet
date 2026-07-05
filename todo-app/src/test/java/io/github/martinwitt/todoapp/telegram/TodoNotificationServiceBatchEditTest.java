@@ -80,6 +80,22 @@ class TodoNotificationServiceBatchEditTest {
         assertThat(keyboard.getKeyboard()).isEmpty();
     }
 
+    @Test
+    void markDone_shouldForgetMessageOnceAllTodosInBatchAreDone() throws Exception {
+        Todo only = todo(1L, "Buy milk");
+        when(todoService.findDueTodos()).thenReturn(List.of(only));
+        service.sendTodaysTodos();
+        service.markDone(1L, MESSAGE_ID);
+
+        service.markDone(999L, MESSAGE_ID);
+
+        org.mockito.Mockito.verify(telegramClient)
+                .execute(
+                        any(
+                                org.telegram.telegrambots.meta.api.methods.updatingmessages
+                                        .EditMessageReplyMarkup.class));
+    }
+
     private Todo todo(Long id, String title) {
         Todo todo = new Todo();
         todo.setId(id);
