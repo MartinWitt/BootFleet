@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-add-todo-last-completed-at
+      author: martinwitt
+      changes:
+        - addColumn:
+            tableName: todos
+            columns:
+              - column:
+                  name: last_completed_at
+                  type: TIMESTAMP

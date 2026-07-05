@@ -51,6 +51,7 @@ public class TodoController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
         Map<Long, String> formattedDeadlines = new HashMap<>();
         Map<Long, String> cronDescriptions = new HashMap<>();
+        Map<Long, String> lastCompletedDates = new HashMap<>();
         for (Todo todo : todos) {
             if (todo.getStatus() == TodoStatus.DONE) {
                 doneTodos.add(todo);
@@ -66,6 +67,9 @@ public class TodoController {
                 cronDescriptions.put(
                         todo.getId(), CronExpressionFormatter.describe(todo.getCronExpression()));
             }
+            if (todo.getLastCompletedAt() != null) {
+                lastCompletedDates.put(todo.getId(), todo.getLastCompletedAt().format(formatter));
+            }
         }
 
         model.addAttribute("recurringTodos", recurringTodos);
@@ -73,6 +77,7 @@ public class TodoController {
         model.addAttribute("doneTodos", doneTodos);
         model.addAttribute("formattedDeadlines", formattedDeadlines);
         model.addAttribute("cronDescriptions", cronDescriptions);
+        model.addAttribute("lastCompletedDates", lastCompletedDates);
         model.addAttribute("weekDays", WeekViewBuilder.build(todos, LocalDate.now()));
         model.addAttribute("tags", tags);
         model.addAttribute("selectedTag", tag);

@@ -89,6 +89,8 @@
                     <span th:if="${cronDescriptions.get(todo.id)}" class="recurring-badge">
                       🔁 <span th:text="${cronDescriptions.get(todo.id)}"></span>
                     </span>
+                    <span class="deadline-display" th:if="${lastCompletedDates.get(todo.id)}"
+                          th:text="'✅ Last done ' + ${lastCompletedDates.get(todo.id)}"></span>
                   </div>
                   <div class="tags" th:if="${not #lists.isEmpty(todo.tags)}">
                     <th:block th:each="tag : ${todo.tags}">

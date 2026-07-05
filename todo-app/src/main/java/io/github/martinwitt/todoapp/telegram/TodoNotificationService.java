@@ -57,8 +57,13 @@ class TodoNotificationService {
     void sendRecurringTodo(Long todoId) {
         todoService
                 .findById(todoId)
-                .filter(t -> t.getStatus() != TodoStatus.DONE)
-                .ifPresent(this::sendTodoMessage);
+                .ifPresent(
+                        t -> {
+                            if (t.getStatus() == TodoStatus.DONE) {
+                                todoService.changeStatus(todoId, TodoStatus.OPEN);
+                            }
+                            sendTodoMessage(t);
+                        });
     }
 
     void sendTodaysTodos() {

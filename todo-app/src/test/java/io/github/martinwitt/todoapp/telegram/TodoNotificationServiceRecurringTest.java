@@ -61,7 +61,7 @@ class TodoNotificationServiceRecurringTest {
     }
 
     @Test
-    void shouldNotSendNotificationForDoneTodo() throws Exception {
+    void shouldResetDoneTodoToOpenAndSendNotificationWhenCronFires() throws Exception {
         Todo done = new Todo();
         done.setId(5L);
         done.setTitle("Küche");
@@ -70,6 +70,7 @@ class TodoNotificationServiceRecurringTest {
 
         service.sendRecurringTodo(5L);
 
-        verify(telegramClient, never()).execute(any(SendMessage.class));
+        verify(todoService).changeStatus(5L, TodoStatus.OPEN);
+        verify(telegramClient).execute(any(SendMessage.class));
     }
 }
