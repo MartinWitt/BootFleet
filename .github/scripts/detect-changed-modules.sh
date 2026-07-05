@@ -24,11 +24,11 @@ is_app_module() {
 mapfile -t changed_dirs < <(cut -d/ -f1 | sort -u)
 
 full=false
-declare -A touched=()
+touched=()
 for dir in "${changed_dirs[@]}"; do
   [ -z "$dir" ] && continue
   if is_app_module "$dir"; then
-    touched["$dir"]=1
+    touched+=("$dir")
   else
     full=true
   fi
@@ -38,9 +38,9 @@ if [ "$full" = true ]; then
   modules=$(IFS=,; echo "${APP_MODULES[*]}")
   images=$(printf '"%s",' "${APP_MODULES[@]}")
 else
-  modules=$(IFS=,; echo "${!touched[*]}")
+  modules=$(IFS=,; echo "${touched[*]}")
   images=""
-  for dir in "${!touched[@]}"; do
+  for dir in "${touched[@]}"; do
     images+="\"$dir\","
   done
 fi

@@ -28,9 +28,7 @@ jobs:
           BASE="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}"
           if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
             echo "No usable diff base ($BASE) — falling back to a full build."
-            echo "full=true" >> "$GITHUB_OUTPUT"
-            echo "modules=" >> "$GITHUB_OUTPUT"
-            echo "image_modules=[]" >> "$GITHUB_OUTPUT"
+            echo "no-diff-base" | bash .github/scripts/detect-changed-modules.sh >> "$GITHUB_OUTPUT"
           else
             git diff --name-only "$BASE" "${{ github.sha }}" | bash .github/scripts/detect-changed-modules.sh >> "$GITHUB_OUTPUT"
           fi
