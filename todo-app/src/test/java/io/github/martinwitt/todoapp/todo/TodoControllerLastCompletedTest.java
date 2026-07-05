@@ -7,6 +7,7 @@ import io.github.martinwitt.todoapp.tag.TagService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,7 +42,9 @@ class TodoControllerLastCompletedTest {
         todoController.list(null, model);
 
         assertThat(lastCompletedDates(model).get(1L))
-                .isEqualTo(DateTimeFormatter.ofPattern("MMM dd, yyyy").format(completedAt));
+                .isEqualTo(
+                        DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)
+                                .format(completedAt));
     }
 
     @Test

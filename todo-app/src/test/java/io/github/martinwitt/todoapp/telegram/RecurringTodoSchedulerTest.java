@@ -93,13 +93,15 @@ class RecurringTodoSchedulerTest {
     }
 
     @Test
-    void shouldNotScheduleWhenRecurringTodoIsDone() {
+    void shouldStillScheduleWhenRecurringTodoIsDone() {
         Todo done = recurringTodo(1L, "0 18 * * 1");
         done.setStatus(TodoStatus.DONE);
+        when(taskScheduler.schedule(any(Runnable.class), any(Trigger.class)))
+                .thenReturn(scheduledFuture);
 
         scheduler.onTodoSaved(new TodoSavedEvent(done));
 
-        verify(taskScheduler, never()).schedule(any(Runnable.class), any(Trigger.class));
+        verify(taskScheduler).schedule(any(Runnable.class), any(Trigger.class));
     }
 
     @Test

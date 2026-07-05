@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
@@ -23,6 +24,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class TodoController {
+
+    private static final DateTimeFormatter DATE_FMT =
+            DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH);
 
     private final TodoService todoService;
     private final TagService tagService;
@@ -48,7 +52,6 @@ public class TodoController {
         List<Todo> recurringTodos = new ArrayList<>();
         List<Todo> oneTimeTodos = new ArrayList<>();
         List<Todo> doneTodos = new ArrayList<>();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
         Map<Long, String> formattedDeadlines = new HashMap<>();
         Map<Long, String> cronDescriptions = new HashMap<>();
         Map<Long, String> lastCompletedDates = new HashMap<>();
@@ -61,14 +64,14 @@ public class TodoController {
                 oneTimeTodos.add(todo);
             }
             if (todo.getDeadline() != null) {
-                formattedDeadlines.put(todo.getId(), todo.getDeadline().format(formatter));
+                formattedDeadlines.put(todo.getId(), todo.getDeadline().format(DATE_FMT));
             }
             if (todo.isRecurring()) {
                 cronDescriptions.put(
                         todo.getId(), CronExpressionFormatter.describe(todo.getCronExpression()));
             }
             if (todo.getLastCompletedAt() != null) {
-                lastCompletedDates.put(todo.getId(), todo.getLastCompletedAt().format(formatter));
+                lastCompletedDates.put(todo.getId(), todo.getLastCompletedAt().format(DATE_FMT));
             }
         }
 
@@ -167,10 +170,9 @@ public class TodoController {
     @PostMapping("/todos/{id}/snooze")
     @ResponseBody
     public ResponseEntity<?> snooze(@PathVariable Long id, @RequestParam int days) {
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM dd, yyyy");
         return todoService
                 .snooze(id, days)
-                .map(dt -> ResponseEntity.ok(Map.of("deadline", dt.format(fmt))))
+                .map(dt -> ResponseEntity.ok(Map.of("deadline", dt.format(DATE_FMT))))
                 .orElse(ResponseEntity.notFound().build());
     }
 

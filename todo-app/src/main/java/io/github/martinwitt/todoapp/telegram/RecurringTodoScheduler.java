@@ -4,7 +4,6 @@ import io.github.martinwitt.todoapp.todo.Todo;
 import io.github.martinwitt.todoapp.todo.TodoDeletedEvent;
 import io.github.martinwitt.todoapp.todo.TodoSavedEvent;
 import io.github.martinwitt.todoapp.todo.TodoService;
-import io.github.martinwitt.todoapp.todo.TodoStatus;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +46,7 @@ class RecurringTodoScheduler implements ApplicationRunner {
     void onTodoSaved(TodoSavedEvent event) {
         Todo todo = event.todo();
         cancelExisting(todo.getId());
-        if (todo.isRecurring() && TodoStatus.DONE != todo.getStatus()) {
+        if (todo.isRecurring()) {
             scheduleTask(todo);
         }
     }
