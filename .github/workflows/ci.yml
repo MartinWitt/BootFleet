@@ -100,7 +100,7 @@ jobs:
         run: mvn -B -DskipTests install -pl ${{ env.HELPER_LIBS }} -am
 
       - name: Build Native Image
-        run: mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest-${{ matrix.arch }} -Dspring-boot.build-image.publish=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }} -Dspring-boot.build-image.buildCache=cache
+        run: mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest-${{ matrix.arch }} -Dspring-boot.build-image.publish=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }} -Dspring-boot.build-image.buildCache=cache -Dspring-boot.build-image.env.BP_RESPONSE_HEADER_TIMEOUT=30
 
   create-manifest:
     needs: [changes, build-images]
