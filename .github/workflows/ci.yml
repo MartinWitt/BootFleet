@@ -100,7 +100,17 @@ jobs:
         run: mvn -B -DskipTests install -pl ${{ env.HELPER_LIBS }} -am
 
       - name: Build Native Image
-        run: mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest-${{ matrix.arch }} -Dspring-boot.build-image.publish=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }} -Dspring-boot.build-image.buildCache=cache -Dspring-boot.build-image.env.BP_RESPONSE_HEADER_TIMEOUT=30
+        # Retries: the buildpack lifecycle downloads its JDK/SBOM dependencies straight
+        # from github.com, and matrix legs across modules/arches hit those same URLs
+        # within seconds of each other, which can trip GitHub's release-download rate
+        # limiting (fails fast, not a slow timeout — hence the retry, not just a longer wait).
+        run: |
+          for attempt in 1 2 3; do
+            mvn -pl ${{ matrix.module }} -Pnative spring-boot:build-image -Dspring-boot.build-image.imageName=ghcr.io/${REPO}/${MODULE}:latest-${{ matrix.arch }} -Dspring-boot.build-image.publish=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }} -Dspring-boot.build-image.buildCache=cache -Dspring-boot.build-image.env.BP_RESPONSE_HEADER_TIMEOUT=30 && break
+            [ "$attempt" = 3 ] && exit 1
+            echo "Build attempt $attempt failed, retrying in 30s..."
+            sleep 30
+          done
 
   create-manifest:
     needs: [changes, build-images]
