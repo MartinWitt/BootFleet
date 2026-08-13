@@ -26,7 +26,7 @@
     <dependency>
       <groupId>io.github.classgraph</groupId>
       <artifactId>classgraph</artifactId>
-      <version>4.8.191</version>
+      <version>4.8.192</version>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
