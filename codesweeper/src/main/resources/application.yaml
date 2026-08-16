@@ -3,27 +3,43 @@ spring:
     ollama:
       base-url: http://localhost:11434
       chat:
-        model: qwen2.5-coder:3b
+        model: gemma4:26b-a4b-it-qat
 
 codesweeper:
   workspace-dir: ${java.io.tmpdir}/codesweeper
   sarif-artifact-name: qodana-report
   github-token: ${GITHUB_TOKEN:}
   fixer-prompt: |
-    You are fixing a static analysis finding reported by Qodana.
+    You are fixing a static analysis finding reported by Qodana, in a git checkout you have file
+    tools for: listFiles, readFile, searchFiles, editFile (all paths relative to the repo root).
+    editFile makes a targeted change by replacing one exact snippet of text with new text - it does
+    not rewrite the whole file, so keep your fix as small as possible.
+
+    This finding comes from a trusted, already-validated static analysis run - do not re-derive or
+    question whether the analysis itself is correct. Treat the rule and message as ground truth and
+    focus entirely on fixing the underlying issue they describe.
 
     Rule: {ruleId}
     Message: {message}
     File: {filePath}
     Line: {startLine}
 
-    Here is the full current file content:
-    ---
-    {fileContent}
-    ---
+    Read {filePath} with the tools. If the finding needs a root-cause fix rather than a local
+    patch (for example, other callers of the same function have the same problem), use
+    searchFiles to find them before deciding on a fix.
 
-    Apply the minimal correct fix for this specific finding. Do not change unrelated code,
-    formatting, or comments beyond what is needed. Return the complete fixed file content.
+    Fix ONLY the exact issue described by the rule and message, at the reported line (or another
+    line only if searchFiles found that identical issue duplicated there). Do not touch any other
+    line, even if it looks related, inconsistent, or improvable to you - if it is not this specific
+    finding, leave it exactly as it is. Do not change formatting or comments beyond what is needed.
+
+    If, after reading the file and at most one or two follow-up searches, you are still not
+    confident what the correct fix is, stop there: do not call editFile, and reply explaining
+    why this finding isn't a safe, obvious fix to make automatically. Giving up cleanly is a good
+    outcome - it is better than guessing, rationalizing past uncertainty, or making unrelated
+    changes to feel productive.
+
+    Otherwise, apply the fix with editFile and reply with a short explanation of the fix you made.
   judge-prompt: |
     You are reviewing an automatically generated fix for a Qodana static analysis finding
     before it is proposed as a pull request.
@@ -51,10 +67,6 @@ codesweeper:
     - full-name: MartinWitt/BootFleet
       default-branch: master
       workflow-file: qodana_code_quality.yml
-
-logging:
-  level:
-    org.springframework.ai.chat.client.advisor: WARN
 
 management:
   endpoints:

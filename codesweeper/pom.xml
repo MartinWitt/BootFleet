@@ -26,6 +26,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.kohsuke</groupId>
+      <artifactId>github-api</artifactId>
+      <version>2.0-rc.7</version>
+    </dependency>
+    <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
@@ -49,10 +54,6 @@
     <dependency>
       <groupId>io.github.martinwitt</groupId>
       <artifactId>spring-boot-utils</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-web</artifactId>
     </dependency>
   </dependencies>
 

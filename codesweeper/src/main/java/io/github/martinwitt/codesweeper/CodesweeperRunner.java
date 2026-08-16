@@ -4,6 +4,7 @@ import io.github.martinwitt.codesweeper.ai.FixerOutput;
 import io.github.martinwitt.codesweeper.ai.FixerService;
 import io.github.martinwitt.codesweeper.ai.JudgeService;
 import io.github.martinwitt.codesweeper.ai.JudgeVerdict;
+import io.github.martinwitt.codesweeper.ai.TurnLoggerAdvisor;
 import io.github.martinwitt.codesweeper.config.CodesweeperProperties;
 import io.github.martinwitt.codesweeper.domain.TrustedRepo;
 import io.github.martinwitt.codesweeper.github.GithubApiClient;
@@ -18,8 +19,12 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -34,6 +39,7 @@ import org.springframework.stereotype.Component;
 public class CodesweeperRunner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(CodesweeperRunner.class);
+    private static final int MAX_FIX_ATTEMPTS = 2;
 
     private final CodesweeperProperties properties;
     private final GithubApiClient githubApiClient;
@@ -42,6 +48,7 @@ public class CodesweeperRunner implements ApplicationRunner {
     private final SarifParser sarifParser;
     private final FixerService fixerService;
     private final JudgeService judgeService;
+    private final TurnLoggerAdvisor turnLoggerAdvisor;
 
     public CodesweeperRunner(
             CodesweeperProperties properties,
@@ -50,7 +57,8 @@ public class CodesweeperRunner implements ApplicationRunner {
             MavenClient mavenClient,
             SarifParser sarifParser,
             FixerService fixerService,
-            JudgeService judgeService) {
+            JudgeService judgeService,
+            TurnLoggerAdvisor turnLoggerAdvisor) {
         this.properties = properties;
         this.githubApiClient = githubApiClient;
         this.gitClient = gitClient;
@@ -58,6 +66,7 @@ public class CodesweeperRunner implements ApplicationRunner {
         this.sarifParser = sarifParser;
         this.fixerService = fixerService;
         this.judgeService = judgeService;
+        this.turnLoggerAdvisor = turnLoggerAdvisor;
     }
 
     @Override
@@ -87,16 +96,28 @@ public class CodesweeperRunner implements ApplicationRunner {
             findings = sarifParser.parse(in);
         }
         log.info("{} findings in {}", findings.size(), repo.fullName());
+        if (findings.isEmpty()) {
+            return;
+        }
+
+        // ponytail: local LLM fixes are slow (tens of seconds each) - pick one finding per run
+        // instead of grinding through all of them, so the fix/judge loop stays fast to iterate on.
+        SarifFinding finding = findings.get(ThreadLocalRandom.current().nextInt(findings.size()));
+        log.info(
+                "Picked {} at {}:{} ({} of {} findings): {}",
+                finding.ruleId(),
+                finding.filePath(),
+                finding.startLine(),
+                findings.indexOf(finding) + 1,
+                findings.size(),
+                finding.message());
 
         Path checkout = gitClient.cloneOrUpdate(workspaceDir, repo);
-        for (SarifFinding finding : findings) {
-            try {
-                processFinding(workspaceDir, checkout, repo, finding);
-            } catch (Exception e) {
-                log.error(
-                        "Failed to process finding {} in {}", finding.ruleId(), repo.fullName(), e);
-                gitClient.discardChanges(checkout);
-            }
+        try {
+            processFinding(workspaceDir, checkout, repo, finding);
+        } catch (Exception e) {
+            log.error("Failed to process finding {} in {}", finding.ruleId(), repo.fullName(), e);
+            gitClient.discardChanges(checkout);
         }
     }
 
@@ -116,30 +137,82 @@ public class CodesweeperRunner implements ApplicationRunner {
         }
         String originalContent = Files.readString(file, StandardCharsets.UTF_8);
 
-        FixerOutput fix = fixerService.fix(finding, originalContent);
-        JudgeVerdict verdict = judgeService.judge(finding, originalContent, fix.fixedFileContent());
-        if (!verdict.useful()) {
-            log.info("Judge rejected fix for {}: {}", finding.ruleId(), verdict.reason());
-            return;
+        // The fixer writes fixes directly via its file tools, so the checkout is already mutated
+        // by the time it returns - anything short of judge approval must be discarded.
+        turnLoggerAdvisor.reset();
+        FixerOutput fix = null;
+        JudgeVerdict verdict = null;
+        String fixedContent = null;
+        String rejectionFeedback = null;
+        for (int attempt = 1; attempt <= MAX_FIX_ATTEMPTS; attempt++) {
+            log.info(
+                    "Asking fixer to fix {} in {} (attempt {}/{})",
+                    finding.ruleId(),
+                    finding.filePath(),
+                    attempt,
+                    MAX_FIX_ATTEMPTS);
+            long fixStart = System.currentTimeMillis();
+            fix = fixerService.fix(finding, checkout, rejectionFeedback);
+            fixedContent = Files.readString(file, StandardCharsets.UTF_8);
+            log.info(
+                    "Fixer finished {} in {}s: {}",
+                    finding.ruleId(),
+                    (System.currentTimeMillis() - fixStart) / 1000,
+                    fix.explanation());
+            if (fixedContent.equals(originalContent)) {
+                log.warn(
+                        "Fixer made no changes to {} for {} - it explained a fix but never wrote"
+                                + " one, skipping judge",
+                        finding.filePath(),
+                        finding.ruleId());
+                gitClient.discardChanges(checkout);
+                return;
+            }
+
+            verdict = judgeService.judge(finding, originalContent, fixedContent);
+            if (verdict.useful()) {
+                log.info("Judge approved fix for {}: {}", finding.ruleId(), verdict.reason());
+                break;
+            }
+            log.info(
+                    "Judge rejected fix for {} (attempt {}/{}): {}",
+                    finding.ruleId(),
+                    attempt,
+                    MAX_FIX_ATTEMPTS,
+                    verdict.reason());
+            gitClient.discardChanges(checkout);
+            if (attempt == MAX_FIX_ATTEMPTS) {
+                return;
+            }
+            rejectionFeedback = verdict.reason();
         }
 
-        Files.writeString(file, fix.fixedFileContent(), StandardCharsets.UTF_8);
-        String module = ModulePath.moduleFor(finding.filePath());
-        mavenClient.spotlessApply(checkout, module);
-        if (!mavenClient.test(checkout, module)) {
-            log.info("Tests failed for fix on {}, discarding", finding.ruleId());
-            gitClient.discardChanges(checkout);
-            return;
+        Set<String> modules =
+                gitClient.changedFiles(checkout).stream()
+                        .map(f -> ModulePath.moduleFor(checkout, f).orElse(null))
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+        modules.forEach(module -> mavenClient.spotlessApply(checkout, module));
+        for (String module : modules) {
+            if (!mavenClient.test(checkout, module)) {
+                log.info(
+                        "Tests failed for fix on {} (module {}), discarding",
+                        finding.ruleId(),
+                        module == null ? "<repo root>" : module);
+                gitClient.discardChanges(checkout);
+                return;
+            }
         }
 
         gitClient.createBranch(checkout, branch);
         gitClient.commitAll(checkout, "fix: " + finding.ruleId() + " in " + finding.filePath());
         gitClient.push(checkout, branch);
-        githubApiClient.createDraftPr(
-                repo,
-                branch,
-                "fix: " + finding.ruleId() + " in " + finding.filePath(),
-                prBody(finding, fix, verdict));
+        String prUrl =
+                githubApiClient.createDraftPr(
+                        repo,
+                        branch,
+                        "fix: " + finding.ruleId() + " in " + finding.filePath(),
+                        prBody(finding, fix, verdict));
+        log.info("Opened draft PR for {}: {}", finding.ruleId(), prUrl);
 
         gitClient.cloneOrUpdate(workspaceDir, repo); // back to default branch for the next finding
     }
@@ -155,6 +228,9 @@ public class CodesweeperRunner implements ApplicationRunner {
         **Fix explanation:** %s
 
         **Judge verdict:** %s
+
+        **Model:** %s
+        **Tokens used:** %d prompt + %d completion = %d total
         """
                 .formatted(
                         finding.ruleId(),
@@ -162,6 +238,10 @@ public class CodesweeperRunner implements ApplicationRunner {
                         finding.filePath(),
                         finding.startLine(),
                         fix.explanation(),
-                        verdict.reason());
+                        verdict.reason(),
+                        turnLoggerAdvisor.getModel(),
+                        turnLoggerAdvisor.getPromptTokens(),
+                        turnLoggerAdvisor.getCompletionTokens(),
+                        turnLoggerAdvisor.getTotalTokens());
     }
 }
