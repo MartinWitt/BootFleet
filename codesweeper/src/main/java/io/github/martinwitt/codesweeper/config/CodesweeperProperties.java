@@ -8,6 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record CodesweeperProperties(
         String workspaceDir,
         String sarifArtifactName,
+        String githubToken,
         String fixerPrompt,
         String judgePrompt,
         List<TrustedRepo> repos) {}

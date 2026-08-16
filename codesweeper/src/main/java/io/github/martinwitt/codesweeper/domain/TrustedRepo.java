@@ -8,4 +8,13 @@ package io.github.martinwitt.codesweeper.domain;
  * @param workflowFile Qodana workflow file name in .github/workflows whose latest successful run
  *     holds the SARIF artifact
  */
-public record TrustedRepo(String fullName, String defaultBranch, String workflowFile) {}
+public record TrustedRepo(String fullName, String defaultBranch, String workflowFile) {
+
+    public String owner() {
+        return fullName.substring(0, fullName.indexOf('/'));
+    }
+
+    public String name() {
+        return fullName.substring(fullName.indexOf('/') + 1);
+    }
+}

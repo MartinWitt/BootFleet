@@ -6,8 +6,8 @@ import io.github.martinwitt.codesweeper.ai.JudgeService;
 import io.github.martinwitt.codesweeper.ai.JudgeVerdict;
 import io.github.martinwitt.codesweeper.config.CodesweeperProperties;
 import io.github.martinwitt.codesweeper.domain.TrustedRepo;
+import io.github.martinwitt.codesweeper.github.GithubApiClient;
 import io.github.martinwitt.codesweeper.process.BranchNaming;
-import io.github.martinwitt.codesweeper.process.GhClient;
 import io.github.martinwitt.codesweeper.process.GitClient;
 import io.github.martinwitt.codesweeper.process.MavenClient;
 import io.github.martinwitt.codesweeper.process.ModulePath;
@@ -36,7 +36,7 @@ public class CodesweeperRunner implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(CodesweeperRunner.class);
 
     private final CodesweeperProperties properties;
-    private final GhClient ghClient;
+    private final GithubApiClient githubApiClient;
     private final GitClient gitClient;
     private final MavenClient mavenClient;
     private final SarifParser sarifParser;
@@ -45,14 +45,14 @@ public class CodesweeperRunner implements ApplicationRunner {
 
     public CodesweeperRunner(
             CodesweeperProperties properties,
-            GhClient ghClient,
+            GithubApiClient githubApiClient,
             GitClient gitClient,
             MavenClient mavenClient,
             SarifParser sarifParser,
             FixerService fixerService,
             JudgeService judgeService) {
         this.properties = properties;
-        this.ghClient = ghClient;
+        this.githubApiClient = githubApiClient;
         this.gitClient = gitClient;
         this.mavenClient = mavenClient;
         this.sarifParser = sarifParser;
@@ -75,7 +75,8 @@ public class CodesweeperRunner implements ApplicationRunner {
     private void processRepo(Path workspaceDir, TrustedRepo repo) throws IOException {
         Files.createDirectories(workspaceDir);
         Optional<Path> sarifFile =
-                ghClient.downloadLatestSarif(workspaceDir, repo, properties.sarifArtifactName());
+                githubApiClient.downloadLatestSarif(
+                        workspaceDir, repo, properties.sarifArtifactName());
         if (sarifFile.isEmpty()) {
             log.info("No SARIF available for {}, skipping", repo.fullName());
             return;
@@ -103,7 +104,7 @@ public class CodesweeperRunner implements ApplicationRunner {
             Path workspaceDir, Path checkout, TrustedRepo repo, SarifFinding finding)
             throws IOException {
         String branch = BranchNaming.branchFor(finding);
-        if (ghClient.prExistsForBranch(workspaceDir, repo, branch)) {
+        if (githubApiClient.prExistsForBranch(repo, branch)) {
             log.info("PR already exists for {} ({}), skipping", finding.ruleId(), branch);
             return;
         }
@@ -134,8 +135,7 @@ public class CodesweeperRunner implements ApplicationRunner {
         gitClient.createBranch(checkout, branch);
         gitClient.commitAll(checkout, "fix: " + finding.ruleId() + " in " + finding.filePath());
         gitClient.push(checkout, branch);
-        ghClient.createDraftPr(
-                checkout,
+        githubApiClient.createDraftPr(
                 repo,
                 branch,
                 "fix: " + finding.ruleId() + " in " + finding.filePath(),

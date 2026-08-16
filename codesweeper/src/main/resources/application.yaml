@@ -8,6 +8,7 @@ spring:
 codesweeper:
   workspace-dir: ${java.io.tmpdir}/codesweeper
   sarif-artifact-name: qodana-report
+  github-token: ${GITHUB_TOKEN:}
   fixer-prompt: |
     You are fixing a static analysis finding reported by Qodana.
 
