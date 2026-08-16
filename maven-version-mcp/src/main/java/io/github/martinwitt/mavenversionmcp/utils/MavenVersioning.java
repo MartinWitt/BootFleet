@@ -209,25 +209,25 @@ public class MavenVersioning {
         Matcher m1 = QUALIFIER_PATTERN.matcher(q1);
         Matcher m2 = QUALIFIER_PATTERN.matcher(q2);
 
-        m1.matches();
-        m2.matches();
+        if (m1.matches() && m2.matches()) {
+            String type1 = m1.group(1) != null ? m1.group(1) : "";
+            String type2 = m2.group(1) != null ? m2.group(1) : "";
 
-        String type1 = m1.group(1) != null ? m1.group(1) : "";
-        String type2 = m2.group(1) != null ? m2.group(1) : "";
+            // If types are different, compare strings
+            if (!type1.equals(type2)) {
+                return type1.compareTo(type2);
+            }
 
-        // If types are different, compare strings
-        if (!type1.equals(type2)) {
-            return type1.compareTo(type2);
+            // Compare numeric parts if available
+            if (m1.group(2) != null && m2.group(2) != null) {
+                int num1 = Integer.parseInt(m1.group(2));
+                int num2 = Integer.parseInt(m2.group(2));
+                return Integer.compare(num1, num2);
+            }
+
+            // Fallback to string comparison
+            return q1.compareTo(q2);
         }
-
-        // Compare numeric parts if available
-        if (m1.group(2) != null && m2.group(2) != null) {
-            int num1 = Integer.parseInt(m1.group(2));
-            int num2 = Integer.parseInt(m2.group(2));
-            return Integer.compare(num1, num2);
-        }
-
-        // Fallback to string comparison
         return q1.compareTo(q2);
     }
 
