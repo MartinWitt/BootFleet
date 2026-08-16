@@ -1,0 +1,62 @@
+spring:
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: qwen2.5-coder:3b
+
+codesweeper:
+  workspace-dir: ${java.io.tmpdir}/codesweeper
+  sarif-artifact-name: qodana-report
+  fixer-prompt: |
+    You are fixing a static analysis finding reported by Qodana.
+
+    Rule: {ruleId}
+    Message: {message}
+    File: {filePath}
+    Line: {startLine}
+
+    Here is the full current file content:
+    ---
+    {fileContent}
+    ---
+
+    Apply the minimal correct fix for this specific finding. Do not change unrelated code,
+    formatting, or comments beyond what is needed. Return the complete fixed file content.
+  judge-prompt: |
+    You are reviewing an automatically generated fix for a Qodana static analysis finding
+    before it is proposed as a pull request.
+
+    Rule: {ruleId}
+    Message: {message}
+    File: {filePath}
+
+    Original file:
+    ---
+    {originalContent}
+    ---
+
+    Fixed file:
+    ---
+    {fixedContent}
+    ---
+
+    Decide whether this fix correctly and safely resolves the finding without changing
+    unrelated behavior, without deleting the check it was supposed to add, and without
+    introducing new bugs. Be skeptical: if the fix removes the flagged call instead of
+    handling its result, silently swallows an error case, or otherwise looks like a
+    shortcut rather than a real fix, mark it as not useful.
+  repos:
+    - full-name: MartinWitt/BootFleet
+      default-branch: master
+      workflow-file: qodana_code_quality.yml
+
+logging:
+  level:
+    org.springframework.ai.chat.client.advisor: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

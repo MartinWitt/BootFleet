@@ -21,6 +21,7 @@
     <module>../url-cleaner</module>
     <module>../todo-app</module>
     <module>../notes-app</module>
+    <module>../codesweeper</module>
   </modules>
 
   <build>
