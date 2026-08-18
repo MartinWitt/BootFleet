@@ -16,7 +16,6 @@ import io.github.martinwitt.codesweeper.sarif.SarifFinding;
 import io.github.martinwitt.codesweeper.sarif.SarifParser;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
@@ -27,6 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -49,6 +49,7 @@ public class CodesweeperRunner implements ApplicationRunner {
     private final FixerService fixerService;
     private final JudgeService judgeService;
     private final TurnLoggerAdvisor turnLoggerAdvisor;
+    private final String model;
 
     public CodesweeperRunner(
             CodesweeperProperties properties,
@@ -58,7 +59,8 @@ public class CodesweeperRunner implements ApplicationRunner {
             SarifParser sarifParser,
             FixerService fixerService,
             JudgeService judgeService,
-            TurnLoggerAdvisor turnLoggerAdvisor) {
+            TurnLoggerAdvisor turnLoggerAdvisor,
+            @Value("${spring.ai.ollama.chat.model}") String model) {
         this.properties = properties;
         this.githubApiClient = githubApiClient;
         this.gitClient = gitClient;
@@ -67,6 +69,7 @@ public class CodesweeperRunner implements ApplicationRunner {
         this.fixerService = fixerService;
         this.judgeService = judgeService;
         this.turnLoggerAdvisor = turnLoggerAdvisor;
+        this.model = model;
     }
 
     @Override
@@ -102,7 +105,29 @@ public class CodesweeperRunner implements ApplicationRunner {
 
         // ponytail: local LLM fixes are slow (tens of seconds each) - pick one finding per run
         // instead of grinding through all of them, so the fix/judge loop stays fast to iterate on.
-        SarifFinding finding = findings.get(ThreadLocalRandom.current().nextInt(findings.size()));
+        // Pinning to one exact finding (via codesweeper.pinned-rule-id/-file-path) instead lets
+        // several runs with different spring.ai.ollama.chat.model overrides all fix the same
+        // finding, for a side-by-side model comparison.
+        SarifFinding finding;
+        if (properties.pinnedRuleId() != null && properties.pinnedFilePath() != null) {
+            finding =
+                    findings.stream()
+                            .filter(
+                                    f ->
+                                            f.ruleId().equals(properties.pinnedRuleId())
+                                                    && f.filePath()
+                                                            .equals(properties.pinnedFilePath()))
+                            .findFirst()
+                            .orElseThrow(
+                                    () ->
+                                            new IllegalStateException(
+                                                    "No finding matches pinned "
+                                                            + properties.pinnedRuleId()
+                                                            + " in "
+                                                            + properties.pinnedFilePath()));
+        } else {
+            finding = findings.get(ThreadLocalRandom.current().nextInt(findings.size()));
+        }
         log.info(
                 "Picked {} at {}:{} ({} of {} findings): {}",
                 finding.ruleId(),
@@ -124,26 +149,28 @@ public class CodesweeperRunner implements ApplicationRunner {
     private void processFinding(
             Path workspaceDir, Path checkout, TrustedRepo repo, SarifFinding finding)
             throws IOException {
-        String branch = BranchNaming.branchFor(finding);
+        String branch = BranchNaming.branchFor(finding, model);
         if (githubApiClient.prExistsForBranch(repo, branch)) {
             log.info("PR already exists for {} ({}), skipping", finding.ruleId(), branch);
             return;
         }
 
-        Path file = checkout.resolve(finding.filePath());
-        if (!Files.isRegularFile(file)) {
+        if (!Files.isRegularFile(checkout.resolve(finding.filePath()))) {
             log.warn("{} no longer exists at {}, skipping", finding.filePath(), repo.fullName());
             return;
         }
-        String originalContent = Files.readString(file, StandardCharsets.UTF_8);
 
         // The fixer writes fixes directly via its file tools, so the checkout is already mutated
-        // by the time it returns - anything short of judge approval must be discarded.
+        // by the time it returns - anything short of judge approval must be discarded. The fix
+        // may touch files other than finding.filePath() (e.g. the real root cause of a visibility
+        // finding can be a referenced type's own declaration), so "did it change anything" and
+        // what the judge reviews are both based on the whole checkout, not just that one file.
         turnLoggerAdvisor.reset();
         FixerOutput fix = null;
         JudgeVerdict verdict = null;
-        String fixedContent = null;
         String rejectionFeedback = null;
+        long fixSeconds = 0;
+        long judgeSeconds = 0;
         for (int attempt = 1; attempt <= MAX_FIX_ATTEMPTS; attempt++) {
             log.info(
                     "Asking fixer to fix {} in {} (attempt {}/{})",
@@ -153,23 +180,24 @@ public class CodesweeperRunner implements ApplicationRunner {
                     MAX_FIX_ATTEMPTS);
             long fixStart = System.currentTimeMillis();
             fix = fixerService.fix(finding, checkout, rejectionFeedback);
-            fixedContent = Files.readString(file, StandardCharsets.UTF_8);
+            fixSeconds += (System.currentTimeMillis() - fixStart) / 1000;
             log.info(
                     "Fixer finished {} in {}s: {}",
                     finding.ruleId(),
                     (System.currentTimeMillis() - fixStart) / 1000,
                     fix.explanation());
-            if (fixedContent.equals(originalContent)) {
+            if (gitClient.changedFiles(checkout).isEmpty()) {
                 log.warn(
-                        "Fixer made no changes to {} for {} - it explained a fix but never wrote"
-                                + " one, skipping judge",
-                        finding.filePath(),
+                        "Fixer made no changes for {} - it explained a fix but never wrote one,"
+                                + " skipping judge",
                         finding.ruleId());
                 gitClient.discardChanges(checkout);
                 return;
             }
 
-            verdict = judgeService.judge(finding, originalContent, fixedContent);
+            long judgeStart = System.currentTimeMillis();
+            verdict = judgeService.judge(finding, gitClient.diff(checkout));
+            judgeSeconds += (System.currentTimeMillis() - judgeStart) / 1000;
             if (verdict.useful()) {
                 log.info("Judge approved fix for {}: {}", finding.ruleId(), verdict.reason());
                 break;
@@ -204,20 +232,33 @@ public class CodesweeperRunner implements ApplicationRunner {
         }
 
         gitClient.createBranch(checkout, branch);
-        gitClient.commitAll(checkout, "fix: " + finding.ruleId() + " in " + finding.filePath());
+        gitClient.commitAll(
+                checkout,
+                "fix: " + finding.ruleId() + " in " + finding.filePath() + " (" + model + ")");
         gitClient.push(checkout, branch);
         String prUrl =
                 githubApiClient.createDraftPr(
                         repo,
                         branch,
-                        "fix: " + finding.ruleId() + " in " + finding.filePath(),
-                        prBody(finding, fix, verdict));
+                        "fix: "
+                                + finding.ruleId()
+                                + " in "
+                                + finding.filePath()
+                                + " ["
+                                + model
+                                + "]",
+                        prBody(finding, fix, verdict, fixSeconds, judgeSeconds));
         log.info("Opened draft PR for {}: {}", finding.ruleId(), prUrl);
 
         gitClient.cloneOrUpdate(workspaceDir, repo); // back to default branch for the next finding
     }
 
-    private String prBody(SarifFinding finding, FixerOutput fix, JudgeVerdict verdict) {
+    private String prBody(
+            SarifFinding finding,
+            FixerOutput fix,
+            JudgeVerdict verdict,
+            long fixSeconds,
+            long judgeSeconds) {
         return """
         Auto-generated by codesweeper from a Qodana finding.
 
@@ -231,6 +272,7 @@ public class CodesweeperRunner implements ApplicationRunner {
 
         **Model:** %s
         **Tokens used:** %d prompt + %d completion = %d total
+        **Timing:** %ds fixer + %ds judge = %ds total
         """
                 .formatted(
                         finding.ruleId(),
@@ -242,6 +284,9 @@ public class CodesweeperRunner implements ApplicationRunner {
                         turnLoggerAdvisor.getModel(),
                         turnLoggerAdvisor.getPromptTokens(),
                         turnLoggerAdvisor.getCompletionTokens(),
-                        turnLoggerAdvisor.getTotalTokens());
+                        turnLoggerAdvisor.getTotalTokens(),
+                        fixSeconds,
+                        judgeSeconds,
+                        fixSeconds + judgeSeconds);
     }
 }

@@ -3,7 +3,9 @@ spring:
     ollama:
       base-url: http://localhost:11434
       chat:
-        model: gemma4:26b-a4b-it-qat
+        # qwen3.5:4b won the fixer/judge benchmark on this hardware - faster and more reliable
+        # than the 9B/27B/24B models tried (see PR history for the runs).
+        model: qwen3.5:4b
 
 codesweeper:
   workspace-dir: ${java.io.tmpdir}/codesweeper
@@ -24,14 +26,18 @@ codesweeper:
     File: {filePath}
     Line: {startLine}
 
-    Read {filePath} with the tools. If the finding needs a root-cause fix rather than a local
-    patch (for example, other callers of the same function have the same problem), use
-    searchFiles to find them before deciding on a fix.
+    Read {filePath} with the tools. The reported line is where the finding surfaces, not
+    necessarily where the fix belongs - for example, a visibility/exposure finding is often best
+    fixed by changing the access modifier on the referenced type's own declaration, which may be
+    in a different file entirely, not the usage site; other findings may need the same bug pattern
+    fixed at every duplicate caller. Use searchFiles/readFile to find the true root cause, even
+    outside {filePath}, before deciding on a fix.
 
-    Fix ONLY the exact issue described by the rule and message, at the reported line (or another
-    line only if searchFiles found that identical issue duplicated there). Do not touch any other
-    line, even if it looks related, inconsistent, or improvable to you - if it is not this specific
-    finding, leave it exactly as it is. Do not change formatting or comments beyond what is needed.
+    Fix the root cause of this exact finding, and nothing else. That may mean editing the reported
+    line, a duplicate occurrence of the same issue, or a different declaration entirely if that is
+    genuinely what causes this finding - but do not touch any code that isn't part of causing or
+    resolving this specific finding, even if it looks related, inconsistent, or improvable to you.
+    Do not change formatting or comments beyond what is needed.
 
     If, after reading the file and at most one or two follow-up searches, you are still not
     confident what the correct fix is, stop there: do not call editFile, and reply explaining
@@ -46,16 +52,15 @@ codesweeper:
 
     Rule: {ruleId}
     Message: {message}
-    File: {filePath}
+    File where the finding was reported: {filePath}
 
-    Original file:
-    ---
-    {originalContent}
-    ---
+    The fix may touch a different file than the one above, if that is where the actual root
+    cause lives (for example, changing a referenced type's own visibility modifier rather than
+    its usage site) - review the diff as a whole rather than assuming only {filePath} matters.
 
-    Fixed file:
+    Diff of every change the fixer made:
     ---
-    {fixedContent}
+    {diff}
     ---
 
     Decide whether this fix correctly and safely resolves the finding without changing

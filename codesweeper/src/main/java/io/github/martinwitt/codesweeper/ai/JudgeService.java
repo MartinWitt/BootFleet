@@ -22,7 +22,7 @@ public class JudgeService {
         this.promptTemplate = properties.judgePrompt();
     }
 
-    public JudgeVerdict judge(SarifFinding finding, String originalContent, String fixedContent) {
+    public JudgeVerdict judge(SarifFinding finding, String diff) {
         String prompt =
                 new PromptTemplate(promptTemplate)
                         .render(
@@ -30,8 +30,7 @@ public class JudgeService {
                                         "ruleId", finding.ruleId(),
                                         "message", finding.message(),
                                         "filePath", finding.filePath(),
-                                        "originalContent", originalContent,
-                                        "fixedContent", fixedContent));
+                                        "diff", diff));
         return chatClient.prompt(prompt).call().entity(JudgeVerdict.class);
     }
 }

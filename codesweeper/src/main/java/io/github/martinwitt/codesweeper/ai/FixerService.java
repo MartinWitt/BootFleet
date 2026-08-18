@@ -4,6 +4,7 @@ import io.github.martinwitt.codesweeper.config.CodesweeperProperties;
 import io.github.martinwitt.codesweeper.sarif.SarifFinding;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.stereotype.Service;
@@ -46,8 +47,13 @@ public class FixerService {
                             + "\n\nTry again, taking that into account.\n\n"
                             + prompt;
         }
+        // Streamed (not .call()) so TurnLoggerAdvisor can print thinking/answer tokens live as
+        // they're generated, instead of the whole turn appearing silently once it's done.
         String explanation =
-                chatClient.prompt(prompt).tools(new FileTools(checkout)).call().content();
+                chatClient.prompt(prompt).tools(new FileTools(checkout)).stream()
+                        .content()
+                        .collect(Collectors.joining())
+                        .block();
         return new FixerOutput(explanation);
     }
 }

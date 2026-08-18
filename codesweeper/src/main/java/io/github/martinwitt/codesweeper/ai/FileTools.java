@@ -133,10 +133,12 @@ public class FileTools {
             @ToolParam(description = "The replacement text, without line-number prefixes")
                     String newText) {
         log.info(
-                "tool call: editFile(\"{}\", {} chars -> {} chars)",
+                "tool call: editFile(\"{}\", {} chars -> {} chars, old: {}, new: {})",
                 relativePath,
                 oldText.length(),
-                newText.length());
+                newText.length(),
+                oldText,
+                newText);
         Path target = resolve(relativePath);
         String content;
         try {

@@ -83,6 +83,11 @@ public class GitClient {
                 .toList();
     }
 
+    /** Unified diff of every uncommitted change in checkout, across all files. */
+    public String diff(Path checkout) {
+        return run(checkout, "diff").output();
+    }
+
     private ProcessResult run(Path workDir, String... gitArgs) {
         return run(workDir, List.of(), gitArgs);
     }

@@ -20,7 +20,8 @@ class GithubApiClientTest {
 
     private final GithubApiClient client =
             new GithubApiClient(
-                    new CodesweeperProperties(null, null, "test-token", null, null, List.of()));
+                    new CodesweeperProperties(
+                            null, null, "test-token", null, null, List.of(), null, null));
 
     /**
      * Real Qodana artifacts wrap their output in a nested zip (inside the GitHub artifact zip) and

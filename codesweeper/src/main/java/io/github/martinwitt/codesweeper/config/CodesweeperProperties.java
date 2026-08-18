@@ -11,4 +11,8 @@ public record CodesweeperProperties(
         String githubToken,
         String fixerPrompt,
         String judgePrompt,
-        List<TrustedRepo> repos) {}
+        List<TrustedRepo> repos,
+        // Pins finding selection to one exact finding instead of a random pick - set both to
+        // benchmark different models against the same finding. Leave unset for normal runs.
+        String pinnedRuleId,
+        String pinnedFilePath) {}
