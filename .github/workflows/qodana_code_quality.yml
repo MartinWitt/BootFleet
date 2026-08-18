@@ -28,7 +28,10 @@ jobs:
           use-caches: true
           post-pr-comment: true
           use-annotations: true
-          # Upload Qodana results (SARIF, other artifacts, logs) as an artifact to the job
-          upload-result: true
+          # Upload Qodana results (SARIF, other artifacts, logs) as an artifact to the job.
+          # Never upload for pull_request runs: codesweeper picks the latest successful
+          # workflow run's artifact as "master's report", and a PR run finishing after the
+          # last master push would otherwise get mistaken for it.
+          upload-result: ${{ github.event_name != 'pull_request' }}
           # quick-fixes available in Ultimate and Ultimate Plus plans
           push-fixes: 'none'
