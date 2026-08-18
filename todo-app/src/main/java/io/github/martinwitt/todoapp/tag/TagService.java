@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TagService {
     private final TagRepository tagRepository;
 
-    public TagService(TagRepository tagRepository) {
+    TagService(TagRepository tagRepository) {
         this.tagRepository = tagRepository;
     }
 
