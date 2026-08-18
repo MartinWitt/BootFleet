@@ -209,8 +209,8 @@ public class MavenVersioning {
         Matcher m1 = QUALIFIER_PATTERN.matcher(q1);
         Matcher m2 = QUALIFIER_PATTERN.matcher(q2);
 
-        m1.matches();
-        m2.matches();
+        boolean m1Match = m1.matches();
+        boolean m2Match = m2.matches();
 
         String type1 = m1.group(1) != null ? m1.group(1) : "";
         String type2 = m2.group(1) != null ? m2.group(1) : "";
