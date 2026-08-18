@@ -16,4 +16,6 @@ profile:
   name: Default
 
 projectJDK: "25" #(Applied in CI/CD pipeline)
-linter: jetbrains/qodana-jvm-community:2025.3
+# Pinned (not :latest) for CI reproducibility - bump periodically; 2025.3 was two release
+# cycles stale when last checked (current is 2026.2).
+linter: jetbrains/qodana-jvm-community:2026.2

@@ -1,0 +1,16 @@
+# Stage 1: Build native image with GraalVM
+FROM ghcr.io/graalvm/native-image:ol9-java25 as builder
+WORKDIR /app
+COPY . .
+RUN mvn clean package -Pnative -DskipTests
+
+# Stage 2: Runtime (minimal image with native binary)
+FROM debian:12-slim
+WORKDIR /app
+COPY --from=builder /app/target/image-update-detector app
+
+# Install ca-certificates for HTTPS
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+EXPOSE 8080
+ENTRYPOINT ["/app/image-update-detector"]
