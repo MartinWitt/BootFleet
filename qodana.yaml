@@ -10,8 +10,10 @@
 version: "1.0"
 
 #Specify inspection profile for code analysis
+# Default = IDE's Project Default profile, the broadest built-in coverage (far more than
+# qodana.starter/qodana.recommended) - used to feed codesweeper a richer set of findings.
 profile:
-  name: qodana.starter
+  name: Default
 
 projectJDK: "25" #(Applied in CI/CD pipeline)
 linter: jetbrains/qodana-jvm-community:2025.3
