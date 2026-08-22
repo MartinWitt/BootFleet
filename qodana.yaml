@@ -10,24 +10,18 @@
 version: "1.0"
 
 #Specify inspection profile for code analysis
-# Base is the empty profile (nothing enabled by default), then only the categories relevant
-# to this Java/Spring/Maven codebase are turned on - codesweeper only fixes Java/pom.xml/Spring
-# config findings, so HTML/YAML/etc. inspections (e.g. HtmlUnknownAttribute on Thymeleaf th:*
-# attributes) just generated noise the fixer couldn't act on safely. Security is generic
-# (hardcoded passwords, vulnerable Maven dependencies) but low-noise and worth keeping.
+# Base is Default (IDE's curated Project Default profile) so the sensible on/off defaults per
+# inspection are kept - an empty base + enabling whole categories was tried first, but that
+# force-enables every inspection in a category regardless of its normal default, including
+# dozens of pure style/architecture opinions (Missing Javadoc, Magic number, Design for
+# extension, ...) that Default deliberately leaves off. Only HTML is excluded, since that was
+# the actual noise: HtmlUnknownAttribute flags valid Thymeleaf th:* attributes as errors.
 profile:
   base:
-    name: empty
-  groups:
-    - groupId: RelevantInspections
-      groups:
-        - "category:Java"
-        - "category:Maven"
-        - "category:Spring"
-        - "category:Security"
+    name: Default
   inspections:
-    - group: RelevantInspections
-      enabled: true
+    - group: "category:HTML"
+      enabled: false
 
 projectJDK: "25" #(Applied in CI/CD pipeline)
 # Pinned (not :latest) for CI reproducibility - bump periodically; 2025.3 was two release
