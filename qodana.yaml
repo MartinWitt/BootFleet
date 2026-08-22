@@ -10,10 +10,18 @@
 version: "1.0"
 
 #Specify inspection profile for code analysis
-# Default = IDE's Project Default profile, the broadest built-in coverage (far more than
-# qodana.starter/qodana.recommended) - used to feed codesweeper a richer set of findings.
+# Base is Default (IDE's curated Project Default profile) so the sensible on/off defaults per
+# inspection are kept - an empty base + enabling whole categories was tried first, but that
+# force-enables every inspection in a category regardless of its normal default, including
+# dozens of pure style/architecture opinions (Missing Javadoc, Magic number, Design for
+# extension, ...) that Default deliberately leaves off. Only HTML is excluded, since that was
+# the actual noise: HtmlUnknownAttribute flags valid Thymeleaf th:* attributes as errors.
 profile:
-  name: Default
+  base:
+    name: Default
+  inspections:
+    - group: "category:HTML"
+      enabled: false
 
 projectJDK: "25" #(Applied in CI/CD pipeline)
 # Pinned (not :latest) for CI reproducibility - bump periodically; 2025.3 was two release
