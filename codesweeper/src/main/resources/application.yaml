@@ -1,0 +1,80 @@
+spring:
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        # qwen3.5:4b won the fixer/judge benchmark on this hardware - faster and more reliable
+        # than the 9B/27B/24B models tried (see PR history for the runs).
+        model: qwen3.5:4b
+
+codesweeper:
+  workspace-dir: ${java.io.tmpdir}/codesweeper
+  sarif-artifact-name: qodana-report
+  github-token: ${GITHUB_TOKEN:}
+  fixer-prompt: |
+    You are fixing a static analysis finding reported by Qodana, in a git checkout you have file
+    tools for: listFiles, readFile, searchFiles, editFile (all paths relative to the repo root).
+    editFile makes a targeted change by replacing one exact snippet of text with new text - it does
+    not rewrite the whole file, so keep your fix as small as possible.
+
+    This finding comes from a trusted, already-validated static analysis run - do not re-derive or
+    question whether the analysis itself is correct. Treat the rule and message as ground truth and
+    focus entirely on fixing the underlying issue they describe.
+
+    Rule: {ruleId}
+    Message: {message}
+    File: {filePath}
+    Line: {startLine}
+
+    Read {filePath} with the tools. The reported line is where the finding surfaces, not
+    necessarily where the fix belongs - for example, a visibility/exposure finding is often best
+    fixed by changing the access modifier on the referenced type's own declaration, which may be
+    in a different file entirely, not the usage site; other findings may need the same bug pattern
+    fixed at every duplicate caller. Use searchFiles/readFile to find the true root cause, even
+    outside {filePath}, before deciding on a fix.
+
+    Fix the root cause of this exact finding, and nothing else. That may mean editing the reported
+    line, a duplicate occurrence of the same issue, or a different declaration entirely if that is
+    genuinely what causes this finding - but do not touch any code that isn't part of causing or
+    resolving this specific finding, even if it looks related, inconsistent, or improvable to you.
+    Do not change formatting or comments beyond what is needed.
+
+    If, after reading the file and at most one or two follow-up searches, you are still not
+    confident what the correct fix is, stop there: do not call editFile, and reply explaining
+    why this finding isn't a safe, obvious fix to make automatically. Giving up cleanly is a good
+    outcome - it is better than guessing, rationalizing past uncertainty, or making unrelated
+    changes to feel productive.
+
+    Otherwise, apply the fix with editFile and reply with a short explanation of the fix you made.
+  judge-prompt: |
+    You are reviewing an automatically generated fix for a Qodana static analysis finding
+    before it is proposed as a pull request.
+
+    Rule: {ruleId}
+    Message: {message}
+    File where the finding was reported: {filePath}
+
+    The fix may touch a different file than the one above, if that is where the actual root
+    cause lives (for example, changing a referenced type's own visibility modifier rather than
+    its usage site) - review the diff as a whole rather than assuming only {filePath} matters.
+
+    Diff of every change the fixer made:
+    ---
+    {diff}
+    ---
+
+    Decide whether this fix correctly and safely resolves the finding without changing
+    unrelated behavior, without deleting the check it was supposed to add, and without
+    introducing new bugs. Be skeptical: if the fix removes the flagged call instead of
+    handling its result, silently swallows an error case, or otherwise looks like a
+    shortcut rather than a real fix, mark it as not useful.
+  repos:
+    - full-name: MartinWitt/BootFleet
+      default-branch: master
+      workflow-file: qodana_code_quality.yml
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

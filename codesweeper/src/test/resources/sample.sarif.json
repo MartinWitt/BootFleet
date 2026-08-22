@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "QDJVM",
+          "rules": [
+            {
+              "id": "IgnoreResultOfCall"
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "IgnoreResultOfCall",
+          "message": {
+            "text": "Result of 'Matcher.matches()' is ignored"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "maven-version-mcp/src/main/java/io/github/martinwitt/mavenversionmcp/client/dto/MavenVersioning.java"
+                },
+                "region": {
+                  "startLine": 42,
+                  "startColumn": 9
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
