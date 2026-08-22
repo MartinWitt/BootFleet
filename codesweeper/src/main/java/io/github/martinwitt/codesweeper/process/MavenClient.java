@@ -1,6 +1,8 @@
 package io.github.martinwitt.codesweeper.process;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -20,10 +22,7 @@ public class MavenClient {
     public void spotlessApply(Path checkout, String module) {
         ProcessResult result =
                 processRunner.run(
-                        moduleDir(checkout, module),
-                        "mvn",
-                        "spotless:apply",
-                        "--no-transfer-progress");
+                        checkout, mavenCommand(module, "spotless:apply", "--no-transfer-progress"));
         if (!result.success()) {
             log.warn("spotless:apply failed for module {}: {}", module, result.output());
         }
@@ -32,7 +31,7 @@ public class MavenClient {
     public boolean test(Path checkout, String module) {
         ProcessResult result =
                 processRunner.run(
-                        moduleDir(checkout, module), "mvn", "test", "--no-transfer-progress", "-q");
+                        checkout, mavenCommand(module, "test", "--no-transfer-progress", "-q"));
         if (!result.success()) {
             log.warn("mvn test failed for module {}: {}", module, result.output());
         }
@@ -40,12 +39,20 @@ public class MavenClient {
     }
 
     /**
-     * module isn't a reactor module of the checkout's root pom - most of BootFleet's directories
-     * are independent Maven projects with their own pom.xml, not declared under the root's
-     * &lt;modules&gt;, so build from inside the module's own directory instead of using -pl from
-     * the checkout root.
+     * Always builds from the checkout root with {@code -pl <module> -am} instead of cd-ing into the
+     * module directory, so Maven resolves the module through the reactor and builds any
+     * reactor-local (snapshot) dependencies it needs first - required for any multi-module Maven
+     * project, not just single-module checkouts.
      */
-    private Path moduleDir(Path checkout, String module) {
-        return module == null ? checkout : checkout.resolve(module);
+    private String[] mavenCommand(String module, String... goalAndArgs) {
+        List<String> command = new ArrayList<>();
+        command.add("mvn");
+        if (module != null) {
+            command.add("-pl");
+            command.add(module);
+            command.add("-am");
+        }
+        command.addAll(List.of(goalAndArgs));
+        return command.toArray(new String[0]);
     }
 }
