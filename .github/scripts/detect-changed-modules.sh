@@ -11,7 +11,7 @@
 # each other, only on the shared libs/parent poms, so this is exhaustive.
 set -euo pipefail
 
-APP_MODULES=(url-cleaner config-reloader image-update-detector maven-version-mcp sequential-thinking-mcp todo-app service-finder notes-app)
+APP_MODULES=(url-cleaner config-reloader image-update-detector maven-version-mcp sequential-thinking-mcp todo-app service-finder notes-app codesweeper)
 
 is_app_module() {
   local candidate="$1"

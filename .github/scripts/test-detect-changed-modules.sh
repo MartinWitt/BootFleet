@@ -26,6 +26,11 @@ assert_contains "$out" "modules=url-cleaner" "full build should list all app mod
 out=$(printf '.github/workflows/ci.yml\n' | ./detect-changed-modules.sh)
 assert_contains "$out" "full=true" "workflow file change should trigger full build"
 
+# codesweeper changed -> scoped, not full (it ships its own Dockerfile, not the buildpack)
+out=$(printf 'codesweeper/src/Foo.java\n' | ./detect-changed-modules.sh)
+assert_contains "$out" "full=false" "codesweeper change should not be full"
+assert_contains "$out" 'image_modules=["codesweeper"]' "codesweeper image list should be just codesweeper"
+
 # Two app modules changed -> scoped to both, no full
 out=$(printf 'todo-app/pom.xml\nservice-finder/pom.xml\n' | ./detect-changed-modules.sh)
 assert_contains "$out" "full=false" "two module change should not be full"
