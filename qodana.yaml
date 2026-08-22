@@ -10,10 +10,24 @@
 version: "1.0"
 
 #Specify inspection profile for code analysis
-# Default = IDE's Project Default profile, the broadest built-in coverage (far more than
-# qodana.starter/qodana.recommended) - used to feed codesweeper a richer set of findings.
+# Base is the empty profile (nothing enabled by default), then only the categories relevant
+# to this Java/Spring/Maven codebase are turned on - codesweeper only fixes Java/pom.xml/Spring
+# config findings, so HTML/YAML/etc. inspections (e.g. HtmlUnknownAttribute on Thymeleaf th:*
+# attributes) just generated noise the fixer couldn't act on safely. Security is generic
+# (hardcoded passwords, vulnerable Maven dependencies) but low-noise and worth keeping.
 profile:
-  name: Default
+  base:
+    name: empty
+  groups:
+    - groupId: RelevantInspections
+      groups:
+        - "category:Java"
+        - "category:Maven"
+        - "category:Spring"
+        - "category:Security"
+  inspections:
+    - group: RelevantInspections
+      enabled: true
 
 projectJDK: "25" #(Applied in CI/CD pipeline)
 # Pinned (not :latest) for CI reproducibility - bump periodically; 2025.3 was two release
