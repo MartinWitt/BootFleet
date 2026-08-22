@@ -40,7 +40,12 @@ public class TurnLoggerAdvisor implements CallAdvisor, StreamAdvisor {
     @Override
     public ChatClientResponse adviseCall(ChatClientRequest request, CallAdvisorChain chain) {
         ChatClientResponse response = chain.nextCall(request);
-        var output = response.chatResponse().getResult().getOutput();
+        var result = response.chatResponse().getResult();
+        if (result == null) {
+            log.warn("model returned no result");
+            return response;
+        }
+        var output = result.getOutput();
         Object thinking = output.getMetadata().get("thinking");
         if (thinking instanceof String s && !s.isBlank()) {
             log.info("model thinking: {}", s);
@@ -67,7 +72,11 @@ public class TurnLoggerAdvisor implements CallAdvisor, StreamAdvisor {
                             if (response.chatResponse() == null) {
                                 return;
                             }
-                            var output = response.chatResponse().getResult().getOutput();
+                            var result = response.chatResponse().getResult();
+                            if (result == null) {
+                                return;
+                            }
+                            var output = result.getOutput();
                             Object thinking = output.getMetadata().get("thinking");
                             if (thinking instanceof String s && !s.isEmpty()) {
                                 System.out.print(ANSI_DIM + s + ANSI_RESET);
