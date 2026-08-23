@@ -64,9 +64,21 @@ public class GitClient {
 
     public void commitAll(Path checkout, String message) {
         run(checkout, "add", "-A");
-        // These are automated bot commits on a disposable clone - signing them would need
-        // interactive pinentry/Hello with no TTY to satisfy it, so skip it for this call only.
-        run(checkout, List.of("-c", "commit.gpgsign=false"), "commit", "-m", message);
+        // These are automated bot commits on a disposable clone with no global git identity
+        // configured, and signing them would need interactive pinentry with no TTY to satisfy it -
+        // set the identity and skip signing for this call only.
+        run(
+                checkout,
+                List.of(
+                        "-c",
+                        "user.name=codesweeper[bot]",
+                        "-c",
+                        "user.email=codesweeper[bot]@users.noreply.github.com",
+                        "-c",
+                        "commit.gpgsign=false"),
+                "commit",
+                "-m",
+                message);
     }
 
     public void push(Path checkout, String branch) {
