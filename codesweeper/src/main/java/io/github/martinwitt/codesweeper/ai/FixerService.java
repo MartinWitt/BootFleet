@@ -21,7 +21,8 @@ public class FixerService {
     }
 
     /**
-     * Lets the model read and fix files itself via {@link FileTools}, scoped to checkout.
+     * Lets the model read and fix files itself via {@link ReadOnlyFileTools} and {@link
+     * WriteFileTools}, scoped to checkout.
      *
      * <p>Deliberately plain text, not structured output: a JSON-schema response format gives the
      * model an easy way to satisfy the schema by just describing a fix in prose instead of actually
@@ -50,7 +51,10 @@ public class FixerService {
         // Streamed (not .call()) so TurnLoggerAdvisor can print thinking/answer tokens live as
         // they're generated, instead of the whole turn appearing silently once it's done.
         String explanation =
-                chatClient.prompt(prompt).tools(new FileTools(checkout)).stream()
+                chatClient
+                        .prompt(prompt)
+                        .tools(new ReadOnlyFileTools(checkout), new WriteFileTools(checkout))
+                        .stream()
                         .content()
                         .collect(Collectors.joining())
                         .block();

@@ -11,17 +11,21 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
 /**
- * File access the fixer model can call directly instead of having file content spliced into its
- * prompt. Adds write access on top of {@link ReadOnlyFileTools} - only bind this to models that are
- * actually meant to change the checkout (the judge, which reviews rather than fixes, gets the
- * read-only base instead).
+ * File write access the fixer model can call directly instead of having file content spliced into
+ * its prompt. Only bind this to models that are actually meant to change the checkout - the judge,
+ * which reviews rather than fixes, gets {@link ReadOnlyFileTools} instead. Deliberately not a
+ * subclass of {@link ReadOnlyFileTools}: Spring AI's tool discovery only sees @Tool methods
+ * declared directly on the object passed to tools(), not inherited ones, so an "extends" here would
+ * silently hide the write tool from callers that only register the read-only base.
  */
-public class FileTools extends ReadOnlyFileTools {
+public class WriteFileTools {
 
-    private static final Logger log = LoggerFactory.getLogger(FileTools.class);
+    private static final Logger log = LoggerFactory.getLogger(WriteFileTools.class);
 
-    public FileTools(Path checkout) {
-        super(checkout);
+    private final Path checkout;
+
+    public WriteFileTools(Path checkout) {
+        this.checkout = checkout.normalize();
     }
 
     @Tool(
@@ -78,5 +82,13 @@ public class FileTools extends ReadOnlyFileTools {
             throw new UncheckedIOException(e);
         }
         return "Edited " + relativePath;
+    }
+
+    private Path resolve(String relativePath) {
+        Path target = checkout.resolve(relativePath).normalize();
+        if (!target.startsWith(checkout)) {
+            throw new IllegalArgumentException("Path escapes checkout: " + relativePath);
+        }
+        return target;
     }
 }
