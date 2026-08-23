@@ -196,7 +196,7 @@ public class CodesweeperRunner implements ApplicationRunner {
             }
 
             long judgeStart = System.currentTimeMillis();
-            verdict = judgeService.judge(finding, gitClient.diff(checkout));
+            verdict = judgeService.judge(finding, gitClient.diff(checkout), checkout);
             judgeSeconds += (System.currentTimeMillis() - judgeStart) / 1000;
             if (verdict.useful()) {
                 log.info("Judge approved fix for {}: {}", finding.ruleId(), verdict.reason());

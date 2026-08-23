@@ -63,11 +63,18 @@ codesweeper:
     {diff}
     ---
 
+    The diff alone often isn't enough to tell whether a removal is safe - e.g. removing an
+    unused import, cast, or "throws" clause is only safe if nothing in the method actually
+    relies on it. You have read-only tools (listFiles, readFile, searchFiles) on the same
+    checkout the fixer used - use them to check the surrounding code and any relevant
+    callers/callees before deciding, instead of assuming a removal is a shortcut.
+
     Decide whether this fix correctly and safely resolves the finding without changing
     unrelated behavior, without deleting the check it was supposed to add, and without
-    introducing new bugs. Be skeptical: if the fix removes the flagged call instead of
-    handling its result, silently swallows an error case, or otherwise looks like a
-    shortcut rather than a real fix, mark it as not useful.
+    introducing new bugs. Be skeptical, but back it with what you actually verified: if the
+    fix removes the flagged call instead of handling its result, silently swallows an error
+    case you confirmed is reachable, or otherwise looks like a shortcut rather than a real
+    fix, mark it as not useful.
   repos:
     - full-name: MartinWitt/BootFleet
       default-branch: master
