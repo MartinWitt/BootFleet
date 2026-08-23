@@ -10,25 +10,21 @@
 version: "1.0"
 
 #Specify inspection profile for code analysis
-# Base is Default (IDE's curated Project Default profile) so the sensible on/off defaults per
-# inspection are kept - an empty base + enabling whole categories was tried first, but that
-# force-enables every inspection in a category regardless of its normal default, including
-# dozens of pure style/architecture opinions (Missing Javadoc, Magic number, Design for
-# extension, ...) that Default deliberately leaves off. Only HTML is excluded, since that was
-# the actual noise: HtmlUnknownAttribute flags valid Thymeleaf th:* attributes as errors.
+# Base is qodana.recommended, JetBrains' own bundled profile (pulled from qodana.jar inside
+# the pinned linter image to confirm this, not guessed). It already excludes GLOBAL
+# inspections wholesale ("significant time consumption" per their own comment) - which
+# covers "unused", SameReturnValue and UnnecessaryModuleDependencyInspection, all found to
+# be structurally false-positive here: qodana-jvm-community lacks IntelliJ Ultimate's Spring
+# plugin, so whole-program reachability analysis has no entry-point awareness for
+# @Component/@Service/@Repository/@Controller beans (container-instantiated via reflection).
+# It also drops HTML/XML/JSON/Maven from its category allow-list, which incidentally also
+# kills the Thymeleaf th:* HtmlUnknownAttribute noise and the Maven "dependency/plugin not
+# found" false positives (CI's linter can't resolve freshly-bumped versions like
+# telegrambots-client:10.2.1 against Maven Central - the deps are real, the merged Renovate
+# PRs prove it).
 profile:
   base:
-    name: Default
-  inspections:
-    - group: "category:HTML"
-      enabled: false
-    # XML/JSON groups only fire on pom.xml's schema namespace (unresolved offline in CI,
-    # e.g. XmlUnboundNsPrefix x23) - not Java findings. Maven group (MavenModelInspection
-    # etc.) is separate and stays enabled, per the Java/Maven/Spring/Security scope above.
-    - group: "category:XML"
-      enabled: false
-    - group: "category:JSON and JSON5"
-      enabled: false
+    name: qodana.recommended
 
 projectJDK: "25" #(Applied in CI/CD pipeline)
 # Pinned (not :latest) for CI reproducibility - bump periodically; 2025.3 was two release
