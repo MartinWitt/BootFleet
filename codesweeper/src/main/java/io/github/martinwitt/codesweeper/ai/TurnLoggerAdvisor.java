@@ -15,7 +15,7 @@ import reactor.core.publisher.Flux;
 /**
  * Logs only the model's own reasoning text for each turn of a tool-calling exchange, instead of
  * SimpleLoggerAdvisor's full request/response dump - that reprints the entire growing conversation
- * (including full file contents already logged once by {@link FileTools}) on every turn.
+ * (including full file contents already logged once by {@link ReadOnlyFileTools}) on every turn.
  *
  * <p>Also accumulates token usage across every turn, since the codesweeper pipeline processes one
  * finding at a time sequentially - callers should {@link #reset()} before each finding they want a

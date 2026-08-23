@@ -27,7 +27,7 @@ public class ReadOnlyFileTools {
     private static final Logger log = LoggerFactory.getLogger(ReadOnlyFileTools.class);
     private static final int MAX_SEARCH_MATCHES = 200;
 
-    protected final Path checkout;
+    private final Path checkout;
 
     public ReadOnlyFileTools(Path checkout) {
         this.checkout = checkout.normalize();
@@ -133,7 +133,7 @@ public class ReadOnlyFileTools {
                 && !path.contains(File.separator + "target" + File.separator);
     }
 
-    protected Path resolve(String relativePath) {
+    private Path resolve(String relativePath) {
         Path target = checkout.resolve(relativePath).normalize();
         if (!target.startsWith(checkout)) {
             throw new IllegalArgumentException("Path escapes checkout: " + relativePath);
