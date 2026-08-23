@@ -2,6 +2,7 @@ package io.github.martinwitt.codesweeper.ai;
 
 import io.github.martinwitt.codesweeper.config.CodesweeperProperties;
 import io.github.martinwitt.codesweeper.sarif.SarifFinding;
+import java.nio.file.Path;
 import java.util.Map;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -22,7 +23,7 @@ public class JudgeService {
         this.promptTemplate = properties.judgePrompt();
     }
 
-    public JudgeVerdict judge(SarifFinding finding, String diff) {
+    public JudgeVerdict judge(SarifFinding finding, String diff, Path checkout) {
         String prompt =
                 new PromptTemplate(promptTemplate)
                         .render(
@@ -31,6 +32,10 @@ public class JudgeService {
                                         "message", finding.message(),
                                         "filePath", finding.filePath(),
                                         "diff", diff));
-        return chatClient.prompt(prompt).call().entity(JudgeVerdict.class);
+        return chatClient
+                .prompt(prompt)
+                .tools(new ReadOnlyFileTools(checkout))
+                .call()
+                .entity(JudgeVerdict.class);
     }
 }
