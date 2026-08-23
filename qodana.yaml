@@ -22,6 +22,13 @@ profile:
   inspections:
     - group: "category:HTML"
       enabled: false
+    # XML/JSON groups only fire on pom.xml's schema namespace (unresolved offline in CI,
+    # e.g. XmlUnboundNsPrefix x23) - not Java findings. Maven group (MavenModelInspection
+    # etc.) is separate and stays enabled, per the Java/Maven/Spring/Security scope above.
+    - group: "category:XML"
+      enabled: false
+    - group: "category:JSON and JSON5"
+      enabled: false
 
 projectJDK: "25" #(Applied in CI/CD pipeline)
 # Pinned (not :latest) for CI reproducibility - bump periodically; 2025.3 was two release
