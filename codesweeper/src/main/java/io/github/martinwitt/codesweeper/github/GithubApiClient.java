@@ -48,7 +48,8 @@ public class GithubApiClient {
             GHRepository ghRepo = gitHub.getRepository(repo.fullName());
             GHWorkflow workflow = ghRepo.getWorkflow(repo.workflowFile());
             for (GHWorkflowRun run : workflow.listRuns()) {
-                if (run.getConclusion() != GHWorkflowRun.Conclusion.SUCCESS) {
+                if (run.getConclusion() != GHWorkflowRun.Conclusion.SUCCESS
+                        || !repo.defaultBranch().equals(run.getHeadBranch())) {
                     continue;
                 }
                 Path artifactDir = workDir.resolve("sarif-" + run.getId());
@@ -66,11 +67,10 @@ public class GithubApiClient {
                     }
                 }
                 log.info(
-                        "No '{}' artifact on run {} for {}",
+                        "No '{}' artifact on run {}, checking earlier successful runs for {}",
                         artifactName,
                         run.getId(),
                         repo.fullName());
-                return Optional.empty();
             }
             log.info("No successful {} run found for {}", repo.workflowFile(), repo.fullName());
             return Optional.empty();
