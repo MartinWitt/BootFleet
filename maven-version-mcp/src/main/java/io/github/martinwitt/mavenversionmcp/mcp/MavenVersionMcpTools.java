@@ -160,8 +160,7 @@ public class MavenVersionMcpTools {
     public VersionComparisonResult compareVersions(
             @McpToolParam(description = "First version to compare", required = true)
                     String version1,
-            @McpToolParam(description = "Second version to compare", required = true)
-                    String version2) {
+            @McpToolParam(description = "Second version to compare") String version2) {
 
         logger.info("Comparing versions {} and {}", version1, version2);
         int comparison = metadataService.compareVersions(version1, version2);
