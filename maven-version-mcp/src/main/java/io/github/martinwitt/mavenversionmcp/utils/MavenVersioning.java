@@ -187,7 +187,7 @@ public class MavenVersioning {
         }
 
         // One is a release, the other isn't - release is higher
-        if ((q1 == null || q1.isEmpty()) && (q2 != null && !q2.isEmpty())) {
+        if ((q1 == null || q1.isEmpty()) && !q2.isEmpty()) {
             return 1;
         }
         if ((q1 != null && !q1.isEmpty()) && (q2 == null || q2.isEmpty())) {
