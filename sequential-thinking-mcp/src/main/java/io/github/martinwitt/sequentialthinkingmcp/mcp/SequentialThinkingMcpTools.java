@@ -422,10 +422,8 @@ public class SequentialThinkingMcpTools {
                             + " verified your hypothesis. After this call the session is closed"
                             + " and no more thoughts can be added.")
     public CompleteThinkingResult completeThinking(
-            @McpToolParam(description = "The thinking session ID", required = true)
-                    String sessionId,
-            @McpToolParam(description = "The final answer or conclusion", required = true)
-                    String finalAnswer) {
+            @McpToolParam(required = true) String sessionId,
+            @McpToolParam(required = true) String finalAnswer) {
 
         logger.info("Completing thinking session {}", sessionId);
 
