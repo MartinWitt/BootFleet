@@ -190,7 +190,7 @@ public class MavenVersioning {
         if ((q1 == null || q1.isEmpty()) && (q2 != null && !q2.isEmpty())) {
             return 1;
         }
-        if ((q1 != null && !q1.isEmpty()) && (q2 == null || q2.isEmpty())) {
+        if ((q2 == null || q2.isEmpty())) {
             return -1;
         }
 
