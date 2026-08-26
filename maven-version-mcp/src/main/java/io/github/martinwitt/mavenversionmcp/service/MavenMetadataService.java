@@ -43,7 +43,7 @@ public class MavenMetadataService {
     /**
      * Fetches all available versions for a Maven artifact from a custom repository.
      *
-     * @param registryUrl Maven repository URL (e.g., "https://repo1.maven.org/maven2")
+     * @param registryUrl Maven repository URL (e.g., {@code "https://repo1.maven.org/maven2"})
      * @param groupId Maven groupId
      * @param artifactId Maven artifactId
      * @return List of version strings, or empty list if metadata cannot be fetched
