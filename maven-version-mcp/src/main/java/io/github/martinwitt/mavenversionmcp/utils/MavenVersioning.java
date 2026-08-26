@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 public class MavenVersioning {
 
     private static final Pattern VERSION_PATTERN =
-            Pattern.compile("^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:-(.+))?(?:(?:(?!)()))?$");
+            Pattern.compile("^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:-(.+))?$");
 
     private static final Pattern QUALIFIER_PATTERN =
             Pattern.compile("^([a-zA-Z]+)?(?:[.\\-]?(\\d+))?.*$");
