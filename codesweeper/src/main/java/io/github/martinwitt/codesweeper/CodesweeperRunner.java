@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * For every trusted repo: pull the latest Qodana SARIF, fix each not-yet-actioned finding, let the
- * judge gate it, run spotless + tests, and open a draft PR only if all of that holds.
+ * judge gate it, run spotless + tests, and open an auto-merge PR only if all of that holds.
  */
 @Component
 public class CodesweeperRunner implements ApplicationRunner {
@@ -237,7 +237,7 @@ public class CodesweeperRunner implements ApplicationRunner {
                 "fix: " + finding.ruleId() + " in " + finding.filePath() + " (" + model + ")");
         gitClient.push(checkout, branch);
         String prUrl =
-                githubApiClient.createDraftPr(
+                githubApiClient.createAutoMergePr(
                         repo,
                         branch,
                         "fix: "
@@ -248,7 +248,7 @@ public class CodesweeperRunner implements ApplicationRunner {
                                 + model
                                 + "]",
                         prBody(finding, fix, verdict, fixSeconds, judgeSeconds));
-        log.info("Opened draft PR for {}: {}", finding.ruleId(), prUrl);
+        log.info("Opened auto-merge PR for {}: {}", finding.ruleId(), prUrl);
 
         gitClient.cloneOrUpdate(workspaceDir, repo); // back to default branch for the next finding
     }
