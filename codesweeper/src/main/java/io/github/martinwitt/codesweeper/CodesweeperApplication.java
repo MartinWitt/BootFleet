@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class CodesweeperApplication {
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         System.exit(
                 SpringApplication.exit(SpringApplication.run(CodesweeperApplication.class, args)));
     }
