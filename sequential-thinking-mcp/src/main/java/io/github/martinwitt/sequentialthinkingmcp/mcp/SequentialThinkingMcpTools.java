@@ -280,8 +280,8 @@ public class SequentialThinkingMcpTools {
         // Find all thoughts affected by this revision (thoughts after the revised one)
         List<Integer> affectedThoughts =
                 session.getThoughts().stream()
-                        .filter(t -> t.thoughtNumber() > revisesThoughtNumber)
                         .map(Thought::thoughtNumber)
+                        .filter(number -> number > revisesThoughtNumber)
                         .toList();
 
         return new ReviseThoughtResult(
