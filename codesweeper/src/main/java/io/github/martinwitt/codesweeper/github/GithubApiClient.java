@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.kohsuke.github.GHArtifact;
+import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHWorkflow;
 import org.kohsuke.github.GHWorkflowRun;
@@ -138,12 +139,19 @@ public class GithubApiClient {
         }
     }
 
-    public String createDraftPr(TrustedRepo repo, String branch, String title, String body) {
+    /**
+     * Opens a ready-for-review PR with GitHub's native auto-merge enabled, so it merges itself once
+     * the branch's required status checks (see repo branch protection) go green.
+     */
+    public String createAutoMergePr(TrustedRepo repo, String branch, String title, String body) {
         try {
             GHRepository ghRepo = gitHub.getRepository(repo.fullName());
-            return ghRepo.createPullRequest(title, branch, repo.defaultBranch(), body, true, true)
-                    .getHtmlUrl()
-                    .toString();
+            GHPullRequest pr =
+                    ghRepo.createPullRequest(
+                            title, branch, repo.defaultBranch(), body, true, false);
+            pr.enablePullRequestAutoMerge(
+                    null, null, null, null, null, GHPullRequest.MergeMethod.SQUASH);
+            return pr.getHtmlUrl().toString();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
