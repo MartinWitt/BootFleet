@@ -80,7 +80,7 @@ public class SequentialThinkingMcpTools {
                                     """,
                             required = true)
                     String thought,
-            @McpToolParam(description = "Whether another thought step is needed", required = true)
+            @McpToolParam(description = "Whether another thought step is needed", required = false)
                     boolean nextThoughtNeeded,
             @McpToolParam(
                             description =
