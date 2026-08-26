@@ -171,7 +171,8 @@ public class CodesweeperRunner implements ApplicationRunner {
         String rejectionFeedback = null;
         long fixSeconds = 0;
         long judgeSeconds = 0;
-        for (int attempt = 1; attempt <= MAX_FIX_ATTEMPTS; attempt++) {
+        int attempt = 1;
+        while (attempt <= MAX_FIX_ATTEMPTS) {
             log.info(
                     "Asking fixer to fix {} in {} (attempt {}/{})",
                     finding.ruleId(),
