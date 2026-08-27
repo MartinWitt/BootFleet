@@ -305,9 +305,9 @@ public class SequentialThinkingMcpTools {
     public BranchThoughtResult branchThought(
             @McpToolParam(description = "The thinking session ID", required = true)
                     String sessionId,
-            @McpToolParam(description = "The thought number to branch from", required = true)
+            @McpToolParam(description = "The thought number to branch from")
                     int branchFromThoughtNumber,
-            @McpToolParam(description = "Description of what this branch explores", required = true)
+            @McpToolParam(description = "Description of what this branch explores")
                     String branchDescription) {
 
         logger.info(
