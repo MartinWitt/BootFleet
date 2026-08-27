@@ -5,6 +5,9 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
@@ -67,9 +70,20 @@ public class WriteFileTools {
                     + " (whitespace included), with no line-number prefixes. Re-read the file if"
                     + " unsure.";
         }
-        if (content.indexOf(oldText, firstIndex + 1) != -1) {
-            return "oldText matches more than once - include more surrounding context to make it"
-                    + " unique.";
+        List<Integer> matchLines = new ArrayList<>();
+        for (int idx = firstIndex; idx != -1; idx = content.indexOf(oldText, idx + 1)) {
+            matchLines.add(lineNumberAt(content, idx));
+        }
+        if (matchLines.size() > 1) {
+            // Naming the exact duplicate lines lets the model pick context that actually
+            // differs between them - a generic "add more context" hint left it resubmitting
+            // the same non-unique oldText over and over.
+            return "oldText matches "
+                    + matchLines.size()
+                    + " times, at lines "
+                    + matchLines.stream().map(String::valueOf).collect(Collectors.joining(", "))
+                    + " - include a line or two of context around just one of those occurrences"
+                    + " to make it unique.";
         }
         String updated =
                 content.substring(0, firstIndex)
@@ -82,6 +96,16 @@ public class WriteFileTools {
             throw new UncheckedIOException(e);
         }
         return "Edited " + relativePath;
+    }
+
+    private static int lineNumberAt(String content, int index) {
+        int line = 1;
+        for (int i = 0; i < index; i++) {
+            if (content.charAt(i) == '\n') {
+                line++;
+            }
+        }
+        return line;
     }
 
     private Path resolve(String relativePath) {
