@@ -158,9 +158,9 @@ public class MavenVersionMcpTools {
                      currently used version is outdated.\
                     """)
     public VersionComparisonResult compareVersions(
-            @McpToolParam(description = "First version to compare", required = true)
+            @McpToolParam(description = "First version to compare", required = false)
                     String version1,
-            @McpToolParam(description = "Second version to compare", required = true)
+            @McpToolParam(description = "Second version to compare", required = false)
                     String version2) {
 
         logger.info("Comparing versions {} and {}", version1, version2);
