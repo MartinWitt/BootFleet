@@ -29,7 +29,6 @@ public class KubernetesClientRuntimeHintsRegistrar implements RuntimeHintsRegist
                 hints.reflection()
                         .registerType(
                                 TypeReference.of(classInfo.getName()), MemberCategory.values());
-                hints.serialization().registerType(TypeReference.of(classInfo.getName()));
             }
         }
 
