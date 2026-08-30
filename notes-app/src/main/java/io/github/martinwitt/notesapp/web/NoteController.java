@@ -127,6 +127,8 @@ public class NoteController {
                         existing -> {
                             existing.setTitle(note.getTitle());
                             existing.setContent(note.getContent());
+                            existing.setDrawing(note.getDrawing());
+                            existing.setDrawingData(note.getDrawingData());
                             existing.setTags(
                                     tagNames != null
                                             ? tagNames.stream()

@@ -3,3 +3,7 @@ databaseChangeLog:
       file: db/changelog/001-initial-schema.yaml
   - include:
       file: db/changelog/002-add-updated-at-column.yaml
+  - include:
+      file: db/changelog/003-add-drawing-column.yaml
+  - include:
+      file: db/changelog/004-add-drawing-data-column.yaml

@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-add-drawing-to-notes
+      author: martinwitt
+      changes:
+        - addColumn:
+            tableName: notes
+            columns:
+              - column:
+                  name: drawing
+                  type: TEXT

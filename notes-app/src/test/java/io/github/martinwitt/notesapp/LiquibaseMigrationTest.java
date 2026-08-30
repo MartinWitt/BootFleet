@@ -47,4 +47,16 @@ class LiquibaseMigrationTest {
         assertThatCode(() -> jdbcTemplate.queryForList("SELECT updated_at FROM notes"))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    void notesTableHasDrawingColumn() {
+        assertThatCode(() -> jdbcTemplate.queryForList("SELECT drawing FROM notes"))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void notesTableHasDrawingDataColumn() {
+        assertThatCode(() -> jdbcTemplate.queryForList("SELECT drawing_data FROM notes"))
+                .doesNotThrowAnyException();
+    }
 }
