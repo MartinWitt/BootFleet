@@ -94,7 +94,7 @@ public class SequentialThinkingMcpTools {
                             description =
                                     "Current estimate of total thoughts needed (can be adjusted"
                                             + " up/down)",
-                            required = true)
+                            required = false)
                     int totalThoughts,
             @McpToolParam(
                             description =
