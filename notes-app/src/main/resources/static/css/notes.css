@@ -56,9 +56,9 @@ header p { color: var(--text-muted); margin-top: 4px; }
 }
 .note-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); }
 
-.note-title a { font-size: 1.05rem; font-weight: 600; color: var(--primary); text-decoration: none; }
+.note-title a { font-size: 1.05rem; font-weight: 600; color: var(--primary); text-decoration: none; overflow-wrap: anywhere; }
 .note-title a:hover { text-decoration: underline; }
-.note-preview { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+.note-preview { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; overflow-wrap: anywhere; }
 
 .note-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .tag {
@@ -109,7 +109,7 @@ header p { color: var(--text-muted); margin-top: 4px; }
 
 /* Detail page */
 .note-date { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
-.note-content { white-space: pre-wrap; line-height: 1.7; margin: 24px 0; font-size: 1rem; }
+.note-content { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; margin: 24px 0; font-size: 1rem; }
 .note-tags-section, .ai-suggestions-section { margin-bottom: 24px; }
 .note-tags-section h3, .ai-suggestions-section h3 { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
 .no-tags { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
