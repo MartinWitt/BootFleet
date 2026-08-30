@@ -3,6 +3,7 @@ package io.github.martinwitt.configreloader.aot;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import io.fabric8.kubernetes.client.impl.KubernetesClientImpl;
+import io.fabric8.kubernetes.client.vertx.VertxHttpClientFactory;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.springframework.aot.hint.RuntimeHints;
@@ -22,8 +23,19 @@ class MetadataGeneratorTest {
                                 .test(hints))
                 .isTrue();
         assertThat(
+                        RuntimeHintsPredicates.reflection()
+                                .onType(VertxHttpClientFactory.class)
+                                .test(hints))
+                .isTrue();
+        assertThat(
                         RuntimeHintsPredicates.resource()
                                 .forResource("META-INF/vertx/vertx-version.txt")
+                                .test(hints))
+                .isTrue();
+        assertThat(
+                        RuntimeHintsPredicates.resource()
+                                .forResource(
+                                        "META-INF/services/io.fabric8.kubernetes.client.http.HttpClient.Factory")
                                 .test(hints))
                 .isTrue();
     }
