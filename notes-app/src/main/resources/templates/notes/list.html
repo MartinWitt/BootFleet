@@ -44,6 +44,8 @@
               <a th:href="@{/notes/{id}(id=${note.id})}" th:text="${note.title}"></a>
             </h3>
             <p class="note-date" th:text="${#temporals.format(note.updatedAt, 'dd.MM.yyyy HH:mm')}"></p>
+            <img th:if="${note.drawing != null and !note.drawing.isEmpty()}"
+                 th:src="${note.drawing}" class="note-card-drawing" alt="Zeichnung"/>
             <p class="note-preview" th:text="${#strings.abbreviate(note.content, 120)}"></p>
             <div class="note-tags" th:if="${not #lists.isEmpty(note.tags)}">
               <th:block th:each="tag : ${note.tags}">

@@ -32,6 +32,12 @@ public class Note {
 
     private LocalDateTime updatedAt;
 
+    @Column(columnDefinition = "TEXT")
+    private String drawing;
+
+    @Column(columnDefinition = "TEXT")
+    private String drawingData;
+
     @ManyToMany
     @JoinTable(
             name = "notes_note_tags",
@@ -90,6 +96,22 @@ public class Note {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getDrawing() {
+        return drawing;
+    }
+
+    public void setDrawing(String drawing) {
+        this.drawing = drawing;
+    }
+
+    public String getDrawingData() {
+        return drawingData;
+    }
+
+    public void setDrawingData(String drawingData) {
+        this.drawingData = drawingData;
     }
 
     public Set<Tag> getTags() {

@@ -17,6 +17,9 @@
   <main>
     <div class="note-content" th:text="${note.content}"></div>
 
+    <img th:if="${note.drawing != null and !note.drawing.isEmpty()}"
+         th:src="${note.drawing}" class="note-drawing" alt="Zeichnung"/>
+
     <!-- Aktuelle Tags -->
     <div class="note-tags-section">
       <h3>Tags</h3>
