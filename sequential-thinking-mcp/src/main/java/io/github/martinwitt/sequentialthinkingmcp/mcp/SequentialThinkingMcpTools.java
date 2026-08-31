@@ -423,8 +423,7 @@ public class SequentialThinkingMcpTools {
     public CompleteThinkingResult completeThinking(
             @McpToolParam(description = "The thinking session ID", required = true)
                     String sessionId,
-            @McpToolParam(description = "The final answer or conclusion", required = true)
-                    String finalAnswer) {
+            @McpToolParam(description = "The final answer or conclusion") String finalAnswer) {
 
         logger.info("Completing thinking session {}", sessionId);
 
