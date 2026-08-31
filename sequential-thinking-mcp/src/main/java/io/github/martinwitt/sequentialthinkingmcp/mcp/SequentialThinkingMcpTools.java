@@ -265,7 +265,7 @@ public class SequentialThinkingMcpTools {
             @McpToolParam(description = "The thinking session ID", required = true)
                     String sessionId,
             @McpToolParam(description = "Your revised thinking", required = true) String thought,
-            @McpToolParam(description = "The thought number being revised")
+            @McpToolParam(description = "The thought number being revised", required = true)
                     int revisesThoughtNumber) {
 
         logger.info(
