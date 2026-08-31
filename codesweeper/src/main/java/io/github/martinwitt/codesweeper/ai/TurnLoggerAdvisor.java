@@ -40,7 +40,7 @@ public class TurnLoggerAdvisor implements CallAdvisor, StreamAdvisor {
     @Override
     public ChatClientResponse adviseCall(ChatClientRequest request, CallAdvisorChain chain) {
         ChatClientResponse response = chain.nextCall(request);
-        var result = response.chatResponse().getResult();
+        var result = response.chatResponse() != null ? response.chatResponse().getResult() : null;
         if (result == null) {
             log.warn("model returned no result");
             return response;
@@ -70,7 +70,10 @@ public class TurnLoggerAdvisor implements CallAdvisor, StreamAdvisor {
                             if (response.chatResponse() == null) {
                                 return;
                             }
-                            var result = response.chatResponse().getResult();
+                            var result =
+                                    response.chatResponse() != null
+                                            ? response.chatResponse().getResult()
+                                            : null;
                             if (result == null) {
                                 return;
                             }
