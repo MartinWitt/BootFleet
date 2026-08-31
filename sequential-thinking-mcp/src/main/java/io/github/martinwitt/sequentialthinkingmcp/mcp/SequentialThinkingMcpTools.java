@@ -343,8 +343,7 @@ public class SequentialThinkingMcpTools {
     public VerifyHypothesisResult verifyHypothesis(
             @McpToolParam(description = "The thinking session ID", required = true)
                     String sessionId,
-            @McpToolParam(description = "The hypothesis to verify", required = true)
-                    String hypothesis,
+            @McpToolParam(description = "The hypothesis to verify") String hypothesis,
             @McpToolParam(
                             description =
                                     "Verification steps taken to confirm or reject the hypothesis",
