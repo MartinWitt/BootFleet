@@ -50,7 +50,7 @@ public class MavenDependencyUtil {
     /**
      * Constructs the URL for fetching maven-metadata.xml from a repository.
      *
-     * @param registryUrl Base URL of the Maven repository {@link https://repo1.maven.org/maven2}
+     * @param registryUrl Base URL of the Maven repository {@link MAVEN_CENTRAL_URL}
      * @param groupId Maven groupId (e.g., com.example)
      * @param artifactId Maven artifactId (e.g., mylib)
      * @return Complete URL to maven-metadata.xml
