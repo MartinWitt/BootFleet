@@ -87,10 +87,8 @@ public class TurnLoggerAdvisor implements CallAdvisor, StreamAdvisor {
                                 System.out.print(text);
                             }
                             Usage usage = response.chatResponse().getMetadata().getUsage();
-                            if (usage != null) {
-                                promptTokens += usage.getPromptTokens();
-                                completionTokens += usage.getCompletionTokens();
-                            }
+                            promptTokens += usage.getPromptTokens();
+                            completionTokens += usage.getCompletionTokens();
                             model = response.chatResponse().getMetadata().getModel();
                         });
     }
