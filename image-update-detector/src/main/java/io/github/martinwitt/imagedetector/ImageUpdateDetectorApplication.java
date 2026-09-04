@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableConfigurationProperties(ImageDetectorProperties.class)
 public class ImageUpdateDetectorApplication {
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         SpringApplication application = new SpringApplication(ImageUpdateDetectorApplication.class);
         application.setAdditionalProfiles("local");
         application.run(args);
