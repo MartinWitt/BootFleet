@@ -235,8 +235,7 @@ public class SequentialThinkingMcpTools {
             @McpToolParam(
                             description =
                                     "Initial estimate of total thoughts needed for this problem"
-                                            + " (can be adjusted later)",
-                            required = true)
+                                            + " (can be adjusted later)")
                     int initialThoughtEstimate) {
 
         logger.info(
