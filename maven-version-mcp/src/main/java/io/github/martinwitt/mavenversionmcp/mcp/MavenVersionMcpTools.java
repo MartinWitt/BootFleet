@@ -158,10 +158,8 @@ public class MavenVersionMcpTools {
                      currently used version is outdated.\
                     """)
     public VersionComparisonResult compareVersions(
-            @McpToolParam(description = "First version to compare", required = false)
-                    String version1,
-            @McpToolParam(description = "Second version to compare", required = false)
-                    String version2) {
+            @McpToolParam(description = "First version to compare") String version1,
+            @McpToolParam(description = "Second version to compare") String version2) {
 
         logger.info("Comparing versions {} and {}", version1, version2);
         int comparison = metadataService.compareVersions(version1, version2);
