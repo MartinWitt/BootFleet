@@ -346,7 +346,13 @@ public class SequentialThinkingMcpTools {
                     String sessionId,
             @McpToolParam(description = "The hypothesis to verify", required = true)
                     String hypothesis,
-            @McpToolParam List<String> verificationSteps) {
+            @McpToolParam(
+                            description =
+                                    "Provide a list of concrete checks that confirm or refute the"
+                                            + " hypothesis — more steps produce higher confidence"
+                                            + " scores.",
+                            required = true)
+                    List<String> verificationSteps) {
 
         logger.info("Verifying hypothesis in session {}", sessionId);
 
