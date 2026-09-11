@@ -29,7 +29,7 @@ public class GitOpsClient {
             String repo = properties.getRepo();
             String branch = properties.getBranch();
             GHRepository repository = gitHub.getRepository(repo);
-            return repository.getFileContent(path, branch).getContent();
+            return repository.getFileContent(path, branch).toString();
         } catch (GHFileNotFoundException e) {
             logger.debug("File not found {}: {}", path, e.getMessage());
             return null;
