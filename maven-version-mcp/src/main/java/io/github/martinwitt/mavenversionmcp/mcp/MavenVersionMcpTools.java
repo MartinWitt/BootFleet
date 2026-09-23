@@ -132,9 +132,7 @@ public class MavenVersionMcpTools {
                      (e.g., 'org.springframework:spring-core').\
                     """)
     public VersionInfoResult getVersionInfo(
-            @McpToolParam(
-                            description = "Maven dependency string in format 'groupId:artifactId'",
-                            required = true)
+            @McpToolParam(description = "Maven dependency string in format 'groupId:artifactId'")
                     String dependency) {
 
         logger.info("Getting version info for {}", dependency);
