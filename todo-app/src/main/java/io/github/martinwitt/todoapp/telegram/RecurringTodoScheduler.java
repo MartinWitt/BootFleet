@@ -38,7 +38,7 @@ class RecurringTodoScheduler implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        todoService.findRecurring().forEach(this::scheduleTask);
+        todoService.findRecurring().forEach(todo -> scheduleTask(todo));
         log.info("Scheduled {} recurring todo(s)", scheduled.size());
     }
 
