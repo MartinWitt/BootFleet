@@ -169,7 +169,7 @@ public class NoteController {
         try {
             return ResponseEntity.ok(tagSuggestionService.suggestTags(title, content));
         } catch (OllamaUnavailableException e) {
-            return ResponseEntity.<List<String>>status(503).build();
+            return ResponseEntity.status(503).build();
         }
     }
 
