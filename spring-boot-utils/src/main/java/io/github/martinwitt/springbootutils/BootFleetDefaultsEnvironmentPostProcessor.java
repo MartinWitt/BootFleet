@@ -35,6 +35,9 @@ public class BootFleetDefaultsEnvironmentPostProcessor
     @Override
     public void postProcessEnvironment(
             ConfigurableEnvironment environment, SpringApplication application) {
+        if (environment == null) {
+            return;
+        }
         if (environment.getPropertySources().contains(PROPERTY_SOURCE_NAME)) {
             return;
         }
