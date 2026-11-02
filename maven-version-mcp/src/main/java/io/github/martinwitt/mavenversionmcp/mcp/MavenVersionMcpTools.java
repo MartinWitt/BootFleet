@@ -109,10 +109,8 @@ public class MavenVersionMcpTools {
                      given major/minor range.\
                     """)
     public VersionsListResult getStableVersions(
-            @McpToolParam(description = "Maven groupId (e.g., com.google.inject)", required = true)
-                    String groupId,
-            @McpToolParam(description = "Maven artifactId (e.g., guice)", required = true)
-                    String artifactId) {
+            @McpToolParam(description = "Maven groupId (e.g., com.google.inject)") String groupId,
+            @McpToolParam(description = "Maven artifactId (e.g., guice)") String artifactId) {
 
         logger.info("Getting stable versions for {}:{}", groupId, artifactId);
         List<String> versions = metadataService.getStableVersions(groupId, artifactId);
