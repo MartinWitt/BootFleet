@@ -88,10 +88,8 @@ public class MavenVersionMcpTools {
                      instead.\
                     """)
     public VersionsListResult getAllVersions(
-            @McpToolParam(description = "Maven groupId (e.g., com.google.inject)", required = true)
-                    String groupId,
-            @McpToolParam(description = "Maven artifactId (e.g., guice)", required = true)
-                    String artifactId) {
+            @McpToolParam(description = "Maven groupId (e.g., com.google.inject)") String groupId,
+            @McpToolParam(description = "Maven artifactId (e.g., guice)") String artifactId) {
 
         logger.info("Getting all versions for {}:{}", groupId, artifactId);
         List<String> versions = metadataService.getAvailableVersions(groupId, artifactId);
