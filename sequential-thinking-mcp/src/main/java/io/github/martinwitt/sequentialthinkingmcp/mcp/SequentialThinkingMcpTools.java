@@ -396,9 +396,7 @@ public class SequentialThinkingMcpTools {
                             + " Use this to get an overview before deciding whether to add more"
                             + " thoughts, create a branch, or call sequentialthinking-complete."
                             + " Also useful for debugging a session if the flow becomes unclear.")
-    public GetThoughtChainResult getThoughtChain(
-            @McpToolParam(description = "The thinking session ID", required = true)
-                    String sessionId) {
+    public GetThoughtChainResult getThoughtChain(String sessionId) {
 
         logger.info("Retrieving thought chain for session {}", sessionId);
 
