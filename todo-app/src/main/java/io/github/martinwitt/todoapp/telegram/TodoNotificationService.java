@@ -165,7 +165,7 @@ class TodoNotificationService {
         try {
             telegramClient.execute(edit);
         } catch (TelegramApiException e) {
-            log.error("Failed to clear keyboard for message {}", messageId, e);
+            log.error("Failed to clear keyboard for message {}", messageId);
         }
     }
 
